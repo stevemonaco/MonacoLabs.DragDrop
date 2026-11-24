@@ -62,12 +62,34 @@ public class DropTargetTests
         Assert.Null(operation.DropAdorner!.ErrorMessage);
     }
 
+    [AvaloniaFact]
+    public void ACopyDropAssignsTheCreatedCopy()
+    {
+        var target = new Border { Background = Brushes.Blue, Width = 100, Height = 100 };
+        DropEventArgs? args = null;
+        var operation = new CopyingDropOperation { PayloadCommand = new RelayCommand(a => args = (DropEventArgs?)a) };
+        DragDrop.SetDropOperation(target, operation);
+        var window = TestWindow.Show(target);
+        using var drag = window.SimulateDrag(DragData.For(new ItemDragOperation(), "A"), DragDropEffects.Copy | DragDropEffects.Move);
+
+        drag.Enter(window.PointIn(target), RawInputModifiers.Control);
+        Assert.Equal(DragDropEffects.Copy, drag.Drop(window.PointIn(target), RawInputModifiers.Control));
+
+        Assert.Equal("A copy", operation.PayloadTarget);
+        Assert.Equal(["A copy"], args?.Items);
+    }
+
     private static (Window, Border, RejectingDropOperation) ShowRejectingTarget(string message)
     {
         var target = new Border { Background = Brushes.Blue, Width = 100, Height = 100 };
         var operation = new RejectingDropOperation { Message = message };
         DragDrop.SetDropOperation(target, operation);
         return (TestWindow.Show(target), target, operation);
+    }
+
+    private sealed class CopyingDropOperation : ItemDropOperation
+    {
+        protected override object CreateCopy(object payload) => $"{payload} copy";
     }
 
     private sealed class RejectingDropOperation : ItemDropOperation

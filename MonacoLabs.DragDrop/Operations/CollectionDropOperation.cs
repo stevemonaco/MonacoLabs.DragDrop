@@ -187,14 +187,16 @@ public partial class CollectionDropOperation : DropOperationBase
 
         if (TryGetDragInfo<DragInfo>(e, out var dragInfo) && TryGetPayload<object>(e, out var payload))
         {
+            var value = ResolveDroppedValue(e.DragEffects, payload);
+
             if (TransfersPayload && location is not null)
             {
                 var payloadCollection = (dragInfo as CollectionDragInfo)?.PayloadCollection;
                 var payloadIndex = (dragInfo as CollectionDragInfo)?.PayloadContainerIndex;
 
                 var actualIndex = location.Index is int index
-                    ? TransferPayloadIndexed(payload, location.Collection, index, payloadCollection, payloadIndex)
-                    : TransferPayload(payload, location.Collection, payloadCollection, payloadIndex);
+                    ? TransferPayloadIndexed(value, location.Collection, index, payloadCollection, payloadIndex)
+                    : TransferPayload(value, location.Collection, payloadCollection, payloadIndex);
 
                 var dropInfo = new CollectionDropInfo()
                 {
@@ -210,7 +212,7 @@ public partial class CollectionDropOperation : DropOperationBase
                 dragInfo.DragOperation.DropCompleted(e.DragEffects, dragInfo, dropInfo);
             }
 
-            InvokePayloadCommand(e, [payload], HoveredOffset, location);
+            InvokePayloadCommand(e, [value], HoveredOffset, location);
         }
         else if (TryGetPlatformItems(e, out var items))
         {

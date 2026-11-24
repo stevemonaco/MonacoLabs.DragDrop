@@ -26,6 +26,7 @@ tests:
   - CollectionDropTests
   - CollectionRemovalTests
   - AutoScrollStepTests
+  - EndToEndTests
 depends:
   - DD-DRAG
   - DD-DROP
@@ -114,8 +115,8 @@ depends:
   - Tests: untested
 - **DD-COLLECTION-029** — When platform data is dropped and accepted, the drop operation shall run `PayloadCommand` with the platform items, the hovered offset and the location (from `ItemsSource` when there is no `PayloadTarget`), and shall insert nothing.
   - Tests: untested
-- **DD-COLLECTION-030** — A Copy drop shall insert the same object reference the source holds, not a copy of it.
-  - Tests: untested
+- **DD-COLLECTION-030** — A Copy drop shall insert the value `CreateCopy` returns (DD-DROP-026), which by default is the reference the source holds; any other effect shall insert the payload.
+  - Tests: `CollectionDropTests.ACopyDropInsertsTheCreatedCopy`, `CollectionDropTests.AMoveDropIgnoresCreateCopy`, `EndToEndTests.CopyingWithAnOverriddenCreateCopyLeavesTheSourceUnchanged`
 - **DD-COLLECTION-031** — After a drop, or when a drag leaves or stops being meant for the target, the drop operation shall clear the hovered container, its pseudo-classes, the location, auto-scrolling, `:dropover` and both adorners.
   - Tests: untested
 
@@ -168,13 +169,12 @@ depends:
 ## Non-goals
 
 - Dragging several selected items at once.
-- Cloning payloads on Copy (DD-COLLECTION-030).
+- Cloning payloads automatically on Copy. `CreateCopy` is the hook (DD-COLLECTION-030).
 - Horizontal insertion zones for wrap or horizontal panels. `GetDropOffset` is virtual for that.
 
 ## Open items
 
 - A Move onto a single-value target (`ItemDropOperation`) removes nothing from the source list (DD-COLLECTION-010). Addressed by [changes/correctness-fixes.md](../../changes/correctness-fixes.md).
 - A Move onto a collection target that does not transfer (no `PayloadTarget`, only `PayloadCommand`) never calls `DropCompleted` (DD-COLLECTION-027), so the source keeps the item. Addressed by [changes/correctness-fixes.md](../../changes/correctness-fixes.md).
-- Copy drops insert the source's reference with no way to clone it (DD-COLLECTION-030). Addressed by [changes/api-design.md](../../changes/api-design.md).
 - `CollectionDragInfo.PayloadContainerIndex` and `CollectionDropInfo.TargetIndex` have copy-paste doc comments that describe the wrong collection. Logged in the backlog.
 - The collection drop operation replaces the base DragEnter, DragOver and Drop handlers, so `OnDragEnter` and `OnDragOver` (DD-DROP) are never called on collection and tree targets, while `OnDrop` is and `OnDragLeave` ends the drag. Logged in the backlog (drop-side redesign).

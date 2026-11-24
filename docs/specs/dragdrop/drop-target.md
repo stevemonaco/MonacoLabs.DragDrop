@@ -55,6 +55,8 @@ depends:
   - Tests: `DropTargetTests.RejectSetsTheMessageAndTheAdornerMirrorsIt`
 - **DD-DROP-025** — When a drag leaves the target or drops on it, the drop target shall clear `ErrorMessage` and the adorner's message.
   - Tests: `DropTargetTests.TheMessageIsClearedWhenTheDragLeaves`
+- **DD-DROP-026** — When an in-process drop's effect is Copy, the drop target shall assign the value `CreateCopy` returns, which by default is the payload itself, and call `CreateCopy` once per drop; for any other effect it shall assign the payload.
+  - Tests: `DropTargetTests.ACopyDropAssignsTheCreatedCopy`
 - **DD-DROP-008** — The drop target shall evaluate `CanDrop` on every DragEnter, DragOver and Drop of a drag meant for it.
   - Tests: untested
 - **DD-DROP-009** — When `CanDrop` is not overridden, the drop target shall accept every drag meant for it.
@@ -75,7 +77,7 @@ depends:
 
 - **DD-DROP-014** — When a drag meant for the target is dropped and `CanDrop` is false, the drop target shall report effect None and clear its hover feedback without changing anything else.
   - Tests: untested
-- **DD-DROP-015** — When an in-process payload is dropped and accepted, the drop target shall recompute the effect, set `PayloadTarget` to the payload (whatever the effect), call the drag operation's `DropCompleted` with that effect and a `DropInfo` whose `ReplacedPayload` is the previous `PayloadTarget`, and then run `PayloadCommand`.
+- **DD-DROP-015** — When an in-process payload is dropped and accepted, the drop target shall recompute the effect, set `PayloadTarget` to the payload, or to its copy when the effect is Copy (DD-DROP-026), call the drag operation's `DropCompleted` with that effect and a `DropInfo` whose `ReplacedPayload` is the previous `PayloadTarget`, and then run `PayloadCommand`.
   - Tests: untested
 - **DD-DROP-016** — When platform data is dropped and accepted, the drop target shall leave `PayloadTarget` unchanged, not call `DropCompleted`, and run `PayloadCommand` with the files or text and `IsPlatformDrop` set (DD-PLATFORM).
   - Tests: untested
@@ -120,6 +122,7 @@ depends:
 
 ## Decisions
 
+- **Copies come from a hook, not `ICloneable`.** `CreateCopy` returns the value a Copy drop assigns or inserts. Reason: what a copy of a view model means (deep or shallow, a new id or the same) is a domain decision, and `ICloneable` does not say. Rejected: calling `ICloneable.Clone` automatically; a bindable factory property (XAML cannot easily supply a delegate).
 - **The operation owns the validation message.** `ErrorMessage` lives on the operation and is mirrored to the adorner. Reason: validation belongs to the operation, overrides should not need `DropAdorner!`, and MVVM apps want to show the message outside the adorner, which is why it is also cleared when the drag ends. Rejected: a `Reject` helper that writes only to the adorner (no bindable message); a `CanDrop` that returns a result object (a larger break for every override).
 - **Targeting and validation are separate steps.** `IsDropTargetFor` decides whether the target is involved at all, and `CanDrop` decides whether this particular drop is valid. Reason: a drag meant for another target should leave this one visually untouched, while a meant-for-me drag that fails validation should explain itself with the error adorner.
 - **DragLeave is deferred.** Reason: Avalonia raises DragLeave then DragEnter when the pointer crosses into a child, and leaving immediately makes the adorner flicker. Rejected: hit testing on each leave to see whether the pointer is still inside.

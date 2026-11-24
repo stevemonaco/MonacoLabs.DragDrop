@@ -1,4 +1,4 @@
-﻿using Avalonia;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -277,7 +277,8 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
         if (TryGetDragInfo<DragInfo>(e, out var dragInfo) && TryGetPayload<object>(e, out var payload))
         {
             var replaced = PayloadTarget;
-            SetCurrentValue(PayloadTargetProperty, payload);
+            var value = ResolveDroppedValue(e.DragEffects, payload);
+            SetCurrentValue(PayloadTargetProperty, value);
 
             var dropMetadata = new DropInfo()
             {
@@ -288,7 +289,7 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
             };
 
             dragInfo.DragOperation.DropCompleted(e.DragEffects, dragInfo, dropMetadata);
-            InvokePayloadCommand(e, [payload], DropTargetOffset.OnTarget);
+            InvokePayloadCommand(e, [value], DropTargetOffset.OnTarget);
         }
         else if (TryGetPlatformItems(e, out var items))
         {
@@ -311,6 +312,15 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
     protected virtual void OnDrop(DragEventArgs dragEventArgs)
     {
     }
+
+    /// <summary>
+    /// Creates the value a Copy drop assigns or inserts in place of <paramref name="payload"/>, and passes to <see cref="PayloadCommand"/>.
+    /// Returns the payload itself by default, so a copy shares the source's reference. Not called for Move or Link drops.
+    /// </summary>
+    protected virtual object CreateCopy(object payload) => payload;
+
+    private protected object ResolveDroppedValue(DragDropEffects effect, object payload) =>
+        effect == DragDropEffects.Copy ? CreateCopy(payload) : payload;
 
     /// <summary>
     /// Checks if the drop is expected to be valid. Override for custom validation, and return <see cref="Reject"/> with a message to explain a rejection.

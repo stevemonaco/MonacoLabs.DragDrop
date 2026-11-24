@@ -15,6 +15,8 @@ types:
   - DropEventArgs
 tests:
   - InteractionIdTests
+  - DropTargetTests
+  - CollectionDropTests
 depends:
   - DD-WIRING
 ---
@@ -63,8 +65,8 @@ Defines what a drag carries and how a drop target recognizes it. Interaction ids
 
 - **DD-TRANSFER-011** — `DropEventArgs.Target` shall be the drop event's source element, and `TargetContext` shall be that element's `DataContext`, or null when the source is not a `StyledElement`.
   - Tests: untested
-- **DD-TRANSFER-012** — `DropEventArgs.Items` shall hold the single in-process payload for an in-process drop, or the dropped files or text for a platform drop (DD-PLATFORM).
-  - Tests: untested
+- **DD-TRANSFER-012** — `DropEventArgs.Items` shall hold the single in-process payload (or its copy on a Copy drop, DD-DROP-026) for an in-process drop, or the dropped files or text for a platform drop (DD-PLATFORM).
+  - Tests: `DropTargetTests.ACopyDropAssignsTheCreatedCopy`, `CollectionDropTests.ACopyDropInsertsTheCreatedCopy`, `CollectionDropTests.AMoveDropIgnoresCreateCopy`
 - **DD-TRANSFER-013** — `DropEventArgs.Offset` shall be `OnTarget` for single-value targets, and the hovered offset for collection and tree targets (DD-COLLECTION).
   - Tests: untested
 - **DD-TRANSFER-014** — `DropEventArgs.Location` shall be the insertion point for collection and tree targets, and null for single-value targets.
