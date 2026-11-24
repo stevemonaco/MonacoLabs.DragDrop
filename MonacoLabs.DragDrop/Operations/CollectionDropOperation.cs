@@ -15,8 +15,6 @@ namespace MonacoLabs.DragDrop;
 /// </summary>
 public partial class CollectionDropOperation : DropOperationBase
 {
-    private const double MaxAutoScrollStep = 14;
-
     private DispatcherTimer? _autoScrollTimer;
     private ScrollViewer? _autoScrollViewer;
     private Vector _autoScrollStep;
@@ -317,8 +315,8 @@ public partial class CollectionDropOperation : DropOperationBase
         var position = e.GetPosition(_autoScrollViewer);
         var size = _autoScrollViewer.Bounds.Size;
         _autoScrollStep = new Vector(
-            GetAutoScrollStep(position.X, size.Width),
-            GetAutoScrollStep(position.Y, size.Height));
+            AutoScroll.Step(position.X, size.Width, AutoScrollMargin),
+            AutoScroll.Step(position.Y, size.Height, AutoScrollMargin));
 
         if (_autoScrollStep == default)
         {
@@ -328,18 +326,6 @@ public partial class CollectionDropOperation : DropOperationBase
 
         _autoScrollTimer ??= new DispatcherTimer(TimeSpan.FromMilliseconds(16), DispatcherPriority.Input, (_, _) => AutoScrollTick());
         _autoScrollTimer.Start();
-    }
-
-    private double GetAutoScrollStep(double position, double extent)
-    {
-        var margin = Math.Min(AutoScrollMargin, extent / 3);
-        if (position < margin)
-            return -MaxAutoScrollStep * Math.Clamp((margin - position) / margin, 0, 1);
-
-        if (position > extent - margin)
-            return MaxAutoScrollStep * Math.Clamp((position - (extent - margin)) / margin, 0, 1);
-
-        return 0;
     }
 
     private void AutoScrollTick()

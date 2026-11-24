@@ -13,7 +13,8 @@ types:
   - DragInfo
   - DropInfo
   - DropEventArgs
-tests: []
+tests:
+  - InteractionIdTests
 depends:
   - DD-WIRING
 ---
@@ -29,7 +30,7 @@ Defines what a drag carries and how a drop target recognizes it. Interaction ids
 ### Interaction ids
 
 - **DD-TRANSFER-001** (inherited) — When `InteractionIds` is not set on a drag or drop operation, it shall be the single id `app:default`.
-  - Tests: untested
+  - Tests: `InteractionIdTests.DragOperationsDefaultToTheAppDefaultId`, `InteractionIdTests.DropOperationsDefaultToTheAppDefaultId`
 - **DD-TRANSFER-002** — A drop target shall accept a drag when any one of its `InteractionIds` is present in the drag's data, regardless of the other ids the drag carries.
   - Tests: untested
 - **DD-TRANSFER-003** — When `InteractionIds` is set from XAML as a comma-separated string, each id shall be one entry.

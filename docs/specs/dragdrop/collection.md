@@ -12,6 +12,8 @@ sources:
   - MonacoLabs.DragDrop/Info/CollectionDropInfo.cs
   - MonacoLabs.DragDrop/Info/CollectionDropLocation.cs
   - MonacoLabs.DragDrop/Info/DropTargetOffset.cs
+  - MonacoLabs.DragDrop/Internals/CollectionRemoval.cs
+  - MonacoLabs.DragDrop/Internals/AutoScroll.cs
 types:
   - CollectionDragOperation
   - CollectionDropOperation
@@ -19,7 +21,9 @@ types:
   - CollectionDropInfo
   - CollectionDropLocation
   - DropTargetOffset
-tests: []
+tests:
+  - CollectionRemovalTests
+  - AutoScrollStepTests
 depends:
   - DD-DRAG
   - DD-DROP
@@ -53,15 +57,15 @@ depends:
 ### Drag-side completion
 
 - **DD-COLLECTION-007** — When a drop completes with effect Move, `PayloadCollection` is set and the drop info is a `CollectionDropInfo` with a target collection, the drag operation shall remove the original from `PayloadCollection` at the pressed container's index.
-  - Tests: untested
+  - Tests: `CollectionRemovalTests.AMoveToAnotherListRemovesThePressedIndex`
 - **DD-COLLECTION-008** — When the target collection is the payload collection and the pressed index is at or after the target index, the drag operation shall remove at the pressed index plus one, because the insertion shifted the original down.
-  - Tests: untested
+  - Tests: `CollectionRemovalTests.AMoveWithinOneListRemovesTheOriginalAfterTheInsertionShiftsIt`, `CollectionRemovalTests.AnAppendWithinOneListRemovesThePressedIndex`
 - **DD-COLLECTION-009** — When the drag has no pressed index, the drag operation shall remove the payload from `PayloadCollection` by equality.
-  - Tests: untested
+  - Tests: `CollectionRemovalTests.WithoutAPressedIndexTheMoveRemovesThePayloadByEquality`
 - **DD-COLLECTION-010** — When the effect is not Move, `PayloadCollection` is null, or the drop info is not a `CollectionDropInfo`, the drag operation shall remove nothing.
   - Tests: untested
 - **DD-COLLECTION-011** — When the drag is dropped outside any target with `RemoveOnDropOutside` (DD-SESSION), the drag operation shall remove the item at the pressed index if that index still holds an equal item, and otherwise remove the payload by equality.
-  - Tests: untested
+  - Tests: `CollectionRemovalTests.ADropOutsideRemovesThePressedIndexWhenItHoldsThePayload`, `CollectionRemovalTests.ADropOutsideRemovesByEqualityWhenThePressedIndexDoesNotHoldThePayload`
 
 ### Drop side: hover
 
@@ -117,11 +121,11 @@ depends:
 - **DD-COLLECTION-032** — While a drag meant for the target is within `AutoScrollMargin` of an edge of the scroll viewer (the attached control itself, or its first descendant `ScrollViewer`), the drop operation shall scroll that viewer towards the edge on a 16 ms timer.
   - Tests: untested
 - **DD-COLLECTION-033** — The scroll step shall grow linearly from 0 at the margin's inner edge to 14 DIPs per tick at the viewer's edge, per axis.
-  - Tests: untested
+  - Tests: `AutoScrollStepTests.TheStepGrowsLinearlyFromTheMarginsInnerEdgeToTheViewersEdge`
 - **DD-COLLECTION-034** — The effective margin shall be at most a third of the viewer's extent on that axis, so small viewers keep a middle zone that does not scroll.
-  - Tests: untested
+  - Tests: `AutoScrollStepTests.TheMarginIsAtMostAThirdOfTheExtent`
 - **DD-COLLECTION-035** — When `AutoScrollMargin` is zero or less, the drop operation shall not auto-scroll.
-  - Tests: untested
+  - Tests: `AutoScrollStepTests.AMarginOfZeroOrLessNeverScrolls`
 
 ### Defaults
 

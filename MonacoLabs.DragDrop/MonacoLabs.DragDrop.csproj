@@ -9,4 +9,8 @@
   <ItemGroup>
     <PackageReference Include="Avalonia" />
   </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="MonacoLabs.DragDrop.Tests" />
+  </ItemGroup>
 </Project>

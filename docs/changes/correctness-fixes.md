@@ -89,7 +89,7 @@ Each task first writes the listed tests and confirms they fail (or, for task 5, 
    - `DragGestureTests.AMoveWithoutTheButtonPressedDoesNotStartADrag`
    - `DragGestureTests.LosingCaptureEndsTheTrackedPress`
 7. **Logged drag failures** (What 7).
-   - `DragGestureTests.AThrowingPlatformDragIsLoggedAndResetsState`: the hook throws; assert a log entry through a test `ILogSink`, no unhandled exception, no `:dragging` left, and a fresh drag possible afterwards.
+   - `DragGestureTests.AThrowingPlatformDragIsLoggedAndResetsState`: a test subclass's `DoDragDrop` override throws (headless drags cannot produce the Win32 `COMException`); assert a log entry through a test `ILogSink`, no unhandled exception, and a fresh drag possible afterwards.
    - `DragGestureTests.AThrowingOnPointerMovedOverrideIsLogged`, if api-design has landed.
 8. **Guards** (What 8).
    - `ThrowIfTests`: the message cases.

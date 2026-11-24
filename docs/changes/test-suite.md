@@ -12,26 +12,30 @@ A new test project, `MonacoLabs.DragDrop.Tests/`, built on xUnit v3 and Avalonia
 
 1. **Pure unit tests** (`[Fact]`/`[Theory]`, no Avalonia platform) for logic extracted into internal static helpers: effect resolution (DD-EFFECTS), the collection removal index (DD-COLLECTION-007 to 011), the auto-scroll step (DD-COLLECTION-033, 034), `ThrowIf` and the interaction-id format mapping (DD-PLATFORM-001). The extraction does not change behavior.
 2. **Headless component tests** (`[AvaloniaFact]`) for each operation inside a real `Window` with the Fluent theme. Drop targets get synthetic drag events through the headless `TopLevel.DragDrop(...)` raw-event extension. Drag sources get synthetic mouse input (`MouseDown`/`MouseMove`/`MouseUp`).
-3. **End-to-end tests**, where a drag source's platform drag call is replaced by a test hook that routes the real `DataTransfer` into a drop target through synthetic drag events and returns the effect. The drag session (DD-SESSION) and `DropCompleted` both run for real.
+3. **End-to-end tests**, where synthetic mouse input drags from a real drag source into a real drop target. Headless `DoDragDropAsync` runs Avalonia's in-process drag loop, so the real `DataTransfer`, the drag session (DD-SESSION) and `DropCompleted` all run, with nothing in the library replaced.
 4. **`SpecTests`**, which checks the specs themselves: front matter, unique ids, existing sources, every public type owned by exactly one spec, and every cited test existing.
 
 **Test setup.** A `TestAppBuilder` (`AppBuilder.Configure<TestApp>().UseSkia().UseHeadless(new() { UseHeadlessDrawing = false })`) registered with `[assembly: AvaloniaTestApplication(...)]`. `TestApp` adds `FluentTheme`. Without a theme, `ListBox` and `TreeView` have no templates, so they have no containers, no `ScrollViewer` and no `PART_Header`. Shared helpers live in `MonacoLabs.DragDrop.Tests/Infrastructure/`:
 
 - `TestWindow`: shows a window with given content at a fixed size and runs layout (`Dispatcher.UIThread.RunJobs()`).
 - `DragData`: builds the `DataTransfer` a given drag operation would produce, through the operation's own `CreateDataTransferItem`, so tests never copy the internal format ids.
-- `SimulateDrag`: raises enter, over, leave and drop at a point, with allowed effects and modifiers, and returns the reported effect.
-- `PumpUntil(condition, timeout)`: runs dispatcher jobs until a condition holds, for the deferred DragLeave and timers.
-- `RecordingDragOperation` variants of the three drag operations that record what the platform drag hook received.
+- `SimulateDrag`: raises enter, over, leave and drop at a point, with allowed effects and modifiers, and returns the effect seen by a window-level `handledEventsToo` handler.
+- `MouseDrag`: presses on a source point, moves past the threshold and through the given points (with modifiers), releases, and awaits the end of the drag. It always releases the mouse, because an in-process drag that never sees `MouseUp` never ends.
+- `PumpUntil(condition, timeout)`: an async loop of `RunJobs()` and short `Task.Delay`s until a condition holds, for the deferred DragLeave and timers.
 
-**What does not change.** No public API, and no behavior: every requirement keeps its wording. The library gains an `InternalsVisibleTo` for the test assembly and an internal per-instance hook for the platform drag call. Requirements that [correctness-fixes.md](correctness-fixes.md) or [api-design.md](api-design.md) changes are not pinned here; those proposals write their tests. Tasks 5–8 are best done after api-design lands, so they test the settled API (see the order in [README.md](README.md)).
+**What does not change.** No public API, and no behavior: every requirement keeps its wording. The library gains only an `InternalsVisibleTo` for the test assembly. Requirements that [correctness-fixes.md](correctness-fixes.md) or [api-design.md](api-design.md) changes are not pinned here; those proposals write their tests. Tasks 5–8 are best done after api-design lands, so they test the settled API (see the order in [README.md](README.md)).
 
 ## Decisions
 
-- **xUnit v3 with `Avalonia.Headless.XUnit`.** `Avalonia.Headless.XUnit` 12.2.0 is built on `xunit.v3.extensibility.core` 3.2.2 or later, so `[AvaloniaFact]` runs each test on the headless UI thread with no custom fixture. Rejected: NUnit with `Avalonia.Headless.NUnit` (no advantage, and xUnit v3 was the request); a hand-rolled dispatcher fixture.
-- **Microsoft Testing Platform runner.** xUnit v3 test projects are executables and support MTP natively, and the .NET 10 SDK's `dotnet test` runs MTP when `global.json` sets `"test": { "runner": "Microsoft.Testing.Platform" }`. Rejected: VSTest through `Microsoft.NET.Test.Sdk` and `xunit.runner.visualstudio`, which is kept only as a fallback if an IDE cannot discover MTP tests (Open questions).
+- **xUnit v3 with `Avalonia.Headless.XUnit`, pinned to `xunit.v3` 3.2.2.** `Avalonia.Headless.XUnit` 12.2.0 is built on `xunit.v3.extensibility.core` 3.2.2, so `[AvaloniaFact]` runs each test on the headless UI thread with no custom fixture. The spike found `xunit.v3` 4.0.3 incompatible: every `[AvaloniaFact]` fails discovery with a `MissingMethodException` on `TestIntrospectionHelper.GetTestCaseDetails`, while plain `[Fact]`s run. Revisit when `Avalonia.Headless.XUnit` ships against 4.x. Rejected: NUnit with `Avalonia.Headless.NUnit` (no advantage, and xUnit v3 was the request); a hand-rolled dispatcher fixture.
+- **`SimulateDrag` uses the headless `TopLevel.DragDrop` extension.** In 12.2 its signature is `DragDrop(TopLevel, Point, RawDragEventType, IDataTransfer, DragDropEffects, RawInputModifiers)`. It hit-tests the point and routes to the element under it, raising DragLeave on the old element and DragEnter on the new one when a DragOver crosses between targets. Modifiers and the `DataTransfer` instance arrive as given. It returns `void`, so `SimulateDrag` reads the resulting effect from a window-level handler registered with `handledEventsToo` (bubble, so it runs last).
+- **Headless `DoDragDropAsync` runs a real in-process drag.** The headless platform registers Avalonia's `InProcessDragSource`. The returned task completes only after synthetic mouse input: `MouseMove` raises DragEnter/DragOver on the element under the pointer, `MouseUp` drops and returns the target's effect, and Escape returns `None`. Without input it never completes, so a test that forgets to release the mouse hangs instead of failing. The spike drove a real `ItemDragOperation` to `ItemDropOperation` drag this way: `:dragging`, `:dropover`, `PayloadTarget` and the Move removal all ran. It does not reproduce Win32 behavior: there is no DragLeave instead of Drop after a None DragOver (DD-SESSION), and an exception from a drop handler escapes from `MouseUp` and leaves the drag task incomplete, instead of surfacing as a `COMException` from `DoDragDropAsync`.
+- **Timers run on the real clock, only while the dispatcher waits.** The headless dispatcher is `ManagedDispatcherImpl`. `Dispatcher.UIThread.RunJobs()` never runs `DispatcherTimer` or `DispatcherTimer.RunOnce`, not even after 3 s of spinning. They fire on time when the test awaits (`await Task.Delay` in an async `[AvaloniaFact]`) or pushes a `DispatcherFrame`. So `PumpUntil` is async and polls with short `Task.Delay`s, and timer tests set short intervals (`HoverExpandDelay`, the auto-scroll interval) to stay fast.
+- **The .NET 11 SDK builds and runs the suite.** The spike ran on a machine with only the 9 and 11 SDKs: the 11 SDK builds the `net10.0` project, and `dotnet test` honours the `global.json` MTP runner setting. `global.json` pins a 10.0 SDK with `"rollForward": "latestMajor"`, so CI uses 10.0 and newer local SDKs still work.
+- **Microsoft Testing Platform runner.** xUnit v3 test projects are executables and support MTP natively, and the .NET 10 SDK's `dotnet test` runs MTP when `global.json` sets `"test": { "runner": "Microsoft.Testing.Platform" }`. The spike's tests, `[AvaloniaFact]`s included, were discovered and run by `dotnet test` and by the Passenger IDE; Rider and Visual Studio were not checked. Rejected: VSTest through `Microsoft.NET.Test.Sdk` and `xunit.runner.visualstudio`, kept only as a fallback if an IDE cannot discover MTP tests.
 - **Real Skia rendering in tests.** `UseHeadlessDrawing = false`, so `RenderTargetBitmap` snapshots (DD-SESSION-002 to 005) and render scaling (DD-ADORNERS-016) work. Rejected: headless drawing stubs, which make the preview tests impossible.
 - **Fixed-size item templates.** Test item templates set explicit heights and widths, so hover zones and insertion indexes do not depend on font metrics. Reason: headless text measurement uses the machine's default font, which differs between Windows and Linux runners.
-- **Tests replace the platform drag call, not `DoDragDrop`.** `DragOperationBase` gains an internal, per-instance hook used in place of `Avalonia.Input.DragDrop.DoDragDropAsync`. Reason: the headless platform has no drag source, and overriding `DoDragDrop` would skip the drag session, the part most worth testing end to end. Rejected: a static hook, which parallel test collections would share.
+- **Tests drive the real platform drag.** Drag-side and end-to-end tests start drags with `MouseDrag`, and the library calls `DoDragDropAsync` as it does in production. Reason: the headless in-process drag source delivers the real `DataTransfer` and allowed effects to the target and returns its effect, so nothing has to be replaced and the drag session runs as shipped. What the source offered (DD-DRAG-015, DD-TRANSFER) is asserted at the target's DragEnter. The Win32-only DD-SESSION sequences (a None DragOver followed by DragLeave) are raised on the window with `SimulateDrag`. A failing platform drag is simulated by a test subclass overriding `DoDragDrop`. Rejected: an internal per-instance hook in place of `DoDragDropAsync` with `RecordingDragOperation` subclasses, which the spike made unnecessary and which would leave the in-process path untested.
 - **Pure logic is extracted, not mocked.** Effect resolution, the removal index and the auto-scroll step become internal static functions that the operations call. Reason: they are the densest logic and need many cases, which run in microseconds without a window. Rejected: a mocking library over `DragEventArgs` (Avalonia types are not designed for mocking).
 - **Plain xUnit `Assert`.** Rejected: FluentAssertions (commercial license since v8) and Shouldly (an extra dependency for little gain).
 - **Tests are named as behaviors and cited from the specs.** Each test method reads as a sentence (`DroppingInTheTopHalfInsertsBeforeTheItem`), and each requirement's `Tests:` line lists the tests that pin it, in the same commit as the test.
@@ -47,7 +51,7 @@ A new test project, `MonacoLabs.DragDrop.Tests/`, built on xUnit v3 and Avalonia
 
 **`docs/ARCHITECTURE.md` §3** is rewritten to describe the four layers, the test app, the helpers, the fixed-size rule and the manual checks that remain.
 
-**`CLAUDE.md`**: "There are no tests, CI, or lint/format configs" is replaced; Commands gains `dotnet test --project MonacoLabs.DragDrop.Tests`; a short testing paragraph names the helpers and the platform drag hook.
+**`CLAUDE.md`**: "There are no tests, CI, or lint/format configs" is replaced; Commands gains `dotnet test --project MonacoLabs.DragDrop.Tests`; a short testing paragraph names the helpers, says drags run for real through `MouseDrag`, and warns that headless timers need an async wait.
 
 ## Tasks
 
@@ -75,7 +79,7 @@ A new test project, `MonacoLabs.DragDrop.Tests/`, built on xUnit v3 and Avalonia
    - `InteractionIdTests`: DD-PLATFORM-001, DD-TRANSFER-001.
 
    Verify: the sample behaves as before on its List and Tree pages (manual).
-4. **Infrastructure.** Add `TestWindow`, `DragData`, `SimulateDrag`, `PumpUntil`, the internal platform drag hook and the `RecordingDragOperation` variants. Verify with one smoke test per helper.
+4. **Infrastructure.** Add `TestWindow`, `DragData`, `SimulateDrag`, `MouseDrag` and `PumpUntil`. Verify with one smoke test per helper.
 5. **Drop-side tests.**
    - `WiringTests`: DD-WIRING-001 to 005, 007 to 010.
    - `DropTargetTests`: DD-DROP-001 to 022 on `ItemDropOperation`.
@@ -88,13 +92,13 @@ A new test project, `MonacoLabs.DragDrop.Tests/`, built on xUnit v3 and Avalonia
    - `TreeDropTests`: DD-TREE-005 to 016.
    - `HoverExpandTests`: DD-TREE-017 to 020.
 7. **Drag-side tests.**
-   - `DragGestureTests`: DD-DRAG-001 to 019, 022 to 024, via synthetic mouse input and the platform drag hook.
+   - `DragGestureTests`: DD-DRAG-001 to 019, 022 to 024, via `MouseDrag` into a recording drop target.
    - `CollectionDragTests`: DD-COLLECTION-001 to 006.
    - `TreeDragTests`: DD-TREE-001 to 004.
    - Cover the selection rule (DD-DRAG-009) on a `ListBox` in `Multiple` selection mode.
 8. **Session and end-to-end tests.**
-   - `DragSessionTests`: DD-SESSION-001 to 012 and 014. Window `AllowDrop` injection and restoration, preview visibility and pseudo-classes, and drops outside targets through synthetic window drag events.
-   - `EndToEndTests`: DD-DRAG-020 and 021, DD-ITEM-001 to 007 and 009, DD-COLLECTION-007 to 009 and 011, DD-TRANSFER-002 to 014, DD-EFFECTS-008 and 009. Each test drags from a real source into a real target through the hook.
+   - `DragSessionTests`: DD-SESSION-001 to 012 and 014. Window `AllowDrop` injection and restoration, preview visibility and pseudo-classes, drops outside targets through `MouseDrag`, and the Win32 None-then-DragLeave sequence through `SimulateDrag` on the window.
+   - `EndToEndTests`: DD-DRAG-020 and 021, DD-ITEM-001 to 007 and 009, DD-COLLECTION-007 to 009 and 011, DD-TRANSFER-002 to 014, DD-EFFECTS-008 and 009. Each test drags from a real source into a real target with `MouseDrag`.
 9. **`SpecTests`.** Parse every spec's front matter and requirements. Check:
    - ids are unique and well formed
    - `sources` exist
@@ -108,10 +112,4 @@ A new test project, `MonacoLabs.DragDrop.Tests/`, built on xUnit v3 and Avalonia
 
 ## Open questions
 
-All five are answered by task 1:
-
-- The headless drag-event API shape and routing in Avalonia 12.2. If it cannot route to the element under the point, `SimulateDrag` raises the routed events directly on the hit-tested element.
-- Headless `DoDragDropAsync` behavior. It only affects whether a forgotten hook fails loudly.
-- Headless timer behavior, which `PumpUntil` and `HoverExpandTests` depend on.
-- `xunit.v3` 4.0.x compatibility. Fallback: pin `xunit.v3` 3.2.2.
-- MTP discovery in Rider and Visual Studio. Fallback: VSTest packages.
+None. The spike (task 1) answered them; see Decisions.

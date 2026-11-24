@@ -9,7 +9,8 @@ sources:
   - MonacoLabs.DragDrop/DragDropIds.cs
 types:
   - PlatformInteractionIds
-tests: []
+tests:
+  - InteractionIdTests
 depends:
   - DD-TRANSFER
 ---
@@ -23,7 +24,7 @@ depends:
 ## Requirements
 
 - **DD-PLATFORM-001** — `PlatformInteractionIds.Files` (`platform:files`) shall map to the platform file format, and `PlatformInteractionIds.Text` (`platform:text`) to the platform text format; every other id shall map to an in-process format.
-  - Tests: untested
+  - Tests: `InteractionIdTests.TheFilesIdMapsToThePlatformFileFormat`, `InteractionIdTests.TheTextIdMapsToThePlatformTextFormat`, `InteractionIdTests.OtherIdsMapToAnInProcessFormat`
 - **DD-PLATFORM-002** — A drop target listing a platform id shall accept that platform data from any source, including other applications and drags from this app that advertise the same platform id.
   - Tests: untested
 - **DD-PLATFORM-003** — A drop shall be a platform drop when the drag carries no in-process payload for the target's non-platform ids.

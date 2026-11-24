@@ -106,24 +106,7 @@ public class CollectionDragOperation : DragOperationBase
             || dropInfo is not CollectionDropInfo { TargetCollection: IList targetCollection } collectionDropInfo)
             return;
 
-        var payloadIndex = collectionDragInfo.PayloadContainerIndex;
-        var targetIndex = collectionDropInfo.TargetIndex;
-
-        if (payloadIndex.HasValue)
-        {
-            if (payloadIndex.Value >= targetIndex && ReferenceEquals(payloadCollection, targetCollection))
-            {
-                payloadCollection.RemoveAt(payloadIndex.Value + 1);
-            }
-            else
-            {
-                payloadCollection.RemoveAt(payloadIndex.Value);
-            }
-        }
-        else if (dragInfo.Payload is { } payload)
-        {
-            payloadCollection.Remove(payload);
-        }
+        CollectionRemoval.RemoveAfterDrop(payloadCollection, dragInfo.Payload, collectionDragInfo.PayloadContainerIndex, targetCollection, collectionDropInfo.TargetIndex);
     }
 
     protected override void OnDroppedOutside(DragInfo dragInfo, object payload)
@@ -131,9 +114,6 @@ public class CollectionDragOperation : DragOperationBase
         if (dragInfo is not CollectionDragInfo { PayloadCollection: IList payloadCollection } collectionDragInfo)
             return;
 
-        if (collectionDragInfo.PayloadContainerIndex is int index && index < payloadCollection.Count && Equals(payloadCollection[index], payload))
-            payloadCollection.RemoveAt(index);
-        else
-            payloadCollection.Remove(payload);
+        CollectionRemoval.RemoveDroppedOutside(payloadCollection, payload, collectionDragInfo.PayloadContainerIndex);
     }
 }

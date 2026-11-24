@@ -124,34 +124,8 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
     /// (Ctrl or Option to copy, Shift to move, both to link) and otherwise prefer Move, then Copy, then Link.
     /// Platform data is always copied or linked.
     /// </summary>
-    protected virtual DragDropEffects GetDropEffect(DragEventArgs e)
-    {
-        var allowed = e.DragEffects;
-
-        // A Move tells an external source such as a file manager to delete its original
-        if (!HasInProcessPayload(e))
-            return allowed.HasFlag(DragDropEffects.Copy) ? DragDropEffects.Copy : allowed & DragDropEffects.Link;
-
-        var copyModifier = OperatingSystem.IsMacOS() ? KeyModifiers.Alt : KeyModifiers.Control;
-        var requested = (e.KeyModifiers & (copyModifier | KeyModifiers.Shift)) switch
-        {
-            var m when m == (copyModifier | KeyModifiers.Shift) => DragDropEffects.Link,
-            var m when m == copyModifier => DragDropEffects.Copy,
-            KeyModifiers.Shift => DragDropEffects.Move,
-            _ => DragDropEffects.None
-        };
-
-        if (requested != DragDropEffects.None && allowed.HasFlag(requested))
-            return requested;
-
-        if (allowed.HasFlag(DragDropEffects.Move))
-            return DragDropEffects.Move;
-
-        if (allowed.HasFlag(DragDropEffects.Copy))
-            return DragDropEffects.Copy;
-
-        return allowed & DragDropEffects.Link;
-    }
+    protected virtual DragDropEffects GetDropEffect(DragEventArgs e) =>
+        DropEffectResolver.Resolve(e.DragEffects, e.KeyModifiers, HasInProcessPayload(e), OperatingSystem.IsMacOS());
 
     protected void InvokePayloadCommand(DragEventArgs e, IReadOnlyList<object> items, DropTargetOffset offset, CollectionDropLocation? location = null, bool isPlatformDrop = false)
     {
