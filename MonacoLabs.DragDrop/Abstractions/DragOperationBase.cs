@@ -137,6 +137,11 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
     /// </summary>
     protected virtual object? ResolvePayload(PointerPressedEventArgs pressedEventArgs) => Payload ?? AttachedControl?.DataContext;
 
+    /// <summary>
+    /// Resolves the control that represents the dragged item. It receives the <c>:dragging</c> pseudo-class and is snapshotted for the drag preview.
+    /// </summary>
+    protected virtual Control? ResolveDragVisual(PointerPressedEventArgs pressedEventArgs) => AttachedControl;
+
     protected virtual async Task DoDragDrop(PointerPressedEventArgs triggerEvent, DragInfo metadata, object payload)
     {
         var item = new DataTransferItem();
@@ -148,11 +153,12 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
         var data = new DataTransfer();
         data.Add(item);
 
-        var effect = DragDropEffects.Move;
-        var result = await AvaDragDrop.DoDragDropAsync(triggerEvent, data, effect);
+        var dragVisual = ResolveDragVisual(triggerEvent);
+        using var tracker = dragVisual is null
+            ? null
+            : new DragVisualTracker(dragVisual, triggerEvent.GetPosition(dragVisual), ShowDragPreview);
 
-        //if (result != DragDropEffects.None)
-        //    DropCompleted(result);
+        await AvaDragDrop.DoDragDropAsync(triggerEvent, data, AllowedEffects);
     }
 
     protected virtual DragInfo CreateMetadata(PointerEventArgs e)

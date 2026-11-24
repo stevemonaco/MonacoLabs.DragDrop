@@ -5,24 +5,57 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vm="using:DragDropSample.ViewModels"
-    Title="DragDropSample"
-    d:DesignHeight="450"
-    d:DesignWidth="800"
+    Title="MonacoLabs.DragDrop Samples"
+    Width="1120"
+    Height="780"
+    MinWidth="760"
+    MinHeight="520"
+    d:DesignHeight="780"
+    d:DesignWidth="1120"
     x:DataType="vm:MainWindowViewModel"
+    Background="{DynamicResource PageBackgroundBrush}"
     Icon="/Assets/avalonia-logo.ico"
     mc:Ignorable="d">
     <Design.DataContext>
         <vm:MainWindowViewModel />
     </Design.DataContext>
 
-    <Grid RowDefinitions="auto, *">
-        <TabStrip ItemsSource="{Binding Pages}" SelectedItem="{Binding SelectedPage}">
-            <TabStrip.ItemTemplate>
-                <DataTemplate x:DataType="vm:PageViewModel">
-                    <TextBlock Text="{Binding Title}" />
-                </DataTemplate>
-            </TabStrip.ItemTemplate>
-        </TabStrip>
-        <ContentControl Grid.Row="1" Content="{Binding SelectedPage}" />
-    </Grid>
+    <DockPanel>
+        <Border
+            BorderBrush="{DynamicResource CardBorderBrush}"
+            BorderThickness="0,0,0,1"
+            Background="{DynamicResource HeaderBackgroundBrush}"
+            DockPanel.Dock="Top">
+            <StackPanel Margin="24,16,24,0" Spacing="10">
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <TextBlock
+                        FontSize="16"
+                        FontWeight="SemiBold"
+                        Text="MonacoLabs.DragDrop" />
+                    <Border Classes="pill">
+                        <TextBlock Text="Samples" />
+                    </Border>
+                </StackPanel>
+                <TabStrip ItemsSource="{Binding Pages}" SelectedItem="{Binding SelectedPage}">
+                    <TabStrip.ItemTemplate>
+                        <DataTemplate x:DataType="vm:PageViewModel">
+                            <TextBlock Text="{Binding Title}" />
+                        </DataTemplate>
+                    </TabStrip.ItemTemplate>
+                </TabStrip>
+            </StackPanel>
+        </Border>
+
+        <Grid Margin="24,20,24,24" RowDefinitions="Auto,*">
+            <StackPanel Margin="0,0,0,20" Spacing="4">
+                <TextBlock Classes="page-title" Text="{Binding SelectedPage.Title}" />
+                <TextBlock
+                    MaxWidth="720"
+                    HorizontalAlignment="Left"
+                    Classes="subtle"
+                    Text="{Binding SelectedPage.Description}" />
+            </StackPanel>
+            <ContentControl Grid.Row="1" Content="{Binding SelectedPage}" />
+        </Grid>
+    </DockPanel>
 </Window>

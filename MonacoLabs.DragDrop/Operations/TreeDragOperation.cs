@@ -2,6 +2,7 @@
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.LogicalTree;
+using Avalonia.VisualTree;
 using System.Collections;
 
 namespace MonacoLabs.DragDrop;
@@ -30,6 +31,16 @@ public class TreeDragOperation : CollectionDragOperation
             PayloadContainer = container,
             PayloadContainerIndex = LocatePayloadContainerIndex(container)
         };
+    }
+
+    // A TreeViewItem's bounds include its expanded children, so only the header row is snapshotted
+    protected override Control? ResolveDragVisual(PointerPressedEventArgs pressedEventArgs)
+    {
+        var container = base.ResolveDragVisual(pressedEventArgs);
+        if (container is not TreeViewItem item)
+            return container;
+
+        return item.GetVisualDescendants().OfType<Control>().FirstOrDefault(x => x.Name == "PART_Header" && x.TemplatedParent == item) ?? item;
     }
 
     protected override Control? LocatePayloadContainer(RoutedEventArgs triggerEvent)

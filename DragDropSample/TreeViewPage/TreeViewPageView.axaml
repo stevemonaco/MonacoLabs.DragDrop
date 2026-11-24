@@ -11,50 +11,65 @@
     d:DesignWidth="800"
     x:DataType="vm:TreeViewPageViewModel"
     mc:Ignorable="d">
-    <Grid ColumnDefinitions="*, auto, *">
-        <TreeView x:Name="tree" ItemsSource="{Binding Solutions}">
-            <dd:DragDrop.DragOperation>
-                <dd:TreeDragOperation InteractionIds="app:node" />
-            </dd:DragDrop.DragOperation>
-            <dd:DragDrop.DropOperation>
-                <dd:TreeDropOperation InteractionIds="app:node" />
-            </dd:DragDrop.DropOperation>
+    <Grid ColumnDefinitions="*,20,*">
+        <Border Classes="card">
+            <Grid RowDefinitions="Auto,*" RowSpacing="12">
+                <TextBlock Classes="card-title" Text="Solution" />
+                <TreeView
+                    x:Name="tree"
+                    Grid.Row="1"
+                    ItemsSource="{Binding Solutions}">
+                    <dd:DragDrop.DragOperation>
+                        <dd:TreeDragOperation InteractionIds="app:node" />
+                    </dd:DragDrop.DragOperation>
+                    <dd:DragDrop.DropOperation>
+                        <dd:TreeDropOperation InteractionIds="app:node" />
+                    </dd:DragDrop.DropOperation>
 
-            <TreeView.DataTemplates>
-                <TreeDataTemplate x:DataType="node:SolutionNodeViewModel" ItemsSource="{Binding Children}">
-                    <TextBlock Text="{Binding Name}" />
-                </TreeDataTemplate>
-                <TreeDataTemplate x:DataType="node:ProjectNodeViewModel" ItemsSource="{Binding Children}">
-                    <TextBlock Text="{Binding Name}" />
-                </TreeDataTemplate>
-                <TreeDataTemplate x:DataType="node:FolderNodeViewModel" ItemsSource="{Binding Children}">
-                    <TextBlock Text="{Binding Name}" />
-                </TreeDataTemplate>
-                <TreeDataTemplate x:DataType="node:FileNodeViewModel">
-                    <TextBlock Text="{Binding Name}" />
-                </TreeDataTemplate>
-            </TreeView.DataTemplates>
-        </TreeView>
-        <GridSplitter Grid.Column="1" ResizeDirection="Columns" />
-        <ListBox
-            x:Name="box"
-            Grid.Column="2"
-            ItemsSource="{Binding FlatItems}">
-            <dd:DragDrop.DragOperation>
-                <dd:CollectionDragOperation
-                    InteractionIds="app:node"
-                    PayloadCollection="{Binding FlatItems}" />
-            </dd:DragDrop.DragOperation>
-            <dd:DragDrop.DropOperation>
-                <dd:CollectionDropOperation InteractionIds="app:node" PayloadTarget="{Binding FlatItems}" />
-            </dd:DragDrop.DropOperation>
+                    <TreeView.DataTemplates>
+                        <TreeDataTemplate x:DataType="node:SolutionNodeViewModel" ItemsSource="{Binding Children}">
+                            <TextBlock Text="{Binding Name}" />
+                        </TreeDataTemplate>
+                        <TreeDataTemplate x:DataType="node:ProjectNodeViewModel" ItemsSource="{Binding Children}">
+                            <TextBlock Text="{Binding Name}" />
+                        </TreeDataTemplate>
+                        <TreeDataTemplate x:DataType="node:FolderNodeViewModel" ItemsSource="{Binding Children}">
+                            <TextBlock Text="{Binding Name}" />
+                        </TreeDataTemplate>
+                        <TreeDataTemplate x:DataType="node:FileNodeViewModel">
+                            <TextBlock Text="{Binding Name}" />
+                        </TreeDataTemplate>
+                    </TreeView.DataTemplates>
+                </TreeView>
+            </Grid>
+        </Border>
 
-            <ListBox.ItemTemplate>
-                <DataTemplate x:DataType="node:NodeViewModel">
-                    <TextBlock Text="{Binding Name}" />
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
+        <GridSplitter
+            Grid.Column="1"
+            Background="Transparent"
+            ResizeDirection="Columns" />
+
+        <Border Grid.Column="2" Classes="card">
+            <Grid RowDefinitions="Auto,*" RowSpacing="12">
+                <TextBlock Classes="card-title" Text="Flat list" />
+                <ListBox
+                    x:Name="box"
+                    Grid.Row="1"
+                    ItemsSource="{Binding FlatItems}">
+                    <dd:DragDrop.DragOperation>
+                        <dd:CollectionDragOperation InteractionIds="app:node" PayloadCollection="{Binding FlatItems}" />
+                    </dd:DragDrop.DragOperation>
+                    <dd:DragDrop.DropOperation>
+                        <dd:CollectionDropOperation InteractionIds="app:node" PayloadTarget="{Binding FlatItems}" />
+                    </dd:DragDrop.DropOperation>
+
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="node:NodeViewModel">
+                            <TextBlock Text="{Binding Name}" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+        </Border>
     </Grid>
-
 </UserControl>

@@ -1,7 +1,10 @@
 ﻿using Avalonia;
+using Avalonia.Animation;
+using Avalonia.Animation.Easings;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Data;
+using Avalonia.Styling;
 using AvaDragDrop = Avalonia.Input.DragDrop;
 
 namespace MonacoLabs.DragDrop;
@@ -45,6 +48,25 @@ public abstract class DropAdornerBase : Border, IDropAdorner
         set { SetAndRaise(ErrorMessageProperty, ref _errorMessage, value); }
     }
 
+    public static readonly StyledProperty<TimeSpan> FadeInDurationProperty =
+        AvaloniaProperty.Register<DropAdornerBase, TimeSpan>(nameof(FadeInDuration), TimeSpan.FromMilliseconds(120));
+
+    /// <summary>
+    /// Duration of the opacity fade when the adorner is attached. <see cref="TimeSpan.Zero"/> disables the fade.
+    /// </summary>
+    public TimeSpan FadeInDuration
+    {
+        get => GetValue(FadeInDurationProperty);
+        set => SetValue(FadeInDurationProperty, value);
+    }
+
+    /// <summary>
+    /// True while this adorner is placed over <see cref="TargetControl"/>.
+    /// </summary>
+    public bool IsAttached => TargetControl is not null && ReferenceEquals(TargetControl.GetValue(AdornerLayer.AdornerProperty), this);
+
+    private CancellationTokenSource? _fadeCts;
+
     static DropAdornerBase()
     {
         IsHitTestVisibleProperty.OverrideDefaultValue<DropAdornerBase>(false);
@@ -58,11 +80,11 @@ public abstract class DropAdornerBase : Border, IDropAdorner
 
     public virtual void Attach()
     {
-        if (TargetControl is null)
+        if (TargetControl is null || IsAttached)
             return;
 
-        var layer = AdornerLayer.GetAdornerLayer(TargetControl);
         AdornerLayer.SetAdorner(TargetControl, this);
+        FadeIn();
     }
 
     public virtual void Detach()
@@ -70,8 +92,29 @@ public abstract class DropAdornerBase : Border, IDropAdorner
         if (TargetControl is null)
             return;
 
-        var layer = AdornerLayer.GetAdornerLayer(TargetControl);
+        _fadeCts?.Cancel();
         AdornerLayer.SetAdorner(TargetControl, null);
+    }
+
+    private void FadeIn()
+    {
+        _fadeCts?.Cancel();
+        if (FadeInDuration <= TimeSpan.Zero)
+            return;
+
+        _fadeCts = new CancellationTokenSource();
+        var animation = new Animation
+        {
+            Duration = FadeInDuration,
+            Easing = new CubicEaseOut(),
+            Children =
+            {
+                new KeyFrame { Cue = new Cue(0d), Setters = { new Setter(OpacityProperty, 0d) } },
+                new KeyFrame { Cue = new Cue(1d), Setters = { new Setter(OpacityProperty, Opacity) } },
+            }
+        };
+
+        _ = animation.RunAsync(this, _fadeCts.Token);
     }
 
     /// <summary>

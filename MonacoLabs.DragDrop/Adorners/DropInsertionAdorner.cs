@@ -26,18 +26,30 @@ public class DropInsertionAdorner : DropAdornerBase
 
     public DropTargetOffset Target { get; set; } = DropTargetOffset.BeforeTarget;
     
+    public static readonly StyledProperty<IBrush?> LineBrushProperty =
+        AvaloniaProperty.Register<DropInsertionAdorner, IBrush?>(nameof(LineBrush), AdornerBrushes.Accent);
+
+    /// <summary>
+    /// Brush of the insertion line and its end marker.
+    /// </summary>
+    public IBrush? LineBrush
+    {
+        get => GetValue(LineBrushProperty);
+        set => SetValue(LineBrushProperty, value);
+    }
+
     static DropInsertionAdorner()
     {
-        OpacityProperty.OverrideDefaultValue<DropInsertionAdorner>(0.7d);
         BorderBrushProperty.OverrideDefaultValue<DropInsertionAdorner>(Brushes.Transparent);
-        BorderThicknessProperty.OverrideDefaultValue<DropInsertionAdorner>(new Thickness(2));
         IsHitTestVisibleProperty.OverrideDefaultValue<DropInsertionAdorner>(false);
         ClipToBoundsProperty.OverrideDefaultValue<DropInsertionAdorner>(false);
+        FadeInDurationProperty.OverrideDefaultValue<DropInsertionAdorner>(TimeSpan.Zero);
     }
 
     public DropInsertionAdorner()
     {
         AdornerLayer.SetIsClipEnabled(this, false);
+        Child = new InsertionMarker(this);
     }
 
     public override void Attach()
@@ -189,9 +201,36 @@ public class DropInsertionAdorner : DropAdornerBase
         {
             errorText.Text = errorMessage;
         }
-        else if (change.Property == IsDropValidProperty)
+        else if (change.Property == IsDropValidProperty
+            || change.Property == VerticalAlignmentProperty
+            || change.Property == LineBrushProperty)
         {
-            Background = change.NewValue is true ? Brushes.Orange : Brushes.Transparent;
+            Child?.InvalidateVisual();
+        }
+    }
+
+    private sealed class InsertionMarker(DropInsertionAdorner owner) : Control
+    {
+        private const double MarkerRadius = 3.5;
+        private const double Thickness = 2;
+
+        public override void Render(DrawingContext context)
+        {
+            if (!owner.IsDropValid || owner.LineBrush is not { } brush)
+                return;
+
+            var size = Bounds.Size;
+            var pen = new Pen(brush, Thickness, lineCap: PenLineCap.Round);
+
+            if (owner.VerticalAlignment == VerticalAlignment.Stretch)
+            {
+                context.DrawRectangle(null, pen, new Rect(size).Deflate(Thickness / 2), 4, 4);
+                return;
+            }
+
+            var y = size.Height / 2;
+            context.DrawEllipse(null, pen, new Point(MarkerRadius + Thickness / 2, y), MarkerRadius, MarkerRadius);
+            context.DrawLine(pen, new Point(MarkerRadius * 2 + Thickness / 2, y), new Point(size.Width - Thickness / 2, y));
         }
     }
 

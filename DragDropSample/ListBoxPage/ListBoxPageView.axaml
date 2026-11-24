@@ -15,105 +15,145 @@
     mc:Ignorable="d">
     <UserControl.DataTemplates>
         <DataTemplate x:DataType="vm:WorkerViewModel">
-            <StackPanel>
-                <StackPanel Orientation="Horizontal" Spacing="4">
-                    <TextBlock Text="{Binding Name}" />
-                    <PathIcon
-                        Classes="vflip"
-                        Data="{x:Static res:AppIcons.Gold}"
-                        ToolTip.Tip="Salary" />
+            <Grid
+                Margin="0,2"
+                ColumnDefinitions="*,Auto"
+                RowDefinitions="Auto,Auto,Auto"
+                RowSpacing="4">
+                <TextBlock FontWeight="SemiBold" Text="{Binding Name}" />
+                <StackPanel
+                    Grid.Column="1"
+                    Orientation="Horizontal"
+                    Spacing="4"
+                    ToolTip.Tip="Salary">
+                    <PathIcon Classes="stat vflip" Data="{x:Static res:AppIcons.Gold}" />
                     <TextBlock Text="{Binding Salary}" />
                 </StackPanel>
-                <StackPanel Orientation="Horizontal" Spacing="4">
-                    <PathIcon
-                        Classes="vflip"
-                        Data="{x:Static res:AppIcons.Mining}"
-                        ToolTip.Tip="Mining" />
-                    <TextBlock Text="{Binding MiningProficiency}" />
-                    <PathIcon
-                        Classes="vflip"
-                        Data="{x:Static res:AppIcons.Crafting}"
+                <StackPanel
+                    Grid.Row="1"
+                    Grid.ColumnSpan="2"
+                    Orientation="Horizontal"
+                    Spacing="12">
+                    <StackPanel
+                        Orientation="Horizontal"
+                        Spacing="4"
+                        ToolTip.Tip="Mining">
+                        <PathIcon Classes="stat vflip" Data="{x:Static res:AppIcons.Mining}" />
+                        <TextBlock Text="{Binding MiningProficiency}" />
+                    </StackPanel>
+                    <StackPanel
                         IsVisible="{Binding CraftingProficiency, Converter={x:Static ObjectConverters.IsNotNull}}"
-                        ToolTip.Tip="Crafting" />
-                    <TextBlock Text="{Binding CraftingProficiency}" />
-                    <PathIcon
-                        Classes="vflip"
-                        Data="{x:Static res:AppIcons.Combat}"
+                        Orientation="Horizontal"
+                        Spacing="4"
+                        ToolTip.Tip="Crafting">
+                        <PathIcon Classes="stat vflip" Data="{x:Static res:AppIcons.Crafting}" />
+                        <TextBlock Text="{Binding CraftingProficiency}" />
+                    </StackPanel>
+                    <StackPanel
                         IsVisible="{Binding CombatProficiency, Converter={x:Static ObjectConverters.IsNotNull}}"
-                        ToolTip.Tip="Combat" />
-                    <TextBlock Text="{Binding CombatProficiency}" />
+                        Orientation="Horizontal"
+                        Spacing="4"
+                        ToolTip.Tip="Combat">
+                        <PathIcon Classes="stat vflip" Data="{x:Static res:AppIcons.Combat}" />
+                        <TextBlock Text="{Binding CombatProficiency}" />
+                    </StackPanel>
                 </StackPanel>
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="{Binding DislikedWorkers, Converter={x:Static con:AppConverters.DislikedWorkers}}" />
-                </StackPanel>
-            </StackPanel>
+                <TextBlock
+                    Grid.Row="2"
+                    Grid.ColumnSpan="2"
+                    Classes="subtle"
+                    FontSize="12"
+                    Text="{Binding DislikedWorkers, Converter={x:Static con:AppConverters.DislikedWorkers}}" />
+            </Grid>
         </DataTemplate>
     </UserControl.DataTemplates>
-    <Grid ColumnDefinitions="*, *" RowDefinitions="*,*,*">
+
+    <Grid ColumnDefinitions="*,20,*">
         <!--  Available Workers  -->
-        <Grid Grid.RowSpan="3" RowDefinitions="auto,*">
-            <TextBlock Text="Available Workers" />
-            <ListBox
-                x:Name="workers"
-                Grid.Row="1"
-                ItemsSource="{Binding AvailableWorkers}">
-                <dd:DragDrop.DragOperation>
-                    <dd:CollectionDragOperation
-                        InteractionIds="app:mining, app:crafting, app:combat"
-                        PayloadCollection="{Binding AvailableWorkers}" />
-                </dd:DragDrop.DragOperation>
-            </ListBox>
-        </Grid>
+        <Border Classes="card">
+            <Grid RowDefinitions="Auto,*" RowSpacing="12">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Classes="card-title" Text="Available workers" />
+                    <Border Classes="pill">
+                        <TextBlock Text="{Binding AvailableWorkers.Count}" />
+                    </Border>
+                </StackPanel>
+                <ListBox
+                    x:Name="workers"
+                    Grid.Row="1"
+                    ItemsSource="{Binding AvailableWorkers}">
+                    <dd:DragDrop.DragOperation>
+                        <dd:CollectionDragOperation InteractionIds="app:mining, app:crafting, app:combat" PayloadCollection="{Binding AvailableWorkers}" />
+                    </dd:DragDrop.DragOperation>
+                </ListBox>
+            </Grid>
+        </Border>
 
-        <!--  Mining Team  -->
         <Grid
-            Grid.Row="0"
-            Grid.Column="1"
-            RowDefinitions="auto,*">
-            <StackPanel Orientation="Horizontal" Spacing="4">
-                <TextBlock Text="Mining Team" />
-                <TextBlock Text="{Binding MiningBudgetRemaining, StringFormat=Budget Remaining: {0}}" />
-                <TextBlock Text="{Binding MiningTeamProficiency, StringFormat=Proficiency: {0}}" />
-            </StackPanel>
-            <ListBox Grid.Row="1" ItemsSource="{Binding MiningTeam}">
-                <dd:DragDrop.DropOperation>
-                    <cdd:WorkerDropOperation InteractionIds="app:mining" PayloadTarget="{Binding MiningTeam}" />
-                </dd:DragDrop.DropOperation>
-            </ListBox>
-        </Grid>
+            Grid.Column="2"
+            RowDefinitions="*,16,*,16,*">
+            <!--  Mining Team  -->
+            <Border Classes="card">
+                <Grid RowDefinitions="Auto,*" RowSpacing="8">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <PathIcon Classes="stat vflip" Data="{x:Static res:AppIcons.Mining}" />
+                        <TextBlock Classes="card-title" Text="Mining team" />
+                        <Border Classes="pill">
+                            <TextBlock Text="{Binding MiningBudgetRemaining, StringFormat=Budget {0}}" />
+                        </Border>
+                        <Border Classes="pill">
+                            <TextBlock Text="{Binding MiningTeamProficiency, StringFormat=Proficiency {0}}" />
+                        </Border>
+                    </StackPanel>
+                    <ListBox Grid.Row="1" ItemsSource="{Binding MiningTeam}">
+                        <dd:DragDrop.DropOperation>
+                            <cdd:WorkerDropOperation InteractionIds="app:mining" PayloadTarget="{Binding MiningTeam}" />
+                        </dd:DragDrop.DropOperation>
+                    </ListBox>
+                </Grid>
+            </Border>
 
-        <!--  Crafting Team  -->
-        <Grid
-            Grid.Row="1"
-            Grid.Column="1"
-            RowDefinitions="auto,*">
-            <StackPanel Orientation="Horizontal" Spacing="4">
-                <TextBlock Text="Crafting Team" />
-                <TextBlock Text="{Binding CraftingBudgetRemaining, StringFormat=Budget Remaining: {0}}" />
-                <TextBlock Text="{Binding CraftingTeamProficiency, StringFormat=Proficiency: {0}}" />
-            </StackPanel>
-            <ListBox Grid.Row="1" ItemsSource="{Binding CraftingTeam}">
-                <dd:DragDrop.DropOperation>
-                    <cdd:WorkerDropOperation InteractionIds="app:crafting" PayloadTarget="{Binding CraftingTeam}" />
-                </dd:DragDrop.DropOperation>
-            </ListBox>
-        </Grid>
+            <!--  Crafting Team  -->
+            <Border Grid.Row="2" Classes="card">
+                <Grid RowDefinitions="Auto,*" RowSpacing="8">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <PathIcon Classes="stat vflip" Data="{x:Static res:AppIcons.Crafting}" />
+                        <TextBlock Classes="card-title" Text="Crafting team" />
+                        <Border Classes="pill">
+                            <TextBlock Text="{Binding CraftingBudgetRemaining, StringFormat=Budget {0}}" />
+                        </Border>
+                        <Border Classes="pill">
+                            <TextBlock Text="{Binding CraftingTeamProficiency, StringFormat=Proficiency {0}}" />
+                        </Border>
+                    </StackPanel>
+                    <ListBox Grid.Row="1" ItemsSource="{Binding CraftingTeam}">
+                        <dd:DragDrop.DropOperation>
+                            <cdd:WorkerDropOperation InteractionIds="app:crafting" PayloadTarget="{Binding CraftingTeam}" />
+                        </dd:DragDrop.DropOperation>
+                    </ListBox>
+                </Grid>
+            </Border>
 
-        <!--  Combat Team  -->
-        <Grid
-            Grid.Row="2"
-            Grid.Column="1"
-            RowDefinitions="auto,*">
-            <StackPanel Orientation="Horizontal" Spacing="4">
-                <TextBlock Text="Combat Team" />
-                <TextBlock Text="{Binding CombatBudgetRemaining, StringFormat=Budget Remaining: {0}}" />
-                <TextBlock Text="{Binding CombatTeamProficiency, StringFormat=Proficiency: {0}}" />
-            </StackPanel>
-            <ListBox Grid.Row="1" ItemsSource="{Binding CombatTeam}">
-                <dd:DragDrop.DropOperation>
-                    <cdd:WorkerDropOperation InteractionIds="app:combat" PayloadTarget="{Binding CombatTeam}" />
-                </dd:DragDrop.DropOperation>
-            </ListBox>
+            <!--  Combat Team  -->
+            <Border Grid.Row="4" Classes="card">
+                <Grid RowDefinitions="Auto,*" RowSpacing="8">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <PathIcon Classes="stat vflip" Data="{x:Static res:AppIcons.Combat}" />
+                        <TextBlock Classes="card-title" Text="Combat team" />
+                        <Border Classes="pill">
+                            <TextBlock Text="{Binding CombatBudgetRemaining, StringFormat=Budget {0}}" />
+                        </Border>
+                        <Border Classes="pill">
+                            <TextBlock Text="{Binding CombatTeamProficiency, StringFormat=Proficiency {0}}" />
+                        </Border>
+                    </StackPanel>
+                    <ListBox Grid.Row="1" ItemsSource="{Binding CombatTeam}">
+                        <dd:DragDrop.DropOperation>
+                            <cdd:WorkerDropOperation InteractionIds="app:combat" PayloadTarget="{Binding CombatTeam}" />
+                        </dd:DragDrop.DropOperation>
+                    </ListBox>
+                </Grid>
+            </Border>
         </Grid>
     </Grid>
 </UserControl>

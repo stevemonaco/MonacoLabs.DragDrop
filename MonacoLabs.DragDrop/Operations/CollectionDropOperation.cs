@@ -52,6 +52,7 @@ public class CollectionDropOperation : DropOperationBase
 
     protected override void DragEnter(object? sender, DragEventArgs e)
     {
+        CancelPendingDragLeave();
         var target = LocateTargetContainer(e);
 
         bool canDrop = CanDrop(e);
@@ -136,6 +137,7 @@ public class CollectionDropOperation : DropOperationBase
 
     protected override void Drop(object? sender, DragEventArgs e)
     {
+        CancelPendingDragLeave();
         if (!TryGetDragInfo<CollectionDragInfo>(e, out var dragInfo) || !TryGetPayload<object>(e, out var payload))
             return;
 

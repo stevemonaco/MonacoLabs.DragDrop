@@ -1,5 +1,6 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 
 namespace MonacoLabs.DragDrop.Abstractions;
 public abstract partial class DragOperationBase
@@ -38,5 +39,29 @@ public abstract partial class DragOperationBase
     {
         get => GetValue(DragThresholdProperty);
         set => SetValue(DragThresholdProperty, value);
+    }
+
+    public static readonly StyledProperty<DragDropEffects> AllowedEffectsProperty =
+        AvaloniaProperty.Register<DragOperationBase, DragDropEffects>(nameof(AllowedEffects), defaultValue: DragDropEffects.Move);
+
+    /// <summary>
+    /// Effects the drag source permits. Use <see cref="DragDropEffects.Copy"/> when the source keeps its item after a drop.
+    /// </summary>
+    public DragDropEffects AllowedEffects
+    {
+        get => GetValue(AllowedEffectsProperty);
+        set => SetValue(AllowedEffectsProperty, value);
+    }
+
+    public static readonly StyledProperty<bool> ShowDragPreviewProperty =
+        AvaloniaProperty.Register<DragOperationBase, bool>(nameof(ShowDragPreview), defaultValue: true);
+
+    /// <summary>
+    /// Shows a <see cref="DragPreviewAdorner"/> snapshot of the dragged control under the pointer while dragging within its window.
+    /// </summary>
+    public bool ShowDragPreview
+    {
+        get => GetValue(ShowDragPreviewProperty);
+        set => SetValue(ShowDragPreviewProperty, value);
     }
 }

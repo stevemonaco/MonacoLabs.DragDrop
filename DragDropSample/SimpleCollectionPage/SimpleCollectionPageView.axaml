@@ -5,52 +5,66 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:dd="using:MonacoLabs.DragDrop"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:sys="using:System"
     xmlns:vm="using:DragDropSample.ViewModels"
     d:DesignHeight="450"
     d:DesignWidth="800"
     x:DataType="vm:SimpleCollectionPageViewModel"
     mc:Ignorable="d">
-    <UserControl.Styles>
-        <Style Selector="ListBoxItem">
-            <!--<Setter Property="(AdornerLayer.IsClipEnabled)" Value="False" />-->
-            <!--<Setter Property="Padding" Value="6" />-->
-            <!--<Setter Property="Margin" Value="4,8,4,8" />-->
-            <!--<Setter Property="ClipToBounds" Value="False" />-->
-        </Style>
-    </UserControl.Styles>
+    <UserControl.DataTemplates>
+        <DataTemplate x:DataType="sys:Guid">
+            <TextBlock
+                FontFamily="Cascadia Mono, Consolas, Courier New"
+                FontSize="12"
+                Text="{Binding}" />
+        </DataTemplate>
+    </UserControl.DataTemplates>
 
-    <Grid ColumnDefinitions="*,8,*">
-        <ListBox
-            x:Name="leftBox"
-            ItemsSource="{Binding LeftGuids}"
-            SelectionMode="Multiple">
-            <dd:DragDrop.DragOperation>
-                <dd:CollectionDragOperation
-                    InteractionIds="app:guid"
-                    PayloadCollection="{Binding LeftGuids}" />
-            </dd:DragDrop.DragOperation>
-            <dd:DragDrop.DropOperation>
-                <dd:CollectionDropOperation InteractionIds="app:guid" PayloadTarget="{Binding LeftGuids}">
-                    <!--<dd:CollectionDropOperation.DropAdorner>
-                        <dd:DropInsertionAdorner />
-                    </dd:CollectionDropOperation.DropAdorner>-->
-                </dd:CollectionDropOperation>
-            </dd:DragDrop.DropOperation>
-        </ListBox>
+    <Grid ColumnDefinitions="*,20,*">
+        <Border Classes="card">
+            <Grid RowDefinitions="Auto,*" RowSpacing="12">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Classes="card-title" Text="Inbox" />
+                    <Border Classes="pill">
+                        <TextBlock Text="{Binding LeftGuids.Count}" />
+                    </Border>
+                </StackPanel>
+                <ListBox
+                    x:Name="leftBox"
+                    Grid.Row="1"
+                    ItemsSource="{Binding LeftGuids}"
+                    SelectionMode="Multiple">
+                    <dd:DragDrop.DragOperation>
+                        <dd:CollectionDragOperation InteractionIds="app:guid" PayloadCollection="{Binding LeftGuids}" />
+                    </dd:DragDrop.DragOperation>
+                    <dd:DragDrop.DropOperation>
+                        <dd:CollectionDropOperation InteractionIds="app:guid" PayloadTarget="{Binding LeftGuids}" />
+                    </dd:DragDrop.DropOperation>
+                </ListBox>
+            </Grid>
+        </Border>
 
-        <ListBox
-            x:Name="rightBox"
-            Grid.Column="2"
-            ItemsSource="{Binding RightGuids}"
-            SelectionMode="Multiple">
-            <dd:DragDrop.DragOperation>
-                <dd:CollectionDragOperation
-                    InteractionIds="app:guid"
-                    PayloadCollection="{Binding RightGuids}" />
-            </dd:DragDrop.DragOperation>
-            <dd:DragDrop.DropOperation>
-                <dd:CollectionDropOperation InteractionIds="app:guid" PayloadTarget="{Binding RightGuids}" />
-            </dd:DragDrop.DropOperation>
-        </ListBox>
+        <Border Grid.Column="2" Classes="card">
+            <Grid RowDefinitions="Auto,*" RowSpacing="12">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Classes="card-title" Text="Archive" />
+                    <Border Classes="pill">
+                        <TextBlock Text="{Binding RightGuids.Count}" />
+                    </Border>
+                </StackPanel>
+                <ListBox
+                    x:Name="rightBox"
+                    Grid.Row="1"
+                    ItemsSource="{Binding RightGuids}"
+                    SelectionMode="Multiple">
+                    <dd:DragDrop.DragOperation>
+                        <dd:CollectionDragOperation InteractionIds="app:guid" PayloadCollection="{Binding RightGuids}" />
+                    </dd:DragDrop.DragOperation>
+                    <dd:DragDrop.DropOperation>
+                        <dd:CollectionDropOperation InteractionIds="app:guid" PayloadTarget="{Binding RightGuids}" />
+                    </dd:DragDrop.DropOperation>
+                </ListBox>
+            </Grid>
+        </Border>
     </Grid>
 </UserControl>

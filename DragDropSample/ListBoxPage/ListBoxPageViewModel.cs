@@ -36,6 +36,7 @@ public partial class ListBoxPageViewModel : PageViewModel
     public ListBoxPageViewModel()
     {
         Title = "ListBox";
+        Description = "Assign workers to teams. A team only accepts proficient workers within its budget, and rejected drops explain why.";
         InitializeNewWorkers(30);
 
         MiningTeam.CollectionChanged += (s, e) =>

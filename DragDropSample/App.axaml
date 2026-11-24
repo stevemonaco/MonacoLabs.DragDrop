@@ -2,7 +2,6 @@
     x:Class="DragDropSample.App"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:dd="using:MonacoLabs.DragDrop"
     xmlns:local="using:DragDropSample"
     RequestedThemeVariant="Default">
     <Application.DataTemplates>
@@ -11,15 +10,7 @@
 
     <Application.Styles>
         <FluentTheme />
-
-        <Style Selector="dd|DropHighlightAdorner">
-            <!--<Setter Property="BorderBrush" Value="Yellow" />
-            <Setter Property="BorderThickness" Value="20" />-->
-
-            <Style Selector="^:error">
-                <Setter Property="Background" Value="Red" />
-            </Style>
-        </Style>
+        <StyleInclude Source="/Resources/SampleTheme.axaml" />
 
         <Style Selector="PathIcon.vflip">
             <Setter Property="RenderTransform" Value="scaley(-1)" />

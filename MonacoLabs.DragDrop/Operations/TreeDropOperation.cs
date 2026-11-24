@@ -6,6 +6,7 @@ public class TreeDropOperation : CollectionDropOperation
 {
     protected override void Drop(object? sender, DragEventArgs e)
     {
+        CancelPendingDragLeave();
         if (!TryGetDragInfo<CollectionDragInfo>(e, out _) || !TryGetPayload<object>(e, out var payload))
             return;
 

@@ -1,42 +1,40 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using System.Collections.Generic;
 
 namespace DragDropSample.ViewModels;
 public partial class SingleItemPageViewModel : PageViewModel
 {
-    [ObservableProperty]
-    public partial string MealChoiceA { get; set; } = "Pizza";
+    public IReadOnlyList<MenuItemViewModel> Meals { get; } =
+    [
+        new("Margherita pizza", "🍕", 12.50m),
+        new("Street tacos", "🌮", 9.75m),
+        new("Ribeye steak", "🥩", 24.00m, IsSoldOut: true),
+        new("Garden salad", "🥗", 8.25m),
+    ];
+
+    public IReadOnlyList<MenuItemViewModel> Drinks { get; } =
+    [
+        new("Sparkling water", "💧", 2.00m),
+        new("Green tea", "🍵", 3.25m),
+        new("Cola", "🥤", 2.75m),
+        new("Orange juice", "🧃", 3.50m),
+    ];
 
     [ObservableProperty]
-    public partial string MealChoiceB { get; set; } = "Tacos";
+    [NotifyPropertyChangedFor(nameof(Total))]
+    public partial MenuItemViewModel? SelectedMeal { get; set; }
 
     [ObservableProperty]
-    public partial string MealChoiceC { get; set; } = "Steak";
+    [NotifyPropertyChangedFor(nameof(Total))]
+    public partial MenuItemViewModel? SelectedDrink { get; set; }
 
-    [ObservableProperty]
-    public partial string MealChoiceD { get; set; } = "Salad";
-
-    [ObservableProperty]
-    public partial string DrinkChoiceA { get; set; } = "Water";
-
-    [ObservableProperty]
-    public partial string DrinkChoiceB { get; set; } = "Tea";
-
-    [ObservableProperty]
-    public partial string DrinkChoiceC { get; set; } = "Soda";
-
-    [ObservableProperty]
-    public partial string DrinkChoiceD { get; set; } = "Juice";
-
-    [ObservableProperty]
-    public partial string? SelectedMeal { get; set; }
-
-    [ObservableProperty]
-    public partial string? SelectedDrink { get; set; }
+    public decimal Total => (SelectedMeal?.Price ?? 0) + (SelectedDrink?.Price ?? 0);
 
     public SingleItemPageViewModel()
     {
         Title = "Single Item";
+        Description = "Drag a meal or a drink onto your order. Each slot only accepts its own kind, and sold-out items are rejected with a reason.";
     }
 
     [RelayCommand]

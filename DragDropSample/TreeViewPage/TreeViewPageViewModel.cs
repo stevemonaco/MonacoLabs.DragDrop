@@ -10,6 +10,7 @@ public partial class TreeViewPageViewModel : PageViewModel
     public TreeViewPageViewModel()
     {
         Title = "TreeView";
+        Description = "Work in progress: drag nodes between the tree and the flat list.";
 
         Solutions = new()
         {

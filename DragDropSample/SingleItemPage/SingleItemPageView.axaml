@@ -2,108 +2,188 @@
     x:Class="DragDropSample.Views.SingleItemPageView"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:cdd="using:DragDropSample.CustomDragDrop"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:dd="using:MonacoLabs.DragDrop"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vm="using:DragDropSample.ViewModels"
-    d:DesignHeight="450"
-    d:DesignWidth="800"
+    d:DesignHeight="600"
+    d:DesignWidth="1000"
     x:DataType="vm:SingleItemPageViewModel"
     mc:Ignorable="d">
+    <UserControl.Resources>
+        <DataTemplate x:Key="MenuItemTemplate" x:DataType="vm:MenuItemViewModel">
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                <Border Classes="tile">
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        FontSize="18"
+                        Text="{Binding Emoji}" />
+                </Border>
+                <StackPanel
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    Spacing="1">
+                    <TextBlock
+                        FontWeight="SemiBold"
+                        Text="{Binding Name}"
+                        TextTrimming="CharacterEllipsis" />
+                    <TextBlock Classes="subtle" Text="{Binding Price, StringFormat={}{0:$0.00}}" />
+                </StackPanel>
+                <Border
+                    Grid.Column="2"
+                    Classes="tag"
+                    IsVisible="{Binding IsSoldOut}">
+                    <TextBlock Text="Sold out" />
+                </Border>
+            </Grid>
+        </DataTemplate>
+    </UserControl.Resources>
+
     <UserControl.Styles>
-        <Style Selector="StackPanel.list > Border">
-            <Setter Property="Padding" Value="4" />
-            <Setter Property="BorderBrush" Value="Orange" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Background" Value="Transparent" />
+        <Style Selector="ItemsControl.menu">
+            <Setter Property="Margin" Value="-4" />
+            <Setter Property="ItemsPanel">
+                <ItemsPanelTemplate>
+                    <UniformGrid Columns="2" />
+                </ItemsPanelTemplate>
+            </Setter>
+        </Style>
+        <Style Selector="ItemsControl.menu Border.chip">
+            <Setter Property="Margin" Value="4" />
         </Style>
     </UserControl.Styles>
 
-    <Grid ColumnDefinitions="*,8,*">
-        <StackPanel Classes="list">
-            <TextBlock FontWeight="Bold" Text="Meal Choices" />
-            <Border>
-                <dd:DragDrop.DragOperation>
-                    <dd:ItemDragOperation InteractionIds="meal" Payload="{Binding MealChoiceA}" />
-                </dd:DragDrop.DragOperation>
-                <TextBlock Text="{Binding MealChoiceA}" />
-            </Border>
-            <Border>
-                <dd:DragDrop.DragOperation>
-                    <dd:ItemDragOperation InteractionIds="meal" Payload="{Binding MealChoiceB}" />
-                </dd:DragDrop.DragOperation>
-                <TextBlock Text="{Binding MealChoiceB}" />
-            </Border>
-            <Border>
-                <dd:DragDrop.DragOperation>
-                    <dd:ItemDragOperation InteractionIds="meal" Payload="{Binding MealChoiceC}" />
-                </dd:DragDrop.DragOperation>
-                <TextBlock Text="{Binding MealChoiceC}" />
-            </Border>
-            <Border>
-                <dd:DragDrop.DragOperation>
-                    <dd:ItemDragOperation InteractionIds="meal" Payload="{Binding MealChoiceD}" />
-                </dd:DragDrop.DragOperation>
-                <TextBlock Text="{Binding MealChoiceD}" />
-            </Border>
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+        <Grid VerticalAlignment="Top" ColumnDefinitions="3*,20,2*">
+            <!--  Menu (drag sources)  -->
+            <Border Classes="card">
+                <StackPanel Spacing="20">
+                    <StackPanel Spacing="2">
+                        <TextBlock Classes="card-title" Text="Menu" />
+                        <TextBlock Classes="subtle" Text="Each card is an ItemDragOperation whose payload falls back to its DataContext." />
+                    </StackPanel>
 
-            <TextBlock
-                Margin="0,8,0,8"
-                FontWeight="Bold"
-                Text="Drink Choices" />
-            <Border>
-                <dd:DragDrop.DragOperation>
-                    <dd:ItemDragOperation InteractionIds="drink" Payload="{Binding DrinkChoiceA}" />
-                </dd:DragDrop.DragOperation>
-                <TextBlock Text="{Binding DrinkChoiceA}" />
-            </Border>
-            <Border>
-                <dd:DragDrop.DragOperation>
-                    <dd:ItemDragOperation InteractionIds="drink" Payload="{Binding DrinkChoiceB}" />
-                </dd:DragDrop.DragOperation>
-                <TextBlock Text="{Binding DrinkChoiceB}" />
-            </Border>
-            <Border>
-                <dd:DragDrop.DragOperation>
-                    <dd:ItemDragOperation InteractionIds="drink" Payload="{Binding DrinkChoiceC}" />
-                </dd:DragDrop.DragOperation>
-                <TextBlock Text="{Binding DrinkChoiceC}" />
-            </Border>
-            <Border>
-                <dd:DragDrop.DragOperation>
-                    <dd:ItemDragOperation InteractionIds="drink" Payload="{Binding DrinkChoiceD}" />
-                </dd:DragDrop.DragOperation>
-                <TextBlock Text="{Binding DrinkChoiceD}" />
-            </Border>
-        </StackPanel>
+                    <StackPanel Spacing="10">
+                        <TextBlock Classes="section-header" Text="MEALS" />
+                        <ItemsControl Classes="menu" ItemsSource="{Binding Meals}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:MenuItemViewModel">
+                                    <Border Classes="chip">
+                                        <dd:DragDrop.DragOperation>
+                                            <dd:ItemDragOperation AllowedEffects="Copy" InteractionIds="meal" />
+                                        </dd:DragDrop.DragOperation>
+                                        <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource MenuItemTemplate}" />
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
 
-        <StackPanel Grid.Column="2" Classes="list">
-            <TextBlock FontWeight="Bold" Text="Selected Meal" />
-            <Border Background="Transparent">
-                <dd:DragDrop.DropOperation>
-                    <dd:ItemDropOperation InteractionIds="meal" PayloadTarget="{Binding SelectedMeal}" />
-                </dd:DragDrop.DropOperation>
-                <StackPanel>
-                    <TextBlock Text="Drop Area" />
-                    <TextBlock Text="{Binding SelectedMeal, StringFormat={}{0}, TargetNullValue=N/A}" />
-                    <Button Command="{Binding RemoveMealCommand}" Content="Remove Meal" />
+                    <StackPanel Spacing="10">
+                        <TextBlock Classes="section-header" Text="DRINKS" />
+                        <ItemsControl Classes="menu" ItemsSource="{Binding Drinks}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:MenuItemViewModel">
+                                    <Border Classes="chip">
+                                        <dd:DragDrop.DragOperation>
+                                            <dd:ItemDragOperation AllowedEffects="Copy" InteractionIds="drink" />
+                                        </dd:DragDrop.DragOperation>
+                                        <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource MenuItemTemplate}" />
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
                 </StackPanel>
             </Border>
 
-            <TextBlock
-                Margin="0,8,0,8"
-                FontWeight="Bold"
-                Text="Selected Drink" />
-            <Border Background="Transparent">
-                <dd:DragDrop.DropOperation>
-                    <dd:ItemDropOperation InteractionIds="drink" PayloadTarget="{Binding SelectedDrink}" />
-                </dd:DragDrop.DropOperation>
-                <StackPanel>
-                    <TextBlock Text="Drop Area" />
-                    <TextBlock Text="{Binding SelectedDrink, StringFormat={}{0}, TargetNullValue=N/A}" />
-                    <Button Command="{Binding RemoveDrinkCommand}" Content="Remove Drink" />
+            <!--  Order (drop targets)  -->
+            <Border
+                Grid.Column="2"
+                VerticalAlignment="Top"
+                Classes="card">
+                <StackPanel Spacing="20">
+                    <StackPanel Spacing="2">
+                        <TextBlock Classes="card-title" Text="Your order" />
+                        <TextBlock Classes="subtle" Text="Each slot is an ItemDropOperation bound TwoWay to the view model." />
+                    </StackPanel>
+
+                    <StackPanel Spacing="10">
+                        <TextBlock Classes="section-header" Text="MEAL" />
+                        <Border Classes="slot" Classes.filled="{Binding SelectedMeal, Converter={x:Static ObjectConverters.IsNotNull}}">
+                            <dd:DragDrop.DropOperation>
+                                <cdd:MenuItemDropOperation InteractionIds="meal" PayloadTarget="{Binding SelectedMeal}" />
+                            </dd:DragDrop.DropOperation>
+                            <Panel>
+                                <Rectangle Classes="slot-outline" />
+                                <TextBlock
+                                    Classes="slot-hint"
+                                    IsVisible="{Binding SelectedMeal, Converter={x:Static ObjectConverters.IsNull}}"
+                                    Text="Drop a meal here" />
+                                <Grid
+                                    Margin="12,8,6,8"
+                                    ColumnDefinitions="*,Auto"
+                                    IsVisible="{Binding SelectedMeal, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                    <ContentPresenter Content="{Binding SelectedMeal}" ContentTemplate="{StaticResource MenuItemTemplate}" />
+                                    <Button
+                                        Grid.Column="1"
+                                        Classes="icon"
+                                        Command="{Binding RemoveMealCommand}"
+                                        Content="✕"
+                                        ToolTip.Tip="Remove meal" />
+                                </Grid>
+                            </Panel>
+                        </Border>
+                    </StackPanel>
+
+                    <StackPanel Spacing="10">
+                        <TextBlock Classes="section-header" Text="DRINK" />
+                        <Border Classes="slot" Classes.filled="{Binding SelectedDrink, Converter={x:Static ObjectConverters.IsNotNull}}">
+                            <dd:DragDrop.DropOperation>
+                                <cdd:MenuItemDropOperation InteractionIds="drink" PayloadTarget="{Binding SelectedDrink}" />
+                            </dd:DragDrop.DropOperation>
+                            <Panel>
+                                <Rectangle Classes="slot-outline" />
+                                <TextBlock
+                                    Classes="slot-hint"
+                                    IsVisible="{Binding SelectedDrink, Converter={x:Static ObjectConverters.IsNull}}"
+                                    Text="Drop a drink here" />
+                                <Grid
+                                    Margin="12,8,6,8"
+                                    ColumnDefinitions="*,Auto"
+                                    IsVisible="{Binding SelectedDrink, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                    <ContentPresenter Content="{Binding SelectedDrink}" ContentTemplate="{StaticResource MenuItemTemplate}" />
+                                    <Button
+                                        Grid.Column="1"
+                                        Classes="icon"
+                                        Command="{Binding RemoveDrinkCommand}"
+                                        Content="✕"
+                                        ToolTip.Tip="Remove drink" />
+                                </Grid>
+                            </Panel>
+                        </Border>
+                    </StackPanel>
+
+                    <Border
+                        Padding="0,14,0,0"
+                        BorderBrush="{DynamicResource CardBorderBrush}"
+                        BorderThickness="0,1,0,0">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                FontWeight="SemiBold"
+                                Text="Total" />
+                            <TextBlock
+                                Grid.Column="1"
+                                FontSize="18"
+                                FontWeight="SemiBold"
+                                Text="{Binding Total, StringFormat={}{0:$0.00}}" />
+                        </Grid>
+                    </Border>
                 </StackPanel>
             </Border>
-        </StackPanel>
-    </Grid>
+        </Grid>
+    </ScrollViewer>
 </UserControl>

@@ -4,6 +4,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using System.Diagnostics.CodeAnalysis;
 using Avalonia.Styling;
+using Avalonia.Threading;
 using MonacoLabs.DragDrop.Adorners;
 using AvaDragDrop = Avalonia.Input.DragDrop;
 using System.Diagnostics;
@@ -18,7 +19,8 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
     protected bool _handledEventsToo = false;
 
     protected DragDropEffects _lastEffects;
-    
+    private bool _isDragLeavePending;
+
     protected DropAdornerKind DropAdornerType { get; set; } = DropAdornerKind.Solid;
     
     public virtual void Attach(Control control)
@@ -61,14 +63,40 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
 
     protected virtual void DragEnter(object? sender, DragEventArgs e)
     {
+        CancelPendingDragLeave();
         bool canDrop = CanDrop(e);
         e.DragEffects = OnDragEnter(e, canDrop);
         _lastEffects = e.DragEffects;
     }
-    
+
+    // Moving between children raises DragLeave then DragEnter in one pass, so leave only if no DragEnter follows
     protected virtual void DragLeave(object? sender, DragEventArgs e)
     {
-        OnDragLeave(e);
+        _isDragLeavePending = true;
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (!_isDragLeavePending)
+                return;
+
+            _isDragLeavePending = false;
+            OnDragLeave(e);
+        });
+    }
+
+    protected void CancelPendingDragLeave() => _isDragLeavePending = false;
+
+    /// <summary>
+    /// Picks the effect for a drop from the effects the drag source allows, preferring Move, then Copy, then Link.
+    /// </summary>
+    protected virtual DragDropEffects GetDropEffect(DragEventArgs e)
+    {
+        if (e.DragEffects.HasFlag(DragDropEffects.Move))
+            return DragDropEffects.Move;
+
+        if (e.DragEffects.HasFlag(DragDropEffects.Copy))
+            return DragDropEffects.Copy;
+
+        return e.DragEffects & DragDropEffects.Link;
     }
 
     protected void InvokePayloadCommand(DragEventArgs e, object payload, DropTargetOffset offset)
@@ -97,20 +125,21 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
     /// <param name="canDrop"></param>
     protected virtual DragDropEffects OnDragEnter(DragEventArgs dragEventArgs, bool canDrop)
     {
-        if (!canDrop)
-        {
-            //e.DragEffects = DragDropEffects.None;
+        // Drags for other interaction ids are not meant for this target, so only failed validation shows the error adorner
+        if (!CanGetPayload(dragEventArgs))
             return DragDropEffects.None;
-        }
-        
+
         if (DropAdorner is not null)
         {
-            DropAdorner.Attach();
             DropAdorner.IsDropValid = canDrop;
+            DropAdorner.Attach();
         }
 
+        if (!canDrop)
+            return DragDropEffects.None;
+
         ((IPseudoClasses)AttachedControl!.Classes).Set(":dropover", true);
-        return DragDropEffects.Move;
+        return GetDropEffect(dragEventArgs);
     }
 
     protected virtual DragDropEffects OnDragOver()
@@ -161,12 +190,22 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
     /// <param name="e"></param>
     protected virtual void Drop(object? sender, DragEventArgs e)
     {
+        CancelPendingDragLeave();
+
         if (!TryGetDragInfo<DragInfo>(e, out var dragInfo))
             return;
 
         if (!TryGetPayload<object>(e, out var payload))
             return;
 
+        if (!CanDrop(e))
+        {
+            e.DragEffects = DragDropEffects.None;
+            OnDragLeave(e);
+            return;
+        }
+
+        e.DragEffects = GetDropEffect(e);
         SetCurrentValue(PayloadTargetProperty, payload);
 
         var dropMetadata = new DropInfo()

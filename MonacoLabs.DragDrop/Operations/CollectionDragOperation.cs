@@ -53,6 +53,9 @@ public class CollectionDragOperation : ItemDragOperation
         return base.ResolvePayload(pressedEventArgs);
     }
 
+    protected override Control? ResolveDragVisual(PointerPressedEventArgs pressedEventArgs) =>
+        LocatePayloadContainer(pressedEventArgs) ?? base.ResolveDragVisual(pressedEventArgs);
+
     protected override DragInfo CreateMetadata(PointerEventArgs e)
     {
         var container = LocatePayloadContainer(e);
