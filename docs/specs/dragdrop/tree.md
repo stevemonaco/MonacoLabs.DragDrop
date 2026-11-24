@@ -13,6 +13,7 @@ types:
   - TreeDropOperation
 tests:
   - TreeDragTests
+  - TreeDropTests
 depends:
   - DD-COLLECTION
 ---
@@ -64,9 +65,9 @@ depends:
 
 - **DD-TREE-014** — When there is no location, the drop operation shall reject the drop.
   - Tests: untested
-- **DD-TREE-015** — When the location's parent container is the dragged node or one of its descendants, the drop operation shall reject the drop and set the adorner's error message to `SelfDropMessage`.
-  - Tests: untested
-- **DD-TREE-016** — The subtree check shall run before `CanDrop` (DD-COLLECTION-023), so a `CanDrop` override cannot allow a node into itself.
+- **DD-TREE-015** — When the location's parent container is the dragged node or one of its descendants, the drop operation shall reject the drop with `SelfDropMessage` as its error message.
+  - Tests: `TreeDropTests.DroppingANodeIntoItselfShowsTheSelfDropMessage`
+- **DD-TREE-016** — The subtree check shall run in `CanDropAtLocation`, before `CanDrop` (DD-COLLECTION-023), so a `CanDrop` override cannot allow a node into itself.
   - Tests: untested
 
 ### Hover expand

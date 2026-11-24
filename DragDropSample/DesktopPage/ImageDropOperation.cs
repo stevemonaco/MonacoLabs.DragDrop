@@ -21,14 +21,12 @@ public class ImageDropOperation : ItemDropOperation
 
         if (files.Count > 1)
         {
-            DropAdorner!.ErrorMessage = "Drop one image at a time";
-            return false;
+            return Reject("Drop one image at a time");
         }
 
         if (files[0] is not IStorageFile file || !ImageExtensions.Contains(Path.GetExtension(file.Name), StringComparer.OrdinalIgnoreCase))
         {
-            DropAdorner!.ErrorMessage = "Only PNG, JPG, GIF, BMP or WebP images";
-            return false;
+            return Reject("Only PNG, JPG, GIF, BMP or WebP images");
         }
 
         return true;

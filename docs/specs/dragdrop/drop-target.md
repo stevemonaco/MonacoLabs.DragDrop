@@ -49,8 +49,12 @@ depends:
 
 ### Validation
 
-- **DD-DROP-007** — Before each `CanDrop` evaluation, the drop target shall clear `DropAdorner.ErrorMessage`, so a message set by an override reflects only the latest evaluation.
-  - Tests: untested
+- **DD-DROP-007** — Before each validation, the drop target shall clear `ErrorMessage`; after it, it shall copy `ErrorMessage` to `DropAdorner.ErrorMessage`, so the message reflects only the latest evaluation.
+  - Tests: `DropTargetTests.TheMessageIsClearedBeforeEachEvaluation`, `DropTargetTests.RejectSetsTheMessageAndTheAdornerMirrorsIt`
+- **DD-DROP-024** — `ErrorMessage` shall be read-only outside the operation, and `Reject(message)` shall set it to the message and return false.
+  - Tests: `DropTargetTests.RejectSetsTheMessageAndTheAdornerMirrorsIt`
+- **DD-DROP-025** — When a drag leaves the target or drops on it, the drop target shall clear `ErrorMessage` and the adorner's message.
+  - Tests: `DropTargetTests.TheMessageIsClearedWhenTheDragLeaves`
 - **DD-DROP-008** — The drop target shall evaluate `CanDrop` on every DragEnter, DragOver and Drop of a drag meant for it.
   - Tests: untested
 - **DD-DROP-009** — When `CanDrop` is not overridden, the drop target shall accept every drag meant for it.
@@ -100,7 +104,7 @@ depends:
 ## Edge cases
 
 - A drag rejected by DD-DROP-004 never shows an adorner, even an error one. Only `CanDrop` rejections show the error state.
-- The adorner's `ErrorMessage` is set by `CanDrop` overrides through `DropAdorner!`. A target whose `DropAdorner` was set to null cannot show messages, and overrides that use `!` throw.
+- A message set directly on `DropAdorner.ErrorMessage` inside `CanDrop` is overwritten when the operation mirrors `ErrorMessage` after validation; overrides use `Reject`. A target whose `DropAdorner` is null still has `ErrorMessage`.
 - `PayloadTarget` is set on Copy and Link drops too; the effect only changes what the drag side does.
 - The deferred leave captures the leaving event's args and runs `OnDragLeave` with them after the event has finished.
 
@@ -116,6 +120,7 @@ depends:
 
 ## Decisions
 
+- **The operation owns the validation message.** `ErrorMessage` lives on the operation and is mirrored to the adorner. Reason: validation belongs to the operation, overrides should not need `DropAdorner!`, and MVVM apps want to show the message outside the adorner, which is why it is also cleared when the drag ends. Rejected: a `Reject` helper that writes only to the adorner (no bindable message); a `CanDrop` that returns a result object (a larger break for every override).
 - **Targeting and validation are separate steps.** `IsDropTargetFor` decides whether the target is involved at all, and `CanDrop` decides whether this particular drop is valid. Reason: a drag meant for another target should leave this one visually untouched, while a meant-for-me drag that fails validation should explain itself with the error adorner.
 - **DragLeave is deferred.** Reason: Avalonia raises DragLeave then DragEnter when the pointer crosses into a child, and leaving immediately makes the adorner flicker. Rejected: hit testing on each leave to see whether the pointer is still inside.
 - **The effect is recomputed on Drop.** Reason: on Drop, `e.DragEffects` arrives as the allowed set, not the effect returned by the last DragOver. Rejected: caching the last DragOver effect, which misses a modifier pressed right before release.
@@ -130,5 +135,4 @@ depends:
 - Detach leaves a pending deferred leave able to throw, and leaves `:dropover`, the adorner and `DropAdorner.TargetControl` in place. Addressed by [changes/correctness-fixes.md](../../changes/correctness-fixes.md).
 - `Context` is a public property that nothing reads. Addressed by [changes/api-design.md](../../changes/api-design.md).
 - `DropAdornerType` is protected with no way to set it from XAML, so `DropAdornerKind.Border` and `None` are reachable only by constructing the adorner. Addressed by [changes/api-design.md](../../changes/api-design.md).
-- Rejecting with a message needs `DropAdorner!.ErrorMessage` in every override. Addressed by [changes/api-design.md](../../changes/api-design.md).
 - Subclasses can override either the subscribed handlers (`DragEnter`, `DragOver`, `DragLeave`, `Drop`) or the hooks they call (`OnDragEnter`, `OnDragOver`, `OnDragLeave`, `OnDrop`). Collection targets replace the handlers, so which hooks run depends on the base class (see DD-COLLECTION Open items). Logged in the backlog (drop-side redesign).

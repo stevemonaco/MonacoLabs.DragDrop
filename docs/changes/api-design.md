@@ -20,9 +20,9 @@ The public surface grew while the library was a prototype, and parts of it will 
 
 **Validation.**
 - `DropOperationBase` gains a public read-only `ErrorMessage` direct property and `protected bool Reject(string? message)`, which sets it and returns false.
-- `EvaluateCanDrop` clears `ErrorMessage` before `CanDrop` and copies it to `DropAdorner.ErrorMessage` afterwards. App UI can bind the message (a status bar, a tooltip) without reaching into the adorner.
+- `EvaluateCanDrop` clears `ErrorMessage` before `CanDrop` and copies it to `DropAdorner.ErrorMessage` afterwards, and the message is cleared when the drag leaves or drops. App UI can bind the message (a status bar, a tooltip) without reaching into the adorner. A collection's `CanDropAtLocation` runs inside the same evaluation, before `CanDrop`, so its `Reject` message is mirrored too.
 - `TreeDropOperation`'s subtree rejection and the sample's custom operations use `Reject`.
-- The logical-descendant check in `CollectionDropOperation.CanDrop` (DD-COLLECTION-024) moves into `CanDropAtLocation`, so `CanDrop` overrides cannot lose it. `TreeDropOperation.CanDropAtLocation` calls the base first.
+- The logical-descendant check in `CollectionDropOperation.CanDrop` (DD-COLLECTION-024) is removed. Task 5 found no drag it guards against, and one it breaks: a collection target whose own surface is hit (a `Border` with a background) rejected drags over that surface.
 
 **Copies.**
 - `DropOperationBase` gains `protected virtual object CreateCopy(object payload)`, returning the payload by default. When the drop effect is Copy, single-value and collection targets assign or insert the value it returns, and `DropEventArgs.Items` carries that value.
@@ -48,7 +48,7 @@ What does not change: interaction ids, targeting rules, effect resolution, the c
 - **Routing options are settable only while detached.** `Routing` and `HandledEventsToo` are read when `Attach` subscribes, so a later change silently does nothing. Throwing makes the mistake visible, and XAML sets both before the attached property attaches the operation. Rejected: a protected constructor parameter (XAML users could not change the routing of a built-in operation); re-subscribing on change (state for a case nobody needs).
 - **Subclasses get hooks, not fields.** Every protected member is a virtual method or a read-only property with a documented meaning. Reason: protected fields freeze the implementation, and the current ones let a subclass leave the press-tracking state inconsistent. The only current reader, the press origin in `CreateMetadata`, becomes a parameter.
 - **The operation owns the validation message.** `ErrorMessage` lives on the operation and is mirrored to the adorner. Reason: validation belongs to the operation, overrides should not need `DropAdorner!`, and MVVM apps want to show the message outside the adorner. A message set directly on `DropAdorner.ErrorMessage` inside `CanDrop` is overwritten by the mirror, so overrides use `Reject`. Rejected: a `Reject` helper that writes only to the adorner (no bindable message); a `CanDrop` that returns a result object (a larger break for every override).
-- **Structural checks live in `CanDropAtLocation`.** See DD-COLLECTION, "Structural checks run before CanDrop". The logical-descendant check moves there. Task 5 first looks for the case that motivated it, and strikes the requirement instead if none exists.
+- **Structural checks live in `CanDropAtLocation`.** See DD-COLLECTION, "Structural checks run before CanDrop". The logical-descendant check was to move there, but task 5 found that every drag event reaching the target comes from a logical descendant (items, template parts, the empty area) except the attached control itself, which the check wrongly rejected, so the requirement is struck instead (DD-COLLECTION, "No logical-descendant check").
 - **Copies come from a hook, not `ICloneable`.** Reason: what a copy of a view model means (deep or shallow, a new id or the same) is a domain decision, and `ICloneable` does not say. Rejected: calling `ICloneable.Clone` automatically; a bindable factory property (XAML cannot easily supply a delegate).
 - **More controls keep their presses.** `TextBox` (caret placement and selection) and `Thumb` (sliders, splitters, scroll thumbs) join `ScrollBar` and `Button` by default. Reason: a selected row's press is handled in the tunneling phase (DD-DRAG-009), so a `TextBox` in it can't focus, and a selection drag turns into an item drag; a slider's thumb starts an item drag the same way. An app that drags rows by a read-only `TextBox` sets `DragDrop.IgnoresPress` to false on it. Rejected: opt-in only, which leaves editable rows broken by default.
 - **Ignored presses are configured by a non-inherited attached property.** `DragDrop.IgnoresPress` is a `bool?` read during the walk, like `DragDrop.IsDragHandle`. Reason: styles and XAML cover the common cases without a subclass, and the walk keeps the boundary at the attached control. Rejected: an inherited property checked only on the pressed element. A probe showed Avalonia does not inherit per-type default values, so the defaults would need app-wide styles or the library setting values on unrelated controls, and values inherited from above the attached control (a drag source inside a `Button`) would ignore every press.
@@ -83,6 +83,7 @@ What does not change: interaction ids, targeting rules, effect resolution, the c
 - Changed **DD-DROP-002**: "When attached with no `DropAdorner`, the drop target shall create a `DropHighlightAdorner` with its default `Kind`…"
 - Changed **DD-DROP-007**: "Before each `CanDrop` evaluation, the drop target shall clear its `ErrorMessage`; after it, it shall copy `ErrorMessage` to `DropAdorner.ErrorMessage`."
 - Added: "`Reject(message)` shall set `ErrorMessage` to the message and return false."
+- Added: "When a drag leaves the target or drops on it, the drop target shall clear `ErrorMessage` and the adorner's message."
 - Added: "When an in-process drop's effect is Copy, the drop target shall assign the value `CreateCopy` returns, which by default is the payload itself."
 - Changed **DD-DROP-015**: "set `PayloadTarget` to the payload, or to its copy (DD-DROP new requirement) when the effect is Copy…"
 - Edge cases: replace the `DropAdorner!` edge case with: a message set directly on the adorner inside `CanDrop` is overwritten. Decisions: add "The operation owns the validation message" and "Copies come from a hook, not `ICloneable`". Open items: remove the `Context`, `DropAdornerType` and `DropAdorner!` items.
@@ -91,13 +92,14 @@ What does not change: interaction ids, targeting rules, effect resolution, the c
 - Changed **DD-TRANSFER-012**: "…the single in-process payload (or its copy on a Copy drop) for an in-process drop…"
 
 **DD-COLLECTION**
-- Struck **DD-COLLECTION-024**, moved to `CanDropAtLocation`.
-- Added: "`CanDropAtLocation` shall reject drags whose event source is not a logical descendant of the attached control." Struck instead if task 5 finds no case for it.
+- Struck **DD-COLLECTION-024**, with the decision "No logical-descendant check".
+- Added: "The drop operation shall validate drags over the attached control's own surface like drags over its content."
+- Changed **DD-COLLECTION-023**: `CanDropAtLocation` runs inside the same validation as `CanDrop`, so its `Reject` message reaches `ErrorMessage`.
 - Changed **DD-COLLECTION-030**: "A Copy drop shall insert the value `CreateCopy` returns, which by default is the reference the source holds."
 - Edge cases: remove the `WorkerDropOperation` edge case. Open items: remove the DD-COLLECTION-024 and `CreateMetadata` items.
 
 **DD-TREE**
-- Changed **DD-TREE-016**: "The subtree check shall run in `CanDropAtLocation` after the base collection check, before `CanDrop`…"
+- Changed **DD-TREE-016**: "The subtree check shall run in `CanDropAtLocation` before `CanDrop`…"
 - Changed **DD-TREE-015**: "…reject the drop with `SelfDropMessage` as its error message."
 
 **DD-ADORNERS**
@@ -143,14 +145,15 @@ Each task writes or adjusts its tests first, then changes the code, updates the 
    - `DragGestureTests.TheElementNearestThePressDecides`
    - `DragGestureTests.IgnoresPressDefaultsToNull`
 5. **Validation message and structural check.**
-   - Add `ErrorMessage` and `Reject`, mirror the message to the adorner, and move DD-COLLECTION-024 into `CanDropAtLocation`.
+   - Add `ErrorMessage` and `Reject`, mirror the message to the adorner, and run `CanDropAtLocation` inside the same evaluation.
    - Before moving the check, look for a drag whose source is not a logical descendant (adorner layer, popup, overlay) with a test. If none exists, strike the requirement instead.
    - Migrate `WorkerDropOperation`, `NodeDropOperation`, `ImageDropOperation`, `MenuItemDropOperation` and `TreeDropOperation` to `Reject`.
 
    Tests:
    - `DropTargetTests.RejectSetsTheMessageAndTheAdornerMirrorsIt`
    - `DropTargetTests.TheMessageIsClearedBeforeEachEvaluation`
-   - `CollectionDropTests.ACanDropOverrideCannotSkipTheStructuralCheck`
+   - `DropTargetTests.TheMessageIsClearedWhenTheDragLeaves`
+   - `CollectionDropTests.ADragOverTheTargetsOwnSurfaceIsAccepted`
    - `TreeDropTests.DroppingANodeIntoItselfShowsTheSelfDropMessage`
 6. **`CreateCopy`.** Tests:
    - `DropTargetTests.ACopyDropAssignsTheCreatedCopy`

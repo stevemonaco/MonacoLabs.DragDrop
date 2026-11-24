@@ -75,7 +75,7 @@ public partial class CollectionDropOperation : DropOperationBase
         UpdateHover(e);
         DropLocation = ResolveDropLocation();
 
-        var canDrop = CanDropAtLocation(e) && EvaluateCanDrop(e);
+        var canDrop = EvaluateCanDrop(e);
 
         if (DropAdorner is not null)
         {
@@ -159,6 +159,7 @@ public partial class CollectionDropOperation : DropOperationBase
             ((IPseudoClasses)AttachedControl.Classes).Set(":dropover", false);
 
         DropAdorner?.Detach();
+        ClearErrorMessage();
     }
 
     protected override void Drop(object? sender, DragEventArgs e)
@@ -175,7 +176,7 @@ public partial class CollectionDropOperation : DropOperationBase
         DropLocation = ResolveDropLocation();
         var location = DropLocation;
 
-        if (!CanDropAtLocation(e) || !EvaluateCanDrop(e))
+        if (!EvaluateCanDrop(e))
         {
             e.DragEffects = DragDropEffects.None;
             EndDrag();
@@ -241,16 +242,11 @@ public partial class CollectionDropOperation : DropOperationBase
         return targetIndex;
     }
 
-    protected override bool CanDrop(DragEventArgs e)
-    {
-        if (e.Source is Control sourceItem && !AttachedControl.IsLogicalAncestorOf(sourceItem))
-            return false;
-
-        return CanGetPayload(e);
-    }
+    private protected override bool CanDropStructurally(DragEventArgs e) => CanDropAtLocation(e);
 
     /// <summary>
     /// Structural check of <see cref="DropLocation"/> that runs before <see cref="DropOperationBase.CanDrop"/>, so overrides of CanDrop can't skip it.
+    /// Return <see cref="DropOperationBase.Reject"/> with a message to explain a rejection.
     /// </summary>
     protected virtual bool CanDropAtLocation(DragEventArgs e) => true;
 

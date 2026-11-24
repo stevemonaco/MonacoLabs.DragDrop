@@ -20,6 +20,21 @@ public abstract partial class DropOperationBase
         private set => SetAndRaise(AttachedControlProperty, ref _attachedControl, value);
     }
 
+    private string? _errorMessage;
+
+    public static readonly DirectProperty<DropOperationBase, string?> ErrorMessageProperty =
+        AvaloniaProperty.RegisterDirect<DropOperationBase, string?>(nameof(ErrorMessage), o => o.ErrorMessage);
+
+    /// <summary>
+    /// Why the drag over the attached control is rejected, as passed to <see cref="Reject"/>. Mirrored to the drop adorner,
+    /// and cleared before each validation and when the drag leaves or drops.
+    /// </summary>
+    public string? ErrorMessage
+    {
+        get => _errorMessage;
+        private set => SetAndRaise(ErrorMessageProperty, ref _errorMessage, value);
+    }
+
     public static readonly StyledProperty<object?> PayloadTargetProperty =
         AvaloniaProperty.Register<DropOperationBase, object?>(nameof(PayloadTarget), defaultBindingMode: BindingMode.TwoWay);
 

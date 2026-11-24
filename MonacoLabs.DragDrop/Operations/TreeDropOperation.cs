@@ -102,10 +102,7 @@ public partial class TreeDropOperation : CollectionDropOperation
         if (!TryGetPayload<object>(e, out var payload) || !IsWithinSubtreeOf(DropLocation.ParentContainer, payload))
             return true;
 
-        if (DropAdorner is not null)
-            DropAdorner.ErrorMessage = SelfDropMessage;
-
-        return false;
+        return Reject(SelfDropMessage);
     }
 
     private static bool IsWithinSubtreeOf(Control? container, object node) =>

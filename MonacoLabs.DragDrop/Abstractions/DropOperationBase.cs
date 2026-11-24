@@ -139,14 +139,39 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
     }
 
     /// <summary>
-    /// Clears the previous validation message and runs <see cref="CanDrop"/>.
+    /// Clears <see cref="ErrorMessage"/>, runs the target's validation including <see cref="CanDrop"/>, and mirrors the resulting message to the drop adorner.
     /// </summary>
     protected bool EvaluateCanDrop(DragEventArgs e)
     {
-        if (DropAdorner is not null)
-            DropAdorner.ErrorMessage = null;
+        ErrorMessage = null;
+        var canDrop = CanDropStructurally(e) && CanDrop(e);
+        MirrorErrorMessage();
+        return canDrop;
+    }
 
-        return CanDrop(e);
+    // Collection targets run their location check here, before CanDrop, so overrides of CanDrop can't skip it
+    private protected virtual bool CanDropStructurally(DragEventArgs e) => true;
+
+    /// <summary>
+    /// Rejects the drag being validated, with <paramref name="message"/> as <see cref="ErrorMessage"/>. Returns false, so validation can
+    /// <c>return Reject("...")</c>.
+    /// </summary>
+    protected bool Reject(string? message)
+    {
+        ErrorMessage = message;
+        return false;
+    }
+
+    private protected void ClearErrorMessage()
+    {
+        ErrorMessage = null;
+        MirrorErrorMessage();
+    }
+
+    private void MirrorErrorMessage()
+    {
+        if (DropAdorner is not null)
+            DropAdorner.ErrorMessage = ErrorMessage;
     }
 
     /// <summary>
@@ -199,6 +224,7 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
     {
         ((IPseudoClasses)AttachedControl!.Classes).Set(":dropover", false);
         DropAdorner?.Detach();
+        ClearErrorMessage();
     }
 
     /// <summary>
@@ -278,6 +304,8 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
             DropAdorner.IsDropValid = false;
             DropAdorner.Detach();
         }
+
+        ClearErrorMessage();
     }
 
     protected virtual void OnDrop(DragEventArgs dragEventArgs)
@@ -285,7 +313,7 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
     }
 
     /// <summary>
-    /// Checks if the drop is expected to be valid. Override for custom validation and set <see cref="DropAdornerBase.ErrorMessage"/> to explain a rejection.
+    /// Checks if the drop is expected to be valid. Override for custom validation, and return <see cref="Reject"/> with a message to explain a rejection.
     /// </summary>
     protected virtual bool CanDrop(DragEventArgs e) => CanGetPayload(e);
 

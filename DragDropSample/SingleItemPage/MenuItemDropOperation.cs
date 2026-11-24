@@ -16,14 +16,12 @@ public class MenuItemDropOperation : ItemDropOperation
 
         if (AttachedControl?.DataContext is GuestOrderViewModel { IsLocked: true } guest)
         {
-            DropAdorner!.ErrorMessage = $"{guest.Name}'s order is locked";
-            return false;
+            return Reject($"{guest.Name}'s order is locked");
         }
 
         if (item.IsSoldOut)
         {
-            DropAdorner!.ErrorMessage = $"{item.Name} is sold out today";
-            return false;
+            return Reject($"{item.Name} is sold out today");
         }
 
         return true;

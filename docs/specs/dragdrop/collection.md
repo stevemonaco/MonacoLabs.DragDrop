@@ -23,6 +23,7 @@ types:
   - DropTargetOffset
 tests:
   - CollectionDragTests
+  - CollectionDropTests
   - CollectionRemovalTests
   - AutoScrollStepTests
 depends:
@@ -95,10 +96,11 @@ depends:
   - Tests: untested
 - **DD-COLLECTION-022** — While an item container at index *i* is hovered, the location's index shall be *i* for `BeforeTarget` and *i* + 1 for `AfterTarget`; while none is hovered, the index shall be null, meaning append.
   - Tests: untested
-- **DD-COLLECTION-023** — The drop operation shall evaluate `CanDropAtLocation` before `CanDrop`, and reject the drop when either is false, so overrides of `CanDrop` cannot skip the structural check.
-  - Tests: untested
-- **DD-COLLECTION-024** — When `CanDrop` is not overridden, the drop operation shall reject drags whose event source is not a logical descendant of the attached control, and otherwise accept them as DD-DROP-009 does.
-  - Tests: untested
+- **DD-COLLECTION-023** — The drop operation shall evaluate `CanDropAtLocation` before `CanDrop`, inside the same validation (DD-DROP-007), and reject the drop when either is false, so overrides of `CanDrop` cannot skip the structural check and a message passed to `Reject` by either reaches `ErrorMessage`.
+  - Tests: `TreeDropTests.DroppingANodeIntoItselfShowsTheSelfDropMessage`
+- ~~**DD-COLLECTION-024**~~ — Removed by api-design: see the decision "No logical-descendant check".
+- **DD-COLLECTION-037** — The drop operation shall validate drags over the attached control's own surface like drags over its content.
+  - Tests: `CollectionDropTests.ADragOverTheTargetsOwnSurfaceIsAccepted`
 
 ### Drop side: dropping
 
@@ -145,7 +147,6 @@ depends:
 - Indexes come from the item control's containers. When `PayloadTarget` is not the collection shown (for example a filtered or sorted view over it), insertion and removal indexes refer to different orders.
 - With multiple selection, only the pressed item is dragged and moved; the rest of the selection stays.
 - The scroll viewer is looked up on the first drag and cached for the operation's lifetime, so a re-templated control keeps scrolling the old viewer.
-- A `CanDrop` override that does not call the base loses DD-COLLECTION-024 (the sample's `WorkerDropOperation` does).
 
 ## Threading and lifetime
 
@@ -162,6 +163,7 @@ depends:
 - **One insertion adorner is retargeted.** Reason: styles set on a custom `ItemDropAdorner` instance survive hover changes, and no adorner is created per container.
 - **Locations fall back to `ItemsSource`.** Reason: platform drops and command-only targets still need an insertion index to hand to `PayloadCommand`.
 - **Structural checks run before `CanDrop`.** See DD-COLLECTION-023. Reason: consumers override `CanDrop` for domain validation and should not have to remember to call the base for structural correctness.
+- **No logical-descendant check.** The former DD-COLLECTION-024 rejected drags whose event source was not a logical descendant of the attached control. Probing found that every source that reaches the target's handlers is one (item containers, template parts such as the empty area's `ScrollContentPresenter`), except the attached control itself: Avalonia's `IsLogicalAncestorOf` is false for the control, so a target whose own surface is hit (a `Border` with a background) rejected drags over it and accepted them over its child. Rejected: moving the check into `CanDropAtLocation`, which keeps that bug for a case nobody found.
 
 ## Non-goals
 
@@ -173,7 +175,6 @@ depends:
 
 - A Move onto a single-value target (`ItemDropOperation`) removes nothing from the source list (DD-COLLECTION-010). Addressed by [changes/correctness-fixes.md](../../changes/correctness-fixes.md).
 - A Move onto a collection target that does not transfer (no `PayloadTarget`, only `PayloadCommand`) never calls `DropCompleted` (DD-COLLECTION-027), so the source keeps the item. Addressed by [changes/correctness-fixes.md](../../changes/correctness-fixes.md).
-- DD-COLLECTION-024 is a structural check in `CanDrop`, contradicting the "Structural checks run before CanDrop" decision. Addressed by [changes/api-design.md](../../changes/api-design.md).
 - Copy drops insert the source's reference with no way to clone it (DD-COLLECTION-030). Addressed by [changes/api-design.md](../../changes/api-design.md).
 - `CollectionDragInfo.PayloadContainerIndex` and `CollectionDropInfo.TargetIndex` have copy-paste doc comments that describe the wrong collection. Logged in the backlog.
 - The collection drop operation replaces the base DragEnter, DragOver and Drop handlers, so `OnDragEnter` and `OnDragOver` (DD-DROP) are never called on collection and tree targets, while `OnDrop` is and `OnDragLeave` ends the drag. Logged in the backlog (drop-side redesign).
