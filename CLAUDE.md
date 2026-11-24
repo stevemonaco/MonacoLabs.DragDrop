@@ -4,7 +4,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-MonacoLabs.DragDrop is a WIP/prototype MVVM-friendly drag-and-drop library for Avalonia 12, plus a demo app (`DragDropSample`) that exercises it. There are no tests, CI, or lint/format configs.
+MonacoLabs.DragDrop is a WIP/prototype MVVM-friendly drag-and-drop library for Avalonia 12, plus a demo app (`DragDropSample`) that exercises it. There are no tests, CI, or lint/format configs yet ([docs/changes/test-suite.md](docs/changes/test-suite.md) plans them).
+
+## Docs
+
+| Path | Content |
+|---|---|
+| `docs/ARCHITECTURE.md` | Goals, architecture map, testing strategy, project-wide decisions, sample |
+| `docs/specs/dragdrop/` | Feature specs, the source of truth for behavior; format in `docs/specs/README.md`, index in `index.md` |
+| `docs/changes/` | Change proposals for work in progress |
+| `docs/BACKLOG.md` | Open work: API design items, bugs, docs and hygiene, manual checks |
+
+**Specs:** before changing a feature's behavior, read its spec (and the specs in its `depends`), and update its requirements and `Tests:` lines in the same change. A change that diverges from its spec without updating it is incomplete. Design decisions and their reasons live in the spec's Decisions section, or ARCHITECTURE §4 when project-wide. New work that needs design starts as a proposal in `docs/changes/`; small fixes come straight from the backlog.
 
 ## Commands
 

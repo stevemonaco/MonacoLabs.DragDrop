@@ -1,0 +1,97 @@
+# MonacoLabs.DragDrop — Architecture
+
+An MVVM-friendly drag-and-drop library for Avalonia 12, plus a sample app that exercises it. This document is the map: goals, the architecture, how it is tested, the project-wide decisions and the sample. What each feature does, and why, is in the [feature specs](specs/README.md). Work not done yet is in the [backlog](BACKLOG.md), and new work starts as a [change proposal](changes/README.md).
+
+## 1. Goals and non-goals
+
+**Goals**
+
+- Drag and drop declared entirely in XAML, with view models that only expose properties, collections and commands. No drag-and-drop code in view models or code-behind.
+- Correct move semantics between single values, flat lists and trees, within one control and between controls, including reordering.
+- Validation that explains itself: a drop target can reject a drag and say why, in place.
+- Exchange of files and text with other applications through the same mechanism as in-app drags.
+- Styling hooks (pseudo-classes, themeable adorners) rather than hard-coded visuals.
+
+**Non-goals**
+
+- Dragging several items at once (the pressed item is the payload).
+- Cross-process in-app payloads. Only files and text leave the process.
+- Touch-specific gestures, keyboard drags, and native OS drag images.
+- Hierarchical controls other than `TreeView` (no `TreeDataGrid`).
+
+## 2. Architecture
+
+One package, `MonacoLabs.DragDrop` (`net10.0`, depends only on `Avalonia`). The spec index is [specs/dragdrop/index.md](specs/dragdrop/index.md).
+
+### 2.1 Wiring
+
+`DragDrop.DragOperation` and `DragDrop.DropOperation` attach an operation object to a control. An operation subscribes to the control's pointer or drag events and keeps per-control state, so each instance attaches to one control (DD-WIRING).
+
+### 2.2 Drag → drop data flow
+
+1. The drag source (DD-DRAG) tracks a press, waits for the threshold, resolves the payload and starts Avalonia's `DoDragDropAsync` inside a drag session (DD-SESSION).
+2. The `DataTransfer` holds the payload once per interaction id, plus a `DragInfo` (DD-TRANSFER). Platform ids add files or text (DD-PLATFORM).
+3. The drop target (DD-DROP) decides whether the drag is meant for it, validates it with `CanDrop`, shows its adorners (DD-ADORNERS) and reports an effect (DD-EFFECTS).
+4. On drop, the target assigns or inserts the payload, calls the drag operation's `DropCompleted`, and runs `PayloadCommand`. The drag side removes its original when the effect is Move.
+
+### 2.3 Operations
+
+| Drag | Drop | Spec |
+|---|---|---|
+| `ItemDragOperation` | `ItemDropOperation` | DD-ITEM: one value replaces another |
+| `CollectionDragOperation` | `CollectionDropOperation` | DD-COLLECTION: insert into and remove from `IList`s |
+| `TreeDragOperation` | `TreeDropOperation` | DD-TREE: per-node collections, three zones, subtree protection |
+
+All derive from `DragOperationBase` / `DropOperationBase` in `MonacoLabs.DragDrop.Abstractions`. Consumers customize validation by subclassing a drop operation and overriding `CanDrop` (and, for trees and collections, reading `DropLocation`).
+
+### 2.4 Source layout
+
+| Folder | Content |
+|---|---|
+| `MonacoLabs.DragDrop/` | `DragDrop` attached properties, interaction ids, assembly attributes |
+| `Abstractions/` | Base operations and their interfaces |
+| `Operations/` | Item, collection and tree operations |
+| `Info/` | `DragInfo`, `DropInfo`, collection variants, `DropEventArgs`, `CollectionDropLocation`, `DropTargetOffset` |
+| `Adorners/` | Drop adorners and the drag preview |
+| `Internals/` | `DragSession`, `ThrowIf` |
+| `DragDropSample/` | The sample app (§5) |
+| `docs/` | This map, the specs, the backlog and change proposals |
+
+## 3. Testing strategy
+
+There are no automated tests yet; every spec requirement is `untested`. The plan is [changes/test-suite.md](changes/test-suite.md): an xUnit v3 project running on Avalonia's headless platform, with pure logic extracted into internal helpers so it can be tested without a window. Once it lands, this section describes the layers and the test conventions.
+
+Behavior that needs the real OS (OLE drags with Explorer and other apps, drops outside the window, render scaling) stays manual. Each such check is a `manual —` requirement in its spec and a line in the backlog's manual checks.
+
+## 4. Project-wide decisions
+
+- **MVVM first.** View models expose collections, properties and `ICommand`s, and never reference controls or drag events. Validation that needs domain knowledge lives in a `CanDrop` override in the view layer (the sample's `CustomDragDrop` operations), not in the view model.
+- **Bindings on operations use the host control's DataContext.** Operations are `AvaloniaObject`s with no `DataContext`. Avalonia anchors bindings on non-control targets to the nearest parent control in XAML, so a plain `{Binding Items}` works. Reason: making operations `StyledElement`s would put them in the logical tree for no benefit. Avoid `#root.DataContext…` paths: named-element bindings on non-`ILogical` targets log "Value is null" until the view's `DataContext` is set, which `ViewLocator` only does after construction.
+- **Interaction ids, not types, select drop targets.** See DD-TRANSFER, "Interaction ids are typed channels".
+- **The drag side removes.** See DD-COLLECTION, "The drag side removes the payload".
+- **Never report Move for platform data.** See DD-EFFECTS, "Platform data is always copied or linked".
+- **Visual feedback is styleable.** The library sets pseudo-classes on the controls involved (`:dropover`, `:droptop`, `:dropbottom`, `:dropinside`, `:dragging`, and `:error`, `:nodrop`, `:copy`, `:remove` on adorners) and takes its default adorner looks from control themes, so app styles override them.
+- **Avalonia property registrations live in `*.props.cs` partial files** next to the logic file.
+- **Most public types use the root `MonacoLabs.DragDrop` namespace regardless of folder.** The exceptions are `MonacoLabs.DragDrop.Abstractions` and `DropAdornerKind` in `MonacoLabs.DragDrop.Adorners`. The XML namespace maps only the root namespace.
+- **Guard clauses use `ThrowIf`** (`Internals/ThrowIf.cs`).
+- **Package versions are central** in `Directory.Packages.props`.
+
+## 5. Sample
+
+`DragDropSample` is a page-per-feature demo, and the only consumer of the library so far.
+
+| Page | Exercises |
+|---|---|
+| `SingleItemPage` | DD-ITEM: menu (Copy only) → order slots, slot ↔ slot with `SwapOnDrop`, drag handles, `RemoveOnDropOutside`, validation messages |
+| `SimpleCollectionPage` | DD-COLLECTION: two lists with Move and Copy |
+| `ListBoxPage` | DD-COLLECTION: one source feeding three targets through interaction ids, domain validation (`WorkerDropOperation`) |
+| `TreeViewPage` | DD-TREE: tree ↔ flat list, node rules (`NodeDropOperation`) |
+| `TreeToTreePage` | DD-TREE: two trees |
+| `DesktopPage` | DD-PLATFORM: files and text with other applications, image validation (`ImageDropOperation`) |
+
+Decisions:
+
+- **Namespaces are not folder-based.** Views use `DragDropSample.Views` and view models `DragDropSample.ViewModels`, because `ViewLocator` maps a view model to its view by replacing "ViewModel" with "View" in the full type name. Custom operations use `DragDropSample.CustomDragDrop`.
+- **Compiled bindings by default.** XAML needs `x:DataType`; `ReflectionBinding` only where compiled bindings cannot resolve the path.
+- **CommunityToolkit.Mvvm** with partial-property `[ObservableProperty]` and `[RelayCommand]`; demo data from Bogus.
+- **Debug builds include Avalonia DevTools** (`WithDeveloperTools()`), so the DevTools MCP can inspect adorners and pseudo-classes in the running sample.

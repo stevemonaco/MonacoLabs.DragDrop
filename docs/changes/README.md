@@ -1,0 +1,51 @@
+# Change proposals
+
+New work starts here. A change proposal is a short file, `docs/changes/<name>.md` (kebab-case), describing one change to the library: a new feature, a behavior change or a fix that needs design. It exists while the change is being agreed and built. When the change lands, its content lives in the specs (`docs/specs/`) and the file is deleted; git history keeps it.
+
+Small fixes that need no design skip the proposal: take the item from [`docs/BACKLOG.md`](../BACKLOG.md) and update the affected spec with the fix.
+
+## Current proposals
+
+| Proposal | Depends on |
+|---|---|
+| [test-suite.md](test-suite.md): introduce the xUnit v3 test suite | — |
+| [api-design.md](api-design.md): breaking API changes before 1.0 | test-suite.md tasks 1–4 |
+| [correctness-fixes.md](correctness-fixes.md): fix the bugs found in the pre-1.0 review | test-suite.md tasks 1–4 |
+
+Suggested order: test-suite tasks 1–4, then api-design, then correctness-fixes, then the rest of test-suite. The API changes land before most tests are written against today's surface, and the fixes are written against the settled API.
+
+## Format
+
+```markdown
+# <Title>
+
+## Why
+
+What problem it solves, for whom, and what prompted it (a backlog item, a bug, a request).
+
+## What
+
+The change, in a few paragraphs: the behavior after it lands, and what does not change.
+
+## Decisions
+
+Each choice the change makes: the decision, the reason, and the alternatives rejected. These move into the governing spec's Decisions section when the change lands.
+
+## Spec changes
+
+Per spec id: requirements added (draft wording, no ids yet), requirements changed (by id, new wording), requirements struck (by id, with the reason). A new feature names its new spec file.
+
+## Tasks
+
+The ordered work items, each with its tests. Manual checks on the sample are listed as tasks.
+
+## Open questions
+
+What must be settled before or during the work. Empty before implementation starts.
+```
+
+## Lifecycle
+
+1. **Draft** the proposal and settle its open questions.
+2. **Implement** it. Each task updates its spec as it goes: requirements, their `Tests:` lines, and the Decisions section.
+3. **Close**: when the tests are green and the specs say what the code does, delete the proposal and remove the backlog lines it resolved. Anything left undone goes back into the backlog.
