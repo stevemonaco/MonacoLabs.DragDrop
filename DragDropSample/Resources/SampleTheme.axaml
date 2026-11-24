@@ -166,6 +166,41 @@
         <Setter Property="FontWeight" Value="SemiBold" />
     </Style>
 
+    <Style Selector="Border.grip">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Padding" Value="6,0" />
+        <Setter Property="Margin" Value="0,0,6,0" />
+        <Setter Property="Cursor" Value="SizeAll" />
+        <Setter Property="VerticalAlignment" Value="Stretch" />
+    </Style>
+    <Style Selector="Border.grip > TextBlock">
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Foreground" Value="{DynamicResource SubtleTextBrush}" />
+    </Style>
+    <Style Selector="Border.grip:pointerover">
+        <Setter Property="Background" Value="{DynamicResource TileBackgroundBrush}" />
+    </Style>
+    <Style Selector="Border.slot:dragging">
+        <Setter Property="Opacity" Value="0.45" />
+    </Style>
+
+    <Style Selector="ToggleButton.lock">
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Padding" Value="8,3" />
+        <Setter Property="CornerRadius" Value="10" />
+    </Style>
+    <Style Selector="ToggleButton.lock TextBlock.locked">
+        <Setter Property="IsVisible" Value="False" />
+    </Style>
+    <Style Selector="ToggleButton.lock:checked TextBlock.locked">
+        <Setter Property="IsVisible" Value="True" />
+    </Style>
+    <Style Selector="ToggleButton.lock:checked TextBlock.unlocked">
+        <Setter Property="IsVisible" Value="False" />
+    </Style>
+
     <Style Selector="Button.icon">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
@@ -192,5 +227,10 @@
     </Style>
     <Style Selector="dd|DragPreviewAdorner:nodrop">
         <Setter Property="Opacity" Value="0.55" />
+    </Style>
+    <Style Selector="dd|DragPreviewAdorner:remove">
+        <Setter Property="Opacity" Value="0.4" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TagForegroundBrush}" />
+        <Setter Property="BorderThickness" Value="2" />
     </Style>
 </Styles>

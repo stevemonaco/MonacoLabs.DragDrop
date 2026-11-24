@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.VisualTree;
@@ -9,7 +10,8 @@ namespace MonacoLabs.DragDrop;
 
 /// <summary>
 /// Snapshot of the dragged control that follows the pointer while a drag is over the source's window.
-/// Has the <c>:nodrop</c> pseudo-class while the hovered location rejects the drag.
+/// Has the <c>:nodrop</c> pseudo-class while the hovered location rejects the drag, <c>:copy</c> while it would copy,
+/// and <c>:remove</c> while dropping would remove the payload (see <see cref="Abstractions.DragOperationBase.RemoveOnDropOutside"/>).
 /// </summary>
 public class DragPreviewAdorner : Border
 {
@@ -71,7 +73,16 @@ public class DragPreviewAdorner : Border
         Canvas.SetTop(this, pointer.Y - _grabOffset.Y);
     }
 
-    public void SetCanDrop(bool canDrop) => PseudoClasses.Set(":nodrop", !canDrop);
+    /// <summary>
+    /// Reflects the hovered location through the <c>:nodrop</c>, <c>:copy</c> and <c>:remove</c> pseudo-classes.
+    /// </summary>
+    /// <param name="isRemoving">Dropping here removes the payload from its source.</param>
+    public void SetEffect(DragDropEffects effect, bool isRemoving)
+    {
+        PseudoClasses.Set(":nodrop", effect == DragDropEffects.None);
+        PseudoClasses.Set(":copy", effect == DragDropEffects.Copy && !isRemoving);
+        PseudoClasses.Set(":remove", isRemoving);
+    }
 
     // The snapshot omits whatever is painted behind the source, so transparent sources need the nearest opaque backdrop
     private static IBrush? FindBackdrop(Visual source)

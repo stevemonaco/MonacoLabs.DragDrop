@@ -5,6 +5,8 @@ public partial class ProjectNodeViewModel : NodeViewModel, IParentNode
 {
     public ObservableCollection<NodeViewModel> Children { get; init; } = [];
 
+    public override string Icon => "📦";
+
     public ProjectNodeViewModel(string name) : base(name)
     {
     }

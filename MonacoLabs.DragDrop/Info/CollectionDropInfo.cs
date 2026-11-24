@@ -20,4 +20,9 @@ public class CollectionDropInfo : DropInfo
     /// Should match the index in the PayloadCollection
     /// </summary>
     public int? TargetIndex { get; init; }
+
+    /// <summary>
+    /// Data item that owns <see cref="TargetCollection"/>, such as the parent tree node. Null for a flat list or a tree's root.
+    /// </summary>
+    public object? TargetParent { get; init; }
 }

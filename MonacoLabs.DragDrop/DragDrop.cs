@@ -69,6 +69,22 @@ public partial class DragDrop
         return element.GetValue(DropOperationProperty);
     }
 
+    /// <summary>
+    /// Identifies the IsDragHandle attached property, which marks an element inside a drag source as a place where drags can start.
+    /// Only drag operations with <see cref="DragOperationBase.RequiresDragHandle"/> set restrict drags to handles.
+    /// </summary>
+    public static readonly AttachedProperty<bool> IsDragHandleProperty = AvaloniaProperty.RegisterAttached<DragDrop, Control, bool>("IsDragHandle");
+
+    public static void SetIsDragHandle(AvaloniaObject element, bool value)
+    {
+        element.SetValue(IsDragHandleProperty, value);
+    }
+
+    public static bool GetIsDragHandle(AvaloniaObject element)
+    {
+        return element.GetValue(IsDragHandleProperty);
+    }
+
     private static void HandleDropOperationChanged(Control control, AvaloniaPropertyChangedEventArgs change)
     {
         if (change.OldValue is IDropOperation oldDrop)

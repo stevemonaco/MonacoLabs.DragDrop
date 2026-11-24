@@ -11,13 +11,13 @@ namespace MonacoLabs.DragDrop;
 /// <summary>
 /// Handles drag operations from flat collection controls
 /// </summary>
-public class CollectionDragOperation : ItemDragOperation
+public class CollectionDragOperation : DragOperationBase
 {
     public static readonly StyledProperty<IList?> PayloadCollectionProperty =
         AvaloniaProperty.Register<CollectionDragOperation, IList?>(nameof(PayloadCollection));
 
     /// <summary>
-    /// Specifies the collection the Payload is inside of so it can be removed when 
+    /// Specifies the collection the Payload is inside of so it can be removed when
     /// the Drop transfer occurs
     /// </summary>
     public IList? PayloadCollection
@@ -59,13 +59,13 @@ public class CollectionDragOperation : ItemDragOperation
     protected override DragInfo CreateMetadata(PointerEventArgs e)
     {
         var container = LocatePayloadContainer(e);
-        var index = LocatePayloadContainerIndex(container);
 
         return new CollectionDragInfo()
         {
             DragOperation = this,
             DragOrigin = _dragOrigin!.Value,
             DragIds = InteractionIds.ToList(),
+            PointerId = e.Pointer.Id,
             PayloadCollection = PayloadCollection,
             PayloadContainer = container,
             PayloadContainerIndex = LocatePayloadContainerIndex(container)
@@ -101,30 +101,39 @@ public class CollectionDragOperation : ItemDragOperation
     {
         base.DropCompleted(effect, dragInfo, dropInfo);
 
-        if (dragInfo is not CollectionDragInfo { PayloadCollection: IList payloadCollection } collectionDragInfo
+        if (effect != DragDropEffects.Move
+            || dragInfo is not CollectionDragInfo { PayloadCollection: IList payloadCollection } collectionDragInfo
             || dropInfo is not CollectionDropInfo { TargetCollection: IList targetCollection } collectionDropInfo)
             return;
 
         var payloadIndex = collectionDragInfo.PayloadContainerIndex;
         var targetIndex = collectionDropInfo.TargetIndex;
 
-        if (effect == DragDropEffects.Move)
+        if (payloadIndex.HasValue)
         {
-            if (payloadIndex.HasValue)
+            if (payloadIndex.Value >= targetIndex && ReferenceEquals(payloadCollection, targetCollection))
             {
-                if (payloadIndex.Value >= targetIndex && ReferenceEquals(payloadCollection, targetCollection))
-                {
-                    payloadCollection.RemoveAt(payloadIndex.Value + 1);
-                }
-                else
-                {
-                    payloadCollection.RemoveAt(payloadIndex.Value);
-                }
+                payloadCollection.RemoveAt(payloadIndex.Value + 1);
             }
             else
             {
-                payloadCollection.Remove(Payload);
+                payloadCollection.RemoveAt(payloadIndex.Value);
             }
         }
+        else if (dragInfo.Payload is { } payload)
+        {
+            payloadCollection.Remove(payload);
+        }
+    }
+
+    protected override void OnDroppedOutside(DragInfo dragInfo, object payload)
+    {
+        if (dragInfo is not CollectionDragInfo { PayloadCollection: IList payloadCollection } collectionDragInfo)
+            return;
+
+        if (collectionDragInfo.PayloadContainerIndex is int index && index < payloadCollection.Count && Equals(payloadCollection[index], payload))
+            payloadCollection.RemoveAt(index);
+        else
+            payloadCollection.Remove(payload);
     }
 }

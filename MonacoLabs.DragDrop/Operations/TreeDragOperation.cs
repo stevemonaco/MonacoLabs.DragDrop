@@ -6,27 +6,27 @@ using Avalonia.VisualTree;
 using System.Collections;
 
 namespace MonacoLabs.DragDrop;
+
+/// <summary>
+/// Drags nodes out of a <see cref="TreeView"/>. Unless <see cref="CollectionDragOperation.PayloadCollection"/> is set,
+/// the collection to remove from is the dragged node's parent <see cref="ItemsControl.ItemsSource"/>.
+/// </summary>
 public class TreeDragOperation : CollectionDragOperation
 {
     protected override DragInfo CreateMetadata(PointerEventArgs e)
     {
         var container = LocatePayloadContainer(e);
-        var index = LocatePayloadContainerIndex(container);
 
         var payloadCollection = PayloadCollection;
-        if (payloadCollection is null)
-        {
-            if (container is TreeViewItem { Parent: TreeViewItem { ItemsSource: IList itemList } })
-                payloadCollection = itemList;
-            else if (AttachedControl is TreeView { ItemsSource: IList treeList })
-                payloadCollection = treeList;
-        }
+        if (payloadCollection is null && container is not null)
+            payloadCollection = ItemsControl.ItemsControlFromItemContainer(container)?.ItemsSource as IList;
 
         return new CollectionDragInfo()
         {
             DragOperation = this,
             DragOrigin = _dragOrigin!.Value,
             DragIds = InteractionIds.ToList(),
+            PointerId = e.Pointer.Id,
             PayloadCollection = payloadCollection,
             PayloadContainer = container,
             PayloadContainerIndex = LocatePayloadContainerIndex(container)
@@ -40,30 +40,25 @@ public class TreeDragOperation : CollectionDragOperation
         if (container is not TreeViewItem item)
             return container;
 
-        return item.GetVisualDescendants().OfType<Control>().FirstOrDefault(x => x.Name == "PART_Header" && x.TemplatedParent == item) ?? item;
+        return FindHeader(item);
     }
 
     protected override Control? LocatePayloadContainer(RoutedEventArgs triggerEvent)
     {
-        if (AttachedControl is TreeView tree && triggerEvent.Source is Control sourceItem)
-        {
-            var ancestors = sourceItem.GetSelfAndLogicalAncestors();
-            return ancestors.OfType<TreeViewItem>().FirstOrDefault();
-        }
+        if (AttachedControl is TreeView && triggerEvent.Source is Control sourceItem)
+            return sourceItem.GetSelfAndLogicalAncestors().OfType<TreeViewItem>().FirstOrDefault();
 
         return null;
     }
 
     protected override int? LocatePayloadContainerIndex(Control? container)
     {
-        if (AttachedControl is TreeView items && container is TreeViewItem item)
-        {
-            if (item.Parent is TreeViewItem parent)
-                return parent.IndexFromContainer(container);
-            
-            return items.IndexFromContainer(container);
-        }
-        
+        if (AttachedControl is TreeView && container is TreeViewItem item)
+            return ItemsControl.ItemsControlFromItemContainer(item)?.IndexFromContainer(item);
+
         return null;
     }
+
+    internal static Control FindHeader(TreeViewItem item) =>
+        item.GetVisualDescendants().OfType<Control>().FirstOrDefault(x => x.Name == "PART_Header" && x.TemplatedParent == item) ?? item;
 }

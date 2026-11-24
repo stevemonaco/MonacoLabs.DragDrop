@@ -13,4 +13,9 @@ public class DropInfo
     public required Control HoveredControl { get; init; }
 
     public required DragEventArgs DragEventArgs { get; init; }
+
+    /// <summary>
+    /// Value the drop target held before the payload replaced it, for single-value targets.
+    /// </summary>
+    public object? ReplacedPayload { get; init; }
 }

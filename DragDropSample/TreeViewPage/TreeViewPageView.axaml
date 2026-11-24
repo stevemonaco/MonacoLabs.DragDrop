@@ -2,6 +2,7 @@
     x:Class="DragDropSample.Views.TreeViewPageView"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:cdd="using:DragDropSample.CustomDragDrop"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:dd="using:MonacoLabs.DragDrop"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -11,35 +12,47 @@
     d:DesignWidth="800"
     x:DataType="vm:TreeViewPageViewModel"
     mc:Ignorable="d">
+    <UserControl.Resources>
+        <DataTemplate x:Key="NodeHeaderTemplate" x:DataType="node:NodeViewModel">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+                <TextBlock Text="{Binding Icon}" />
+                <TextBlock Text="{Binding Name}" />
+            </StackPanel>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <UserControl.Styles>
+        <Style x:DataType="node:NodeViewModel" Selector="TreeViewItem">
+            <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+        </Style>
+    </UserControl.Styles>
+
+    <UserControl.DataTemplates>
+        <TreeDataTemplate x:DataType="node:SolutionNodeViewModel" ItemsSource="{Binding Children}">
+            <ContentControl Content="{Binding}" ContentTemplate="{StaticResource NodeHeaderTemplate}" />
+        </TreeDataTemplate>
+        <TreeDataTemplate x:DataType="node:ProjectNodeViewModel" ItemsSource="{Binding Children}">
+            <ContentControl Content="{Binding}" ContentTemplate="{StaticResource NodeHeaderTemplate}" />
+        </TreeDataTemplate>
+        <TreeDataTemplate x:DataType="node:FolderNodeViewModel" ItemsSource="{Binding Children}">
+            <ContentControl Content="{Binding}" ContentTemplate="{StaticResource NodeHeaderTemplate}" />
+        </TreeDataTemplate>
+        <DataTemplate x:DataType="node:NodeViewModel">
+            <ContentControl Content="{Binding}" ContentTemplate="{StaticResource NodeHeaderTemplate}" />
+        </DataTemplate>
+    </UserControl.DataTemplates>
+
     <Grid ColumnDefinitions="*,20,*">
         <Border Classes="card">
             <Grid RowDefinitions="Auto,*" RowSpacing="12">
                 <TextBlock Classes="card-title" Text="Solution" />
-                <TreeView
-                    x:Name="tree"
-                    Grid.Row="1"
-                    ItemsSource="{Binding Solutions}">
+                <TreeView Grid.Row="1" ItemsSource="{Binding Solutions}">
                     <dd:DragDrop.DragOperation>
                         <dd:TreeDragOperation InteractionIds="app:node" />
                     </dd:DragDrop.DragOperation>
                     <dd:DragDrop.DropOperation>
-                        <dd:TreeDropOperation InteractionIds="app:node" />
+                        <cdd:NodeDropOperation InteractionIds="app:node" />
                     </dd:DragDrop.DropOperation>
-
-                    <TreeView.DataTemplates>
-                        <TreeDataTemplate x:DataType="node:SolutionNodeViewModel" ItemsSource="{Binding Children}">
-                            <TextBlock Text="{Binding Name}" />
-                        </TreeDataTemplate>
-                        <TreeDataTemplate x:DataType="node:ProjectNodeViewModel" ItemsSource="{Binding Children}">
-                            <TextBlock Text="{Binding Name}" />
-                        </TreeDataTemplate>
-                        <TreeDataTemplate x:DataType="node:FolderNodeViewModel" ItemsSource="{Binding Children}">
-                            <TextBlock Text="{Binding Name}" />
-                        </TreeDataTemplate>
-                        <TreeDataTemplate x:DataType="node:FileNodeViewModel">
-                            <TextBlock Text="{Binding Name}" />
-                        </TreeDataTemplate>
-                    </TreeView.DataTemplates>
                 </TreeView>
             </Grid>
         </Border>
@@ -52,22 +65,13 @@
         <Border Grid.Column="2" Classes="card">
             <Grid RowDefinitions="Auto,*" RowSpacing="12">
                 <TextBlock Classes="card-title" Text="Flat list" />
-                <ListBox
-                    x:Name="box"
-                    Grid.Row="1"
-                    ItemsSource="{Binding FlatItems}">
+                <ListBox Grid.Row="1" ItemsSource="{Binding FlatItems}">
                     <dd:DragDrop.DragOperation>
                         <dd:CollectionDragOperation InteractionIds="app:node" PayloadCollection="{Binding FlatItems}" />
                     </dd:DragDrop.DragOperation>
                     <dd:DragDrop.DropOperation>
                         <dd:CollectionDropOperation InteractionIds="app:node" PayloadTarget="{Binding FlatItems}" />
                     </dd:DragDrop.DropOperation>
-
-                    <ListBox.ItemTemplate>
-                        <DataTemplate x:DataType="node:NodeViewModel">
-                            <TextBlock Text="{Binding Name}" />
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
                 </ListBox>
             </Grid>
         </Border>

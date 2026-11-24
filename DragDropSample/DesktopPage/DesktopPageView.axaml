@@ -1,0 +1,159 @@
+<UserControl
+    x:Class="DragDropSample.Views.DesktopPageView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:cdd="using:DragDropSample.CustomDragDrop"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:dd="using:MonacoLabs.DragDrop"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:DragDropSample.ViewModels"
+    d:DesignHeight="600"
+    d:DesignWidth="1000"
+    x:DataType="vm:DesktopPageViewModel"
+    mc:Ignorable="d">
+    <Grid ColumnDefinitions="*,20,*">
+        <!--  Files  -->
+        <Border Classes="card">
+            <Grid RowDefinitions="Auto,*" RowSpacing="12">
+                <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Spacing="2">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Classes="card-title" Text="Files" />
+                            <Border Classes="pill">
+                                <TextBlock Text="{Binding Files.Count}" />
+                            </Border>
+                        </StackPanel>
+                        <TextBlock Classes="subtle" Text="Drop files or folders from your file manager. Drag one back out to copy it, or drop it on empty space to remove it from the list." />
+                    </StackPanel>
+                    <Button
+                        Grid.Column="1"
+                        VerticalAlignment="Top"
+                        Classes="icon"
+                        Command="{Binding ClearFilesCommand}"
+                        Content="Clear" />
+                </Grid>
+
+                <Panel Grid.Row="1">
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Classes="subtle"
+                        IsVisible="{Binding !Files.Count}"
+                        Text="Drop files here" />
+                    <ListBox ItemsSource="{Binding Files}">
+                        <dd:DragDrop.DragOperation>
+                            <cdd:FileDragOperation
+                                AllowedEffects="Copy"
+                                InteractionIds="platform:files"
+                                PayloadCollection="{Binding Files}"
+                                RemoveOnDropOutside="True" />
+                        </dd:DragDrop.DragOperation>
+                        <dd:DragDrop.DropOperation>
+                            <dd:CollectionDropOperation InteractionIds="platform:files" PayloadCommand="{Binding AddFilesCommand}" />
+                        </dd:DragDrop.DropOperation>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:DroppedFileViewModel">
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                    <TextBlock
+                                        VerticalAlignment="Center"
+                                        FontSize="18"
+                                        Text="{Binding Icon}" />
+                                    <StackPanel Grid.Column="1" Spacing="1">
+                                        <TextBlock
+                                            FontWeight="SemiBold"
+                                            Text="{Binding Name}"
+                                            TextTrimming="CharacterEllipsis" />
+                                        <TextBlock
+                                            Classes="subtle"
+                                            FontSize="12"
+                                            Text="{Binding Details}"
+                                            TextTrimming="CharacterEllipsis"
+                                            TextWrapping="NoWrap" />
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Panel>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Column="2" RowDefinitions="Auto,20,*">
+            <!--  Image  -->
+            <Border Classes="card">
+                <StackPanel Spacing="12">
+                    <StackPanel Spacing="2">
+                        <TextBlock Classes="card-title" Text="Image" />
+                        <TextBlock Classes="subtle" Text="An ItemDropOperation that accepts platform:files and validates the file type in CanDrop." />
+                    </StackPanel>
+                    <Border
+                        Height="170"
+                        Classes="slot"
+                        Classes.filled="{Binding Image, Converter={x:Static ObjectConverters.IsNotNull}}">
+                        <dd:DragDrop.DropOperation>
+                            <cdd:ImageDropOperation InteractionIds="platform:files" PayloadCommand="{Binding SetImageCommand}" />
+                        </dd:DragDrop.DropOperation>
+                        <Panel>
+                            <Rectangle Classes="slot-outline" />
+                            <TextBlock
+                                Classes="slot-hint"
+                                IsVisible="{Binding Image, Converter={x:Static ObjectConverters.IsNull}}"
+                                Text="Drop an image file here" />
+                            <Grid
+                                Margin="10"
+                                ColumnDefinitions="*,Auto"
+                                IsVisible="{Binding Image, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                <Image Source="{Binding Image}" Stretch="Uniform" />
+                                <StackPanel
+                                    Grid.Column="1"
+                                    VerticalAlignment="Top"
+                                    Spacing="4">
+                                    <Button
+                                        HorizontalAlignment="Right"
+                                        Classes="icon"
+                                        Command="{Binding ClearImageCommand}"
+                                        Content="✕"
+                                        ToolTip.Tip="Clear image" />
+                                </StackPanel>
+                            </Grid>
+                        </Panel>
+                    </Border>
+                    <TextBlock
+                        Classes="subtle"
+                        IsVisible="{Binding ImageName, Converter={x:Static ObjectConverters.IsNotNull}}"
+                        Text="{Binding ImageName}" />
+                </StackPanel>
+            </Border>
+
+            <!--  Snippets  -->
+            <Border Grid.Row="2" Classes="card">
+                <Grid RowDefinitions="Auto,*" RowSpacing="12">
+                    <StackPanel Spacing="2">
+                        <TextBlock Classes="card-title" Text="Snippets" />
+                        <TextBlock Classes="subtle" Text="Drop text from a browser or editor. Drag a snippet into another app to copy its text, or within the list to reorder it. Drop it on empty space to remove it." />
+                    </StackPanel>
+                    <ListBox Grid.Row="1" ItemsSource="{Binding Snippets}">
+                        <dd:DragDrop.DragOperation>
+                            <dd:CollectionDragOperation
+                                AllowedEffects="Move,Copy"
+                                InteractionIds="app:snippet, platform:text"
+                                PayloadCollection="{Binding Snippets}"
+                                RemoveOnDropOutside="True" />
+                        </dd:DragDrop.DragOperation>
+                        <dd:DragDrop.DropOperation>
+                            <dd:CollectionDropOperation
+                                InteractionIds="app:snippet, platform:text"
+                                PayloadCommand="{Binding AddSnippetsCommand}"
+                                PayloadTarget="{Binding Snippets}" />
+                        </dd:DragDrop.DropOperation>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="x:String">
+                                <TextBlock Text="{Binding}" TextWrapping="Wrap" />
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

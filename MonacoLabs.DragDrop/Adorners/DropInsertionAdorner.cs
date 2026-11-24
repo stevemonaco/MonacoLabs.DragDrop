@@ -1,31 +1,29 @@
-﻿using Avalonia.Controls;
-using Avalonia.Media;
-using Avalonia;
-using Avalonia.Layout;
+﻿using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
-using Avalonia.Input;
-using Avalonia.Interactivity;
-using AvaDragDrop = Avalonia.Input.DragDrop;
-using System.Diagnostics;
+using Avalonia.Media;
 
 namespace MonacoLabs.DragDrop;
 
 /// <summary>
-/// Adorner that displays an insertion separator between child items in a collection control
+/// Adorner that draws an insertion line above or below the hovered item, or an outline around it for drops into the item.
+/// The owning drop operation decides the <see cref="Offset"/>.
 /// </summary>
 public class DropInsertionAdorner : DropAdornerBase
 {
-    public static readonly StyledProperty<bool> SupportsChildInsertionProperty =
-        AvaloniaProperty.Register<DropInsertionAdorner, bool>("SupportsChildInsertion");
+    private DropTargetOffset _offset = DropTargetOffset.BeforeTarget;
+    public static readonly DirectProperty<DropInsertionAdorner, DropTargetOffset> OffsetProperty =
+        AvaloniaProperty.RegisterDirect<DropInsertionAdorner, DropTargetOffset>(nameof(Offset), o => o.Offset);
 
-    public bool SupportsChildInsertion
+    /// <summary>
+    /// Where the payload lands relative to <see cref="DropAdornerBase.TargetControl"/>.
+    /// </summary>
+    public DropTargetOffset Offset
     {
-        get => GetValue(SupportsChildInsertionProperty);
-        set => SetValue(SupportsChildInsertionProperty, value);
+        get => _offset;
+        private set => SetAndRaise(OffsetProperty, ref _offset, value);
     }
 
-    public DropTargetOffset Target { get; set; } = DropTargetOffset.BeforeTarget;
-    
     public static readonly StyledProperty<IBrush?> LineBrushProperty =
         AvaloniaProperty.Register<DropInsertionAdorner, IBrush?>(nameof(LineBrush), AdornerBrushes.Accent);
 
@@ -54,137 +52,21 @@ public class DropInsertionAdorner : DropAdornerBase
         Child = new InsertionMarker(this);
     }
 
-    public override void Attach()
+    /// <summary>
+    /// Moves the indicator to <paramref name="offset"/> relative to <see cref="DropAdornerBase.TargetControl"/>.
+    /// </summary>
+    public virtual void Update(DropTargetOffset offset)
     {
         if (TargetControl is null)
             return;
 
-        base.Attach();
-        TargetControl.AddHandler(AvaDragDrop.DragOverEvent, TargetControl_DragOver, RoutingStrategies.Bubble, true);
-        TargetControl.AddHandler(AvaDragDrop.DragEnterEvent, TargetControl_DragEnter, RoutingStrategies.Bubble, true);
-
-        var rect = GetAdornerRect();
-
-        Width = rect.Width;
-        Height = 4;
-
-        Debug.WriteLine($"Attach: {TargetControl.GetType()}");
-
-        Target = DropTargetOffset.BeforeTarget;
-        //IsVisible = false;
-
-        //TargetControl.RenderTransform = new TranslateTransform(0, 40);
-        //RenderTransform = new TranslateTransform(40, 40);
-
-        //if (VerticalAlignment == VerticalAlignment.Top)
-        //{
-        //    RenderTransform = new TranslateTransform(rect.X, rect.Y);
-        //}
-        //else if (VerticalAlignment == VerticalAlignment.Bottom)
-        //{
-        //    RenderTransform = new TranslateTransform(rect.X, 0); // TargetControl.Height + 4);
-        //}
-
-        //Child = new TextBlock()
-        //{
-        //    //[!TextBlock.TextProperty] = new Binding()
-        //    //{
-        //    //    Source = this,
-        //    //    Path = nameof(ErrorMessage)
-        //    //},
-        //    Text = ErrorMessage,
-        //    FontSize = 24,
-        //    Foreground = Brushes.White,
-        //    HorizontalAlignment = HorizontalAlignment.Center,
-        //    VerticalAlignment = VerticalAlignment.Center,
-        //    TextWrapping = TextWrapping.Wrap
-        //};
-    }
-
-    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
-    {
-        base.OnDetachedFromVisualTree(e);
-        Debug.WriteLine("Detached from Visual Tree");
-    }
-
-    public override void Detach()
-    {
-        if (TargetControl is null)
-            return;
-
-        RemovePseudoclasses();
-        Debug.WriteLine("Detach");
-        base.Detach();
-        TargetControl.RemoveHandler(AvaDragDrop.DragOverEvent, TargetControl_DragOver);
-        TargetControl.RemoveHandler(AvaDragDrop.DragEnterEvent, TargetControl_DragEnter);
-    }
-
-    protected virtual void TargetControl_DragEnter(object? sender, DragEventArgs e)
-    {
-        if (TargetControl is null)
-            return;
-
-        var dragLocation = e.GetPosition(TargetControl);
-        Update(dragLocation);
-    }
-
-    protected virtual void TargetControl_DragOver(object? sender, DragEventArgs e)
-    {
-        if (TargetControl is null)
-            return;
-
-        var dragLocation = e.GetPosition(TargetControl);
-        Update(dragLocation);
-    }
-
-    public virtual void Update(Point dragLocation)
-    {
-        if (TargetControl is null)
-            return;
-
-        IsVisible = true;
-
-        if (SupportsChildInsertion)
-        {
-            if (dragLocation.Y < (Math.Floor(TargetControl.Bounds.Height / 4)))
-            {
-                Target = DropTargetOffset.AfterTarget;
-                VerticalAlignment = VerticalAlignment.Top;
-            }
-            else if (dragLocation.Y > TargetControl.Bounds.Height - (Math.Floor(TargetControl.Bounds.Height / 4)))
-            {
-                Target = DropTargetOffset.BeforeTarget;
-                VerticalAlignment = VerticalAlignment.Bottom;
-            }
-            else
-            {
-                Target = DropTargetOffset.OnTarget;
-                VerticalAlignment = VerticalAlignment.Stretch;
-            }
-        }
-        else
-        {
-            if (dragLocation.Y < Math.Floor(TargetControl.Bounds.Height / 2))
-            {
-                Target = DropTargetOffset.AfterTarget;
-                VerticalAlignment = VerticalAlignment.Top;
-            }
-            else
-            {
-                Target = DropTargetOffset.BeforeTarget;
-                VerticalAlignment = VerticalAlignment.Bottom;
-            }
-        }
+        Offset = offset;
 
         // Covering the target exactly keeps the adorner on its pixel-aligned bounds; the marker draws the line at the edge
-        _gapOffset = VerticalAlignment == VerticalAlignment.Stretch || SupportsChildInsertion
-            ? 0
-            : GetGapCenterOffset(VerticalAlignment == VerticalAlignment.Top);
-        Margin = default;
+        _gapOffset = offset == DropTargetOffset.OnTarget ? 0 : GetGapCenterOffset(offset == DropTargetOffset.BeforeTarget);
+        Width = TargetControl.Bounds.Width;
         Height = TargetControl.Bounds.Height;
         Child?.InvalidateVisual();
-
-        UpdatePseudoclasses(VerticalAlignment == VerticalAlignment.Top);
     }
 
     /// <summary>
@@ -212,18 +94,8 @@ public class DropInsertionAdorner : DropAdornerBase
     {
         base.OnPropertyChanged(change);
 
-        if (change.Property == ErrorMessageProperty
-            && change.NewValue is string errorMessage
-            && Child is TextBlock errorText)
-        {
-            errorText.Text = errorMessage;
-        }
-        else if (change.Property == IsDropValidProperty
-            || change.Property == VerticalAlignmentProperty
-            || change.Property == LineBrushProperty)
-        {
+        if (change.Property == IsDropValidProperty || change.Property == LineBrushProperty)
             Child?.InvalidateVisual();
-        }
     }
 
     private sealed class InsertionMarker(DropInsertionAdorner owner) : Control
@@ -242,13 +114,13 @@ public class DropInsertionAdorner : DropAdornerBase
             var thickness = thicknessPixels / scaling;
             var pen = new Pen(brush, thickness, lineCap: PenLineCap.Round);
 
-            if (owner.VerticalAlignment == VerticalAlignment.Stretch)
+            if (owner.Offset == DropTargetOffset.OnTarget)
             {
                 context.DrawRectangle(null, pen, new Rect(size).Deflate(thickness / 2), 4, 4);
                 return;
             }
 
-            var edge = owner.VerticalAlignment == VerticalAlignment.Top ? 0 : size.Height;
+            var edge = owner.Offset == DropTargetOffset.BeforeTarget ? 0 : size.Height;
             var y = SnapLineCenter(edge + owner._gapOffset, thicknessPixels, scaling);
             context.DrawEllipse(null, pen, new Point(MarkerRadius + thickness / 2, y), MarkerRadius, MarkerRadius);
             context.DrawLine(pen, new Point(MarkerRadius * 2 + thickness / 2, y), new Point(size.Width - thickness / 2, y));
@@ -260,17 +132,5 @@ public class DropInsertionAdorner : DropAdornerBase
             var topPixel = Math.Round(y * scaling - thicknessPixels / 2);
             return (topPixel + thicknessPixels / 2) / scaling;
         }
-    }
-
-    private void UpdatePseudoclasses(bool isTop)
-    {
-        ((IPseudoClasses)TargetControl!.Classes).Set(":droptop", isTop);
-        ((IPseudoClasses)TargetControl!.Classes).Set(":dropbottom", !isTop);
-    }
-
-    private void RemovePseudoclasses()
-    {
-        ((IPseudoClasses)TargetControl!.Classes).Set(":droptop", false);
-        ((IPseudoClasses)TargetControl!.Classes).Set(":dropbottom", false);
     }
 }

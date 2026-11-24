@@ -27,4 +27,9 @@ public class DragInfo
     /// Id associated with the pointer that started the drag operation
     /// </summary>
     public int? PointerId { get; init; }
+
+    /// <summary>
+    /// Payload resolved when the drag started
+    /// </summary>
+    public object? Payload { get; internal set; }
 }

@@ -9,13 +9,15 @@ public partial class TreeViewPageViewModel : PageViewModel
 
     public TreeViewPageViewModel()
     {
-        Title = "TreeView";
-        Description = "Work in progress: drag nodes between the tree and the flat list.";
+        Title = "Tree ↔ List";
+        Description = "Drag nodes between the tree and the flat list, or rearrange the tree. Drop on a node's top or bottom edge to insert beside it, "
+            + "or on its middle to move it inside. Folders hold folders and files, and only projects can be at the top level.";
 
         Solutions = new()
         {
             new ProjectNodeViewModel("DragDropSample")
             {
+                IsExpanded = true,
                 Children = new()
                 {
                     new FolderNodeViewModel("Assets")
@@ -27,6 +29,7 @@ public partial class TreeViewPageViewModel : PageViewModel
                     },
                     new FolderNodeViewModel("Shell")
                     {
+                        IsExpanded = true,
                         Children =
                         [
                             new FileNodeViewModel("MainWindow.axaml"),
@@ -43,6 +46,7 @@ public partial class TreeViewPageViewModel : PageViewModel
             },
             new ProjectNodeViewModel("MonacoLabs.DragDrop")
             {
+                IsExpanded = true,
                 Children = new()
                 {
                     new FileNodeViewModel("DragDrop.cs"),

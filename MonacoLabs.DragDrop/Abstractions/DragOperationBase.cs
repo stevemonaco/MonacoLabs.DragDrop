@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Platform.Storage;
 using Avalonia.VisualTree;
 using AvaDragDrop = Avalonia.Input.DragDrop;
 
@@ -51,40 +52,47 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
 
     protected virtual void Control_PointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        if (sender is not Control c || _isDragPending)
+        if (sender is not Control c || _isDragPending || !CanDrag)
             return;
 
-        if (e.Source is Control sourceControl && sourceControl.GetVisualAncestors().Any(x => x is ScrollBar))
+        if (e.Source is not Control control || IsInsideIgnoredControl(control))
             return;
 
         var point = e.GetCurrentPoint(AttachedControl);
         if (!point.Properties.IsLeftButtonPressed)
             return;
 
-        if (e.Source is Control control)
-        {
-            _trackedControl = control;
-            _dragOrigin = point.Position;
-            _pressedEventArgs = e;
+        if (RequiresDragHandle && !IsInsideDragHandle(control))
+            return;
 
-            // Selecting items ignore handled presses, so an unselected item must receive this one to become selected
-            if (FindSelectable(control) is not { IsSelected: false })
-                e.Handled = true;
-        }
+        _trackedControl = control;
+        _dragOrigin = point.Position;
+        _pressedEventArgs = e;
+
+        // Selecting items ignore handled presses, so an unselected item must receive this one to become selected
+        if (FindSelectable(control) is not { IsSelected: false })
+            e.Handled = true;
     }
 
-    private ISelectable? FindSelectable(Control source)
+    // Scrollbars and buttons (e.g. a tree item's expander) must keep receiving their presses
+    private bool IsInsideIgnoredControl(Control source) =>
+        SelfAndAncestorsWithinAttachedControl(source).Any(x => x is ScrollBar or Button);
+
+    private bool IsInsideDragHandle(Control source) =>
+        SelfAndAncestorsWithinAttachedControl(source).Any(DragDrop.GetIsDragHandle);
+
+    private ISelectable? FindSelectable(Control source) =>
+        SelfAndAncestorsWithinAttachedControl(source).OfType<ISelectable>().FirstOrDefault();
+
+    private IEnumerable<Visual> SelfAndAncestorsWithinAttachedControl(Control source)
     {
         foreach (var visual in source.GetSelfAndVisualAncestors())
         {
-            if (visual is ISelectable selectable)
-                return selectable;
+            yield return visual;
 
             if (visual == AttachedControl)
-                break;
+                yield break;
         }
-
-        return null;
     }
 
     protected virtual void Control_PointerReleased(object? sender, PointerReleasedEventArgs e)
@@ -123,6 +131,7 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
             return;
 
         var metadata = CreateMetadata(pressedEventArgs);
+        metadata.Payload = payload;
 
         _trackedControl = null;
         _dragOrigin = null;
@@ -135,30 +144,62 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
     /// <summary>
     /// Resolves the object to transfer for a drag started by <paramref name="pressedEventArgs"/>.
     /// </summary>
-    protected virtual object? ResolvePayload(PointerPressedEventArgs pressedEventArgs) => Payload ?? AttachedControl?.DataContext;
+    protected virtual object? ResolvePayload(PointerPressedEventArgs pressedEventArgs) =>
+        IsSet(PayloadProperty) ? Payload : AttachedControl?.DataContext;
 
     /// <summary>
     /// Resolves the control that represents the dragged item. It receives the <c>:dragging</c> pseudo-class and is snapshotted for the drag preview.
     /// </summary>
     protected virtual Control? ResolveDragVisual(PointerPressedEventArgs pressedEventArgs) => AttachedControl;
 
+    /// <summary>
+    /// Resolves the text offered to other applications when <see cref="PlatformInteractionIds.Text"/> is in <see cref="InteractionIds"/>.
+    /// </summary>
+    protected virtual string? ResolvePlatformText(object payload) => payload as string ?? payload.ToString();
+
+    /// <summary>
+    /// Resolves the file or folder offered to other applications when <see cref="PlatformInteractionIds.Files"/> is in <see cref="InteractionIds"/>.
+    /// </summary>
+    protected virtual IStorageItem? ResolvePlatformFile(object payload) => payload as IStorageItem;
+
     protected virtual async Task DoDragDrop(PointerPressedEventArgs triggerEvent, DragInfo metadata, object payload)
+    {
+        var data = new DataTransfer();
+        data.Add(CreateDataTransferItem(metadata, payload));
+
+        var dragVisual = ResolveDragVisual(triggerEvent);
+        var grabOffset = dragVisual is null ? default : triggerEvent.GetPosition(dragVisual);
+        using var session = new DragSession(TopLevel.GetTopLevel(AttachedControl), dragVisual, grabOffset, ShowDragPreview, RemoveOnDropOutside);
+
+        await AvaDragDrop.DoDragDropAsync(triggerEvent, data, AllowedEffects);
+
+        if (RemoveOnDropOutside && session.DroppedOutsideTarget)
+            OnDroppedOutside(metadata, payload);
+    }
+
+    protected virtual DataTransferItem CreateDataTransferItem(DragInfo metadata, object payload)
     {
         var item = new DataTransferItem();
         foreach (var id in InteractionIds)
-            item.Set(DragDropIds.PayloadFormat(id), payload);
+        {
+            if (id == PlatformInteractionIds.Text)
+            {
+                if (ResolvePlatformText(payload) is { } text)
+                    item.SetText(text);
+            }
+            else if (id == PlatformInteractionIds.Files)
+            {
+                if (ResolvePlatformFile(payload) is { } file)
+                    item.SetFile(file);
+            }
+            else
+            {
+                item.Set(DragDropIds.PayloadFormat(id), payload);
+            }
+        }
 
         item.Set(DragDropIds.DragMetadataFormat, metadata);
-
-        var data = new DataTransfer();
-        data.Add(item);
-
-        var dragVisual = ResolveDragVisual(triggerEvent);
-        using var tracker = dragVisual is null
-            ? null
-            : new DragVisualTracker(dragVisual, triggerEvent.GetPosition(dragVisual), ShowDragPreview);
-
-        await AvaDragDrop.DoDragDropAsync(triggerEvent, data, AllowedEffects);
+        return item;
     }
 
     protected virtual DragInfo CreateMetadata(PointerEventArgs e)
@@ -180,6 +221,14 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
     /// <param name="dragInfo">DragInfo associated with the dragdrop operation</param>
     /// <param name="dropInfo">DropInfo associated with the dragdrop operation</param>
     public virtual void DropCompleted(DragDropEffects effect, DragInfo dragInfo, DropInfo dropInfo)
+    {
+    }
+
+    /// <summary>
+    /// Occurs when <see cref="RemoveOnDropOutside"/> is set and the payload was dropped where no drop target lives.
+    /// Responsible for removing the payload from its source.
+    /// </summary>
+    protected virtual void OnDroppedOutside(DragInfo dragInfo, object payload)
     {
     }
 }

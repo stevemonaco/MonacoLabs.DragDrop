@@ -1,6 +1,6 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
 
 namespace DragDropSample.ViewModels;
 public partial class SingleItemPageViewModel : PageViewModel
@@ -21,31 +21,23 @@ public partial class SingleItemPageViewModel : PageViewModel
         new("Orange juice", "🧃", 3.50m),
     ];
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(Total))]
-    public partial MenuItemViewModel? SelectedMeal { get; set; }
+    public IReadOnlyList<GuestOrderViewModel> Guests { get; } = [new("Guest 1"), new("Guest 2")];
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(Total))]
-    public partial MenuItemViewModel? SelectedDrink { get; set; }
-
-    public decimal Total => (SelectedMeal?.Price ?? 0) + (SelectedDrink?.Price ?? 0);
+    public decimal Total => Guests.Sum(x => x.Subtotal);
 
     public SingleItemPageViewModel()
     {
         Title = "Single Item";
-        Description = "Drag a meal or a drink onto your order. Each slot only accepts its own kind, and sold-out items are rejected with a reason.";
+        Description = "Drag a meal or drink onto a guest's order. Drag a filled slot by its grip to move it (or swap with an occupied slot), "
+            + "hold Ctrl to copy, or drop it on empty space to remove it. Sold-out items and locked orders are rejected.";
+
+        foreach (var guest in Guests)
+            guest.PropertyChanged += Guest_PropertyChanged;
     }
 
-    [RelayCommand]
-    public void RemoveMeal()
+    private void Guest_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        SelectedMeal = null;
-    }
-
-    [RelayCommand]
-    public void RemoveDrink()
-    {
-        SelectedDrink = null;
+        if (e.PropertyName == nameof(GuestOrderViewModel.Subtotal))
+            OnPropertyChanged(nameof(Total));
     }
 }

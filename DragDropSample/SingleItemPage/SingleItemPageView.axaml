@@ -58,11 +58,11 @@
     <ScrollViewer HorizontalScrollBarVisibility="Disabled">
         <Grid VerticalAlignment="Top" ColumnDefinitions="3*,20,2*">
             <!--  Menu (drag sources)  -->
-            <Border Classes="card">
+            <Border VerticalAlignment="Top" Classes="card">
                 <StackPanel Spacing="20">
                     <StackPanel Spacing="2">
                         <TextBlock Classes="card-title" Text="Menu" />
-                        <TextBlock Classes="subtle" Text="Each card is an ItemDragOperation whose payload falls back to its DataContext." />
+                        <TextBlock Classes="subtle" Text="Each card is an ItemDragOperation whose payload falls back to its DataContext. Menu cards only allow Copy." />
                     </StackPanel>
 
                     <StackPanel Spacing="10">
@@ -99,72 +99,144 @@
                 </StackPanel>
             </Border>
 
-            <!--  Order (drop targets)  -->
+            <!--  Orders (drop targets that are also drag sources)  -->
             <Border
                 Grid.Column="2"
                 VerticalAlignment="Top"
                 Classes="card">
                 <StackPanel Spacing="20">
                     <StackPanel Spacing="2">
-                        <TextBlock Classes="card-title" Text="Your order" />
-                        <TextBlock Classes="subtle" Text="Each slot is an ItemDropOperation bound TwoWay to the view model." />
+                        <TextBlock Classes="card-title" Text="Your table" />
+                        <TextBlock Classes="subtle" Text="Each slot is an ItemDropOperation and an ItemDragOperation bound TwoWay to the same property, with SwapOnDrop and RemoveOnDropOutside." />
                     </StackPanel>
 
-                    <StackPanel Spacing="10">
-                        <TextBlock Classes="section-header" Text="MEAL" />
-                        <Border Classes="slot" Classes.filled="{Binding SelectedMeal, Converter={x:Static ObjectConverters.IsNotNull}}">
-                            <dd:DragDrop.DropOperation>
-                                <cdd:MenuItemDropOperation InteractionIds="meal" PayloadTarget="{Binding SelectedMeal}" />
-                            </dd:DragDrop.DropOperation>
-                            <Panel>
-                                <Rectangle Classes="slot-outline" />
-                                <TextBlock
-                                    Classes="slot-hint"
-                                    IsVisible="{Binding SelectedMeal, Converter={x:Static ObjectConverters.IsNull}}"
-                                    Text="Drop a meal here" />
-                                <Grid
-                                    Margin="12,8,6,8"
-                                    ColumnDefinitions="*,Auto"
-                                    IsVisible="{Binding SelectedMeal, Converter={x:Static ObjectConverters.IsNotNull}}">
-                                    <ContentControl Content="{Binding SelectedMeal}" ContentTemplate="{StaticResource MenuItemTemplate}" />
-                                    <Button
-                                        Grid.Column="1"
-                                        Classes="icon"
-                                        Command="{Binding RemoveMealCommand}"
-                                        Content="✕"
-                                        ToolTip.Tip="Remove meal" />
-                                </Grid>
-                            </Panel>
-                        </Border>
-                    </StackPanel>
+                    <ItemsControl ItemsSource="{Binding Guests}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Spacing="24" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:GuestOrderViewModel">
+                                <StackPanel Spacing="10">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock
+                                            VerticalAlignment="Center"
+                                            Classes="section-header"
+                                            Text="{Binding Name}" />
+                                        <ToggleButton
+                                            Grid.Column="1"
+                                            Classes="lock"
+                                            IsChecked="{Binding IsLocked}"
+                                            ToolTip.Tip="Locked orders can't be changed by dragging">
+                                            <Panel>
+                                                <TextBlock Classes="unlocked" Text="🔓 Unlocked" />
+                                                <TextBlock Classes="locked" Text="🔒 Locked" />
+                                            </Panel>
+                                        </ToggleButton>
+                                    </Grid>
 
-                    <StackPanel Spacing="10">
-                        <TextBlock Classes="section-header" Text="DRINK" />
-                        <Border Classes="slot" Classes.filled="{Binding SelectedDrink, Converter={x:Static ObjectConverters.IsNotNull}}">
-                            <dd:DragDrop.DropOperation>
-                                <cdd:MenuItemDropOperation InteractionIds="drink" PayloadTarget="{Binding SelectedDrink}" />
-                            </dd:DragDrop.DropOperation>
-                            <Panel>
-                                <Rectangle Classes="slot-outline" />
-                                <TextBlock
-                                    Classes="slot-hint"
-                                    IsVisible="{Binding SelectedDrink, Converter={x:Static ObjectConverters.IsNull}}"
-                                    Text="Drop a drink here" />
-                                <Grid
-                                    Margin="12,8,6,8"
-                                    ColumnDefinitions="*,Auto"
-                                    IsVisible="{Binding SelectedDrink, Converter={x:Static ObjectConverters.IsNotNull}}">
-                                    <ContentControl Content="{Binding SelectedDrink}" ContentTemplate="{StaticResource MenuItemTemplate}" />
-                                    <Button
-                                        Grid.Column="1"
-                                        Classes="icon"
-                                        Command="{Binding RemoveDrinkCommand}"
-                                        Content="✕"
-                                        ToolTip.Tip="Remove drink" />
-                                </Grid>
-                            </Panel>
-                        </Border>
-                    </StackPanel>
+                                    <Border Classes="slot" Classes.filled="{Binding Meal, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                        <dd:DragDrop.DragOperation>
+                                            <dd:ItemDragOperation
+                                                AllowedEffects="Move,Copy"
+                                                CanDrag="{Binding !IsLocked}"
+                                                InteractionIds="meal"
+                                                Payload="{Binding Meal}"
+                                                RemoveOnDropOutside="True"
+                                                RequiresDragHandle="True"
+                                                SwapOnDrop="True" />
+                                        </dd:DragDrop.DragOperation>
+                                        <dd:DragDrop.DropOperation>
+                                            <cdd:MenuItemDropOperation InteractionIds="meal" PayloadTarget="{Binding Meal}" />
+                                        </dd:DragDrop.DropOperation>
+                                        <Panel>
+                                            <Rectangle Classes="slot-outline" />
+                                            <TextBlock
+                                                Classes="slot-hint"
+                                                IsVisible="{Binding Meal, Converter={x:Static ObjectConverters.IsNull}}"
+                                                Text="Drop a meal here" />
+                                            <Grid
+                                                Margin="4,8,6,8"
+                                                ColumnDefinitions="Auto,*,Auto"
+                                                IsVisible="{Binding Meal, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                                <Border
+                                                    Classes="grip"
+                                                    dd:DragDrop.IsDragHandle="True"
+                                                    ToolTip.Tip="Drag to move, hold Ctrl to copy">
+                                                    <TextBlock Text="⠿" />
+                                                </Border>
+                                                <ContentControl
+                                                    Grid.Column="1"
+                                                    Content="{Binding Meal}"
+                                                    ContentTemplate="{StaticResource MenuItemTemplate}" />
+                                                <Button
+                                                    Grid.Column="2"
+                                                    Classes="icon"
+                                                    Command="{Binding RemoveMealCommand}"
+                                                    Content="✕"
+                                                    IsEnabled="{Binding !IsLocked}"
+                                                    ToolTip.Tip="Remove meal" />
+                                            </Grid>
+                                        </Panel>
+                                    </Border>
+
+                                    <Border Classes="slot" Classes.filled="{Binding Drink, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                        <dd:DragDrop.DragOperation>
+                                            <dd:ItemDragOperation
+                                                AllowedEffects="Move,Copy"
+                                                CanDrag="{Binding !IsLocked}"
+                                                InteractionIds="drink"
+                                                Payload="{Binding Drink}"
+                                                RemoveOnDropOutside="True"
+                                                RequiresDragHandle="True"
+                                                SwapOnDrop="True" />
+                                        </dd:DragDrop.DragOperation>
+                                        <dd:DragDrop.DropOperation>
+                                            <cdd:MenuItemDropOperation InteractionIds="drink" PayloadTarget="{Binding Drink}" />
+                                        </dd:DragDrop.DropOperation>
+                                        <Panel>
+                                            <Rectangle Classes="slot-outline" />
+                                            <TextBlock
+                                                Classes="slot-hint"
+                                                IsVisible="{Binding Drink, Converter={x:Static ObjectConverters.IsNull}}"
+                                                Text="Drop a drink here" />
+                                            <Grid
+                                                Margin="4,8,6,8"
+                                                ColumnDefinitions="Auto,*,Auto"
+                                                IsVisible="{Binding Drink, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                                <Border
+                                                    Classes="grip"
+                                                    dd:DragDrop.IsDragHandle="True"
+                                                    ToolTip.Tip="Drag to move, hold Ctrl to copy">
+                                                    <TextBlock Text="⠿" />
+                                                </Border>
+                                                <ContentControl
+                                                    Grid.Column="1"
+                                                    Content="{Binding Drink}"
+                                                    ContentTemplate="{StaticResource MenuItemTemplate}" />
+                                                <Button
+                                                    Grid.Column="2"
+                                                    Classes="icon"
+                                                    Command="{Binding RemoveDrinkCommand}"
+                                                    Content="✕"
+                                                    IsEnabled="{Binding !IsLocked}"
+                                                    ToolTip.Tip="Remove drink" />
+                                            </Grid>
+                                        </Panel>
+                                    </Border>
+
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Classes="subtle" Text="Subtotal" />
+                                        <TextBlock
+                                            Grid.Column="1"
+                                            Classes="subtle"
+                                            Text="{Binding Subtotal, StringFormat={}{0:$0.00}}" />
+                                    </Grid>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
 
                     <Border
                         Padding="0,14,0,0"

@@ -11,7 +11,7 @@ public class SimpleCollectionPageViewModel : PageViewModel
     public SimpleCollectionPageViewModel()
     {
         Title = "Simple Collection";
-        Description = "Reorder within a list or move items between lists. Ctrl+click to multi-select, then drag any selected item.";
+        Description = "Reorder within a list or move items between lists. Ctrl+click to multi-select, then drag any selected item. Hold Ctrl while dropping to copy instead of move.";
         LeftGuids = new(Enumerable.Range(0, 20).Select(x => Guid.NewGuid()));
     }
 }

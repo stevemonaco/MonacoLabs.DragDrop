@@ -21,7 +21,8 @@ public abstract partial class DragOperationBase
         AvaloniaProperty.Register<DragOperationBase, object?>(nameof(Payload));
 
     /// <summary>
-    /// Object that is transferred via DragDrop. If null, this falls back to AttachedControl.DataContext.
+    /// Object that is transferred via DragDrop. If not set, this falls back to AttachedControl.DataContext.
+    /// Once set or bound, a null value means there is nothing to drag.
     /// </summary>
     public object? Payload
     {
@@ -51,6 +52,43 @@ public abstract partial class DragOperationBase
     {
         get => GetValue(AllowedEffectsProperty);
         set => SetValue(AllowedEffectsProperty, value);
+    }
+
+    public static readonly StyledProperty<bool> CanDragProperty =
+        AvaloniaProperty.Register<DragOperationBase, bool>(nameof(CanDrag), defaultValue: true);
+
+    /// <summary>
+    /// When false, presses on the attached control don't start drags.
+    /// </summary>
+    public bool CanDrag
+    {
+        get => GetValue(CanDragProperty);
+        set => SetValue(CanDragProperty, value);
+    }
+
+    public static readonly StyledProperty<bool> RequiresDragHandleProperty =
+        AvaloniaProperty.Register<DragOperationBase, bool>(nameof(RequiresDragHandle));
+
+    /// <summary>
+    /// Only starts drags from presses inside an element marked with <see cref="DragDrop.IsDragHandleProperty"/>.
+    /// </summary>
+    public bool RequiresDragHandle
+    {
+        get => GetValue(RequiresDragHandleProperty);
+        set => SetValue(RequiresDragHandleProperty, value);
+    }
+
+    public static readonly StyledProperty<bool> RemoveOnDropOutsideProperty =
+        AvaloniaProperty.Register<DragOperationBase, bool>(nameof(RemoveOnDropOutside));
+
+    /// <summary>
+    /// Removes the payload from its source when it is dropped on a part of the source's window that isn't a drop target.
+    /// Drops outside the window and cancelled drags never remove.
+    /// </summary>
+    public bool RemoveOnDropOutside
+    {
+        get => GetValue(RemoveOnDropOutsideProperty);
+        set => SetValue(RemoveOnDropOutsideProperty, value);
     }
 
     public static readonly StyledProperty<bool> ShowDragPreviewProperty =
