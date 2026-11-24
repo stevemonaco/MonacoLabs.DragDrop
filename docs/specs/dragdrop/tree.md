@@ -11,7 +11,8 @@ sources:
 types:
   - TreeDragOperation
   - TreeDropOperation
-tests: []
+tests:
+  - TreeDragTests
 depends:
   - DD-COLLECTION
 ---
@@ -29,9 +30,9 @@ depends:
 - **DD-TREE-001** — When attached to a `TreeView`, the drag operation's pressed container shall be the nearest `TreeViewItem` at or above the pressed element, at any depth.
   - Tests: untested
 - **DD-TREE-002** — The pressed index shall be the container's index within its parent items control (the parent `TreeViewItem` or the `TreeView`).
-  - Tests: untested
+  - Tests: `TreeDragTests.ThePayloadCollectionIsTheParentsItemsSource`
 - **DD-TREE-003** — When `PayloadCollection` is not set, the drag's payload collection shall be the parent items control's `ItemsSource` when that is an `IList`.
-  - Tests: untested
+  - Tests: `TreeDragTests.ThePayloadCollectionIsTheParentsItemsSource`
 - **DD-TREE-004** — The drag visual shall be the node's `PART_Header` when its template has one, and the whole `TreeViewItem` otherwise.
   - Tests: untested
 

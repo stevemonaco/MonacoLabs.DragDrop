@@ -10,12 +10,12 @@ A review of the library before stabilizing its API found eight defects: lost mov
 2. **A Move onto a collection target without `PayloadTarget` completes the move.** Today a `CollectionDropOperation` that only runs `PayloadCommand` never calls `DropCompleted` (DD-COLLECTION-027), so the source keeps the item. After the change, the drop target calls `DropCompleted` after the command runs. A drop that neither transfers nor runs a command reports effect None and changes nothing. `DropEventArgs` gains `Effect`, so a command can tell a Move from a Copy.
 3. **Detaching a drop operation is clean.** Detach cancels a pending deferred DragLeave, clears `:dropover` and hides the adorners. A deferred leave that runs after Detach does nothing, where today it throws a `NullReferenceException` from the dispatcher (DD-DROP Threading and lifetime).
 4. **The drag preview releases its bitmap.** `DragPreviewAdorner` implements `IDisposable` and disposes its `RenderTargetBitmap`, and the drag session disposes the preview when the drag ends.
-5. **Dead drag state is removed.** The protected `_isDragPending` field, never set to true, is deleted with its checks.
+5. ~~**Dead drag state is removed.**~~ Landed with [api-design.md](api-design.md), which deleted `_isDragPending` with the other protected drag fields.
 6. **Stale presses cannot start drags.** A pointer move without the left button pressed, or a lost pointer capture, ends the tracked press.
 7. **A failing drag does not crash the app.** An exception from the platform drag (on Win32, the `COMException` that wraps an exception from a drop handler) is caught in the pointer-moved handler, logged through Avalonia's logger, and the drag state is reset. Today it escapes an `async void` handler. Once [api-design.md](api-design.md) has made that handler private around a `Task`-returning `OnPointerMoved`, the same catch also covers exceptions thrown by subclass overrides.
 8. **Guard messages and exception types are right.** `ThrowIf.True` and `ThrowIf.False` no longer report the opposite condition. Attaching an operation that is already attached throws `InvalidOperationException` naming the operation type and the control it is attached to.
 
-What does not change: interaction ids, targeting and validation, effect resolution, and every visual. The public API changes in four places: `_isDragPending` removed, `DragPreviewAdorner` becomes `IDisposable`, `DropEventArgs.Effect` added, and the exception type of a double `Attach`.
+What does not change: interaction ids, targeting and validation, effect resolution, and every visual. The public API changes in three places: `DragPreviewAdorner` becomes `IDisposable`, `DropEventArgs.Effect` added, and the exception type of a double `Attach`.
 
 ## Decisions
 
@@ -25,7 +25,7 @@ What does not change: interaction ids, targeting and validation, effect resoluti
 - **`DropEventArgs` carries the effect.** Reason: a command that inserts the payload itself must know whether the source keeps its item (Copy) or loses it (Move), for example to clone on Copy.
 - **Drag failures are logged, not rethrown.** The pointer-moved handler catches exceptions from the drag, logs them at Error under the log area `DragDrop`, and resets the drag state. The `using` around the drag session already removes the preview and `:dragging`. Reason: an exception escaping an `async void` handler terminates the app, and on Win32 the original exception has already been reduced to `E_FAIL`. Rejected: rethrowing (crashes the app); a public `DragFailed` event (no consumer has asked; backlog).
 - **The preview owns its snapshot.** `DragPreviewAdorner` implements `IDisposable` and disposes its bitmap. Reason: the adorner creates the bitmap in `Create`, so it is the natural owner, and `IDisposable` tells subclasses and other callers of `Create` to release it. Rejected: an internal release method called only by the session, which leaks for any other caller of the public `Create`.
-- **A double `Attach` is an `InvalidOperationException`.** Reason: the argument is fine; the operation's state is wrong. `ThrowIf` gains a guard for state errors so both operation bases use one message format.
+- **A double `Attach` is an `InvalidOperationException`.** Reason: the argument is fine; the operation's state is wrong. Both operation bases use `ThrowIf.InvalidOperation`, which api-design added for the routing options, so they share one message format.
 
 ## Spec changes
 
@@ -59,7 +59,7 @@ What does not change: interaction ids, targeting and validation, effect resoluti
 - Added: "When the pointer moves while a press is tracked but the left button is no longer pressed, the drag source shall stop tracking the press and not start a drag."
 - Added: "When the pointer capture is lost while a press is tracked, the drag source shall stop tracking the press."
 - Added: "When the platform drag, or an `OnPointerMoved` override, throws, the drag source shall log the exception at Error level under the `DragDrop` log area, clear its drag state, and not let the exception reach the application." The override clause applies once api-design has landed.
-- Threading and lifetime: replace the paragraph on exceptions escaping `async void`. Decisions: add "Drag failures are logged, not rethrown". Open items: remove the three items this change resolves.
+- Threading and lifetime: replace the paragraph on exceptions escaping `async void`. Decisions: add "Drag failures are logged, not rethrown". Open items: remove the two items this change resolves.
 
 **DD-WIRING**
 - Changed **DD-WIRING-006**: "When `Attach` is called on an operation that is already attached, the operation shall throw `InvalidOperationException` naming the operation's type and the control it is attached to."
@@ -67,7 +67,7 @@ What does not change: interaction ids, targeting and validation, effect resoluti
 
 ## Tasks
 
-Each task first writes the listed tests and confirms they fail (or, for task 5, that they pass before and after), then fixes the code, updates the spec and cites the tests.
+Each task first writes the listed tests and confirms they fail, then fixes the code, updates the spec and cites the tests.
 
 1. **Removal by checked index** (What 1).
    - `CollectionRemovalTests`: the changed DD-COLLECTION-008 and 009 cases. Pressed index valid; pressed index stale; duplicates of equal values (the Guid lists on the Simple collection page); append into the same collection; no pressed index.
@@ -84,7 +84,7 @@ Each task first writes the listed tests and confirms they fail (or, for task 5, 
    - `CollectionDropTests.DetachingMidDragClearsTheHoveredContainer`
 4. **Preview disposal** (What 4).
    - `DragSessionTests.EndingTheDragDisposesThePreview`. Assert through the preview's disposed state, not the bitmap's.
-5. **Remove `_isDragPending`** (What 5). No behavior change; `DragGestureTests.ADragDoesNotStartTwiceFromOnePress` pins re-entry protection before and after.
+5. ~~**Remove `_isDragPending`**~~ Landed with api-design, with `DragGestureTests.ADragDoesNotStartTwiceFromOnePress`.
 6. **Stale presses** (What 6).
    - `DragGestureTests.AMoveWithoutTheButtonPressedDoesNotStartADrag`
    - `DragGestureTests.LosingCaptureEndsTheTrackedPress`

@@ -13,25 +13,8 @@ namespace MonacoLabs.DragDrop;
 /// </summary>
 public class TreeDragOperation : CollectionDragOperation
 {
-    protected override DragInfo CreateMetadata(PointerEventArgs e)
-    {
-        var container = LocatePayloadContainer(e);
-
-        var payloadCollection = PayloadCollection;
-        if (payloadCollection is null && container is not null)
-            payloadCollection = ItemsControl.ItemsControlFromItemContainer(container)?.ItemsSource as IList;
-
-        return new CollectionDragInfo()
-        {
-            DragOperation = this,
-            DragOrigin = _dragOrigin!.Value,
-            DragIds = InteractionIds.ToList(),
-            PointerId = e.Pointer.Id,
-            PayloadCollection = payloadCollection,
-            PayloadContainer = container,
-            PayloadContainerIndex = LocatePayloadContainerIndex(container)
-        };
-    }
+    protected override IList? ResolvePayloadCollection(Control? container) =>
+        PayloadCollection ?? (container is null ? null : ItemsControl.ItemsControlFromItemContainer(container)?.ItemsSource as IList);
 
     // A TreeViewItem's bounds include its expanded children, so only the header row is snapshotted
     protected override Control? ResolveDragVisual(PointerPressedEventArgs pressedEventArgs)

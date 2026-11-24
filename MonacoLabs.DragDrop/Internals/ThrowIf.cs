@@ -22,6 +22,13 @@ internal static class ThrowIf
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
+    public static void InvalidOperation(bool condition, string message)
+    {
+        if (condition)
+            throw new InvalidOperationException(message);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
     public static void Null(object? value, string? message = default, [CallerArgumentExpression(nameof(value))] string valueExpression = "")
     {
         if (value is not null)

@@ -4,6 +4,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using Avalonia.Threading;
 using MonacoLabs.DragDrop.Adorners;
 using AvaDragDrop = Avalonia.Input.DragDrop;
@@ -12,12 +13,41 @@ namespace MonacoLabs.DragDrop.Abstractions;
 
 public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
 {
+    private RoutingStrategies _routing = RoutingStrategies.Bubble;
+    private bool _handledEventsToo;
+    private bool _isDragLeavePending;
+
     public IList<string> InteractionIds { get; set; } = [DragDropIds.DefaultOperation];
     public object? Context { get; set; }
-    public RoutingStrategies Routing { get; set; } = RoutingStrategies.Bubble;
-    protected bool _handledEventsToo = false;
 
-    private bool _isDragLeavePending;
+    /// <summary>
+    /// Routing strategy of the drag event handlers. Can only be set while the operation is detached.
+    /// </summary>
+    public RoutingStrategies Routing
+    {
+        get => _routing;
+        set
+        {
+            ThrowIfAttached();
+            _routing = value;
+        }
+    }
+
+    /// <summary>
+    /// Whether the drag event handlers also receive events that are already handled. Can only be set while the operation is detached.
+    /// </summary>
+    public bool HandledEventsToo
+    {
+        get => _handledEventsToo;
+        set
+        {
+            ThrowIfAttached();
+            _handledEventsToo = value;
+        }
+    }
+
+    private void ThrowIfAttached([CallerMemberName] string property = "") =>
+        ThrowIf.InvalidOperation(AttachedControl is not null, $"{property} can only be set while {GetType().Name} is detached");
 
     protected DropAdornerKind DropAdornerType { get; set; } = DropAdornerKind.Solid;
 
@@ -51,10 +81,10 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
 
     protected virtual void SubscribeDropEvents(Control control)
     {
-        control.AddHandler(AvaDragDrop.DragEnterEvent, DragEnter, Routing, _handledEventsToo);
-        control.AddHandler(AvaDragDrop.DragLeaveEvent, DragLeave, Routing, _handledEventsToo);
-        control.AddHandler(AvaDragDrop.DragOverEvent, DragOver, Routing, _handledEventsToo);
-        control.AddHandler(AvaDragDrop.DropEvent, Drop, Routing, _handledEventsToo);
+        control.AddHandler(AvaDragDrop.DragEnterEvent, DragEnter, Routing, HandledEventsToo);
+        control.AddHandler(AvaDragDrop.DragLeaveEvent, DragLeave, Routing, HandledEventsToo);
+        control.AddHandler(AvaDragDrop.DragOverEvent, DragOver, Routing, HandledEventsToo);
+        control.AddHandler(AvaDragDrop.DropEvent, Drop, Routing, HandledEventsToo);
     }
 
     protected virtual void UnsubscribeDropEvents(Control control)

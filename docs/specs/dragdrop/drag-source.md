@@ -9,7 +9,8 @@ sources:
   - MonacoLabs.DragDrop/Abstractions/DragOperationBase.props.cs
 types:
   - DragOperationBase
-tests: []
+tests:
+  - DragGestureTests
 depends:
   - DD-WIRING
   - DD-TRANSFER
@@ -26,12 +27,14 @@ depends:
 
 ### Subscribing
 
-- **DD-DRAG-001** — When attached, the drag source shall handle the control's pointer pressed, moved and released events with the strategy in `Routing`, including handled events only when the subclass opts in.
+- **DD-DRAG-001** — When attached, the drag source shall handle the control's pointer pressed, moved and released events with the strategy in `Routing`, including handled events when `HandledEventsToo` is true.
   - Tests: untested
 - **DD-DRAG-002** — When detached, the drag source shall remove those handlers.
   - Tests: untested
-- **DD-DRAG-003** (inherited) — When `Routing` is not set, the drag source shall use bubbling routing and ignore handled events.
+- **DD-DRAG-003** (inherited) — When `Routing` and `HandledEventsToo` are not set, the drag source shall use bubbling routing and ignore handled events.
   - Tests: untested
+- **DD-DRAG-025** — When `Routing` or `HandledEventsToo` is set while the operation is attached, the drag source shall throw `InvalidOperationException`.
+  - Tests: `DragGestureTests.SettingRoutingWhileAttachedThrows`, `DragGestureTests.RoutingCanBeSetWhileDetached`
 
 ### Tracking a press
 
@@ -57,11 +60,13 @@ depends:
 - **DD-DRAG-012** — While the pointer is within `DragThreshold` of the press position, the drag source shall not start a drag.
   - Tests: untested
 - **DD-DRAG-013** — When a drag starts, the drag source shall stop tracking the press before the drag runs, so moves during the drag do not start another.
-  - Tests: untested
+  - Tests: `DragGestureTests.ADragDoesNotStartTwiceFromOnePress`
 - **DD-DRAG-014** — The drag source shall start the platform drag with the stored press event, not the move that crossed the threshold.
   - Tests: untested
 - **DD-DRAG-015** — The drag source shall offer `AllowedEffects` to the platform drag.
   - Tests: untested
+- **DD-DRAG-026** — The drag source's moved handler shall await `OnPointerMoved`, so an override can await before calling the base and the drag still starts.
+  - Tests: `DragGestureTests.AnOnPointerMovedOverrideCanAwaitBeforeCallingTheBase`
 
 ### Payload
 
@@ -98,14 +103,13 @@ depends:
 ## Edge cases
 
 - A press with a null payload stays tracked: every later move past the threshold resolves the payload again and returns, until the pointer is released.
-- `CreateMetadata` reads the press origin, which is set only while a press is tracked; a subclass calling it outside `StartDrag` fails.
 - The press position and the threshold are measured relative to the attached control, so a control that moves under the pointer (for example during scrolling) changes the measured distance.
 - Ignored presses (DD-DRAG-005 to 008) are left unhandled, so the pressed element and its ancestors handle them as usual.
 
 ## Threading and lifetime
 
-- UI thread only. `Control_PointerMoved` is `async void`: the drag runs as a continuation on the UI thread, and the handler returns while the platform drag is in progress.
-- An exception thrown while the drag runs (including the `COMException` Win32 raises when a drop handler throws) escapes the `async void` handler and goes to the app's unhandled-exception handling.
+- UI thread only. The private moved handler awaits `OnPointerMoved` on the UI thread, and returns to the input system while the platform drag is in progress.
+- An exception thrown while the drag runs (including the `COMException` Win32 raises when a drop handler throws) escapes the private `async void` moved handler and goes to the app's unhandled-exception handling.
 
 ## Platform behavior
 
@@ -116,6 +120,9 @@ depends:
 - **Presses on unselected items stay unhandled.** Reason: `SelectingItemsControl.UpdateSelectionFromEvent` ignores handled events, so handling the press would make the user click twice (once to select, once to drag). Presses on selected items are handled so a multiple selection is not collapsed to one item. Rejected: always leaving presses unhandled, which loses multiple selection on every drag start.
 - **Scroll bars and buttons keep their presses.** Reason: a drag source on an items control would otherwise swallow scroll bar drags and the tree expander's toggle.
 - **An explicit null `Payload` means nothing to drag.** Reason: a bound slot that is empty (an empty order slot on the single-item page) must not fall back to its `DataContext` and drag the whole view model.
+- **Subclasses get hooks, not fields.** Every protected member is a virtual method or a read-only property with a documented meaning. Reason: protected fields freeze the implementation, and the former ones let a subclass leave the press-tracking state inconsistent. The press origin, their only subclass reader, is a parameter of `CreateMetadata`.
+- **Pointer hooks, not event handlers.** The subscribed handlers are private, and subclasses override `OnPointerPressed`, `OnPointerReleased` and a `Task`-returning `OnPointerMoved`. Reason: `Control_*` was designer-handler naming for a public extension point, `sender` is always the attached control, and a virtual `async void` forces overrides to be `async void` too, whose exceptions bypass the library's handling and crash the app. Rejected: keeping the handlers virtual and only renaming them (an override still decides whether the exception handling runs).
+- **Routing options are settable only while detached.** `Routing` and `HandledEventsToo` are read when `Attach` subscribes, so a later change would silently do nothing. Throwing makes the mistake visible, and XAML sets both before the attached property attaches the operation. Rejected: a protected constructor parameter (XAML users could not change the routing of a built-in operation); re-subscribing on change (state for a case nobody needs).
 
 ## Non-goals
 
@@ -125,8 +132,6 @@ depends:
 
 ## Open items
 
-- `_isDragPending` is never set to true, so its checks are dead code. Addressed by [changes/correctness-fixes.md](../../changes/correctness-fixes.md).
 - A pointer move with no button pressed can start a drag from a stale press, because moves don't check the button and `PointerCaptureLost` is not handled. Not yet reproduced. Addressed by [changes/correctness-fixes.md](../../changes/correctness-fixes.md).
 - Exceptions during a drag crash the app through the `async void` handler (Threading and lifetime). Addressed by [changes/correctness-fixes.md](../../changes/correctness-fixes.md).
-- The protected fields `_trackedControl`, `_dragOrigin`, `_pressedEventArgs`, `_isDragPending` and `_handledEventsToo` are part of the public API surface. Addressed by [changes/api-design.md](../../changes/api-design.md).
 - The ignored-control list (`ScrollBar`, `Button`) is fixed; a `TextBox` inside a drag source loses its press. Addressed by [changes/api-design.md](../../changes/api-design.md).

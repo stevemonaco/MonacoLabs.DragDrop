@@ -22,6 +22,7 @@ types:
   - CollectionDropLocation
   - DropTargetOffset
 tests:
+  - CollectionDragTests
   - CollectionRemovalTests
   - AutoScrollStepTests
 depends:
@@ -42,9 +43,9 @@ depends:
 ### Drag side
 
 - **DD-COLLECTION-001** — The collection drag operation shall handle pointer events with tunneling routing, including handled ones, so presses reach it before `ListBoxItem` handles them for selection.
-  - Tests: untested
+  - Tests: `CollectionDragTests.PressesOnAListBoxItemReachTheOperation`
 - **DD-COLLECTION-002** — When attached to an `ItemsControl`, the drag operation shall track only presses inside an item container of that control.
-  - Tests: untested
+  - Tests: `CollectionDragTests.PressesOutsideAnItemContainerAreNotTracked`
 - **DD-COLLECTION-003** — When a press is inside an item container, the dragged payload shall be that container's item, whatever `Payload` and the selection say.
   - Tests: untested
 - **DD-COLLECTION-004** — When a press is not inside an item container (the operation is attached to a non-items control), the drag operation shall resolve the payload as DD-DRAG-016 does.
@@ -52,7 +53,7 @@ depends:
 - **DD-COLLECTION-005** — The drag visual (DD-SESSION) shall be the pressed item container when there is one, and the attached control otherwise.
   - Tests: untested
 - **DD-COLLECTION-006** — The drag's `CollectionDragInfo` shall carry `PayloadCollection`, the pressed container, and the container's index in the attached control.
-  - Tests: untested
+  - Tests: `CollectionDragTests.TheDragInfoCarriesTheCollectionTheContainerAndItsIndex`
 
 ### Drag-side completion
 
@@ -175,5 +176,4 @@ depends:
 - DD-COLLECTION-024 is a structural check in `CanDrop`, contradicting the "Structural checks run before CanDrop" decision. Addressed by [changes/api-design.md](../../changes/api-design.md).
 - Copy drops insert the source's reference with no way to clone it (DD-COLLECTION-030). Addressed by [changes/api-design.md](../../changes/api-design.md).
 - `CollectionDragInfo.PayloadContainerIndex` and `CollectionDropInfo.TargetIndex` have copy-paste doc comments that describe the wrong collection. Logged in the backlog.
-- `CreateMetadata` is duplicated in the base, collection and tree drag operations. Addressed by [changes/api-design.md](../../changes/api-design.md).
 - The collection drop operation replaces the base DragEnter, DragOver and Drop handlers, so `OnDragEnter` and `OnDragOver` (DD-DROP) are never called on collection and tree targets, while `OnDrop` is and `OnDragLeave` ends the drag. Logged in the backlog (drop-side redesign).

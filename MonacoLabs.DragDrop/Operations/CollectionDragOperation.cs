@@ -1,4 +1,4 @@
-﻿using Avalonia;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -29,15 +29,15 @@ public class CollectionDragOperation : DragOperationBase
     public CollectionDragOperation()
     {
         Routing = RoutingStrategies.Tunnel;
-        _handledEventsToo = true;
+        HandledEventsToo = true;
     }
 
-    protected override void Control_PointerPressed(object? sender, PointerPressedEventArgs e)
+    protected override void OnPointerPressed(PointerPressedEventArgs e)
     {
         if (AttachedControl is ItemsControl && LocatePayloadContainerIndex(LocatePayloadContainer(e)) is null or < 0)
             return;
 
-        base.Control_PointerPressed(sender, e);
+        base.OnPointerPressed(e);
     }
 
     /// <summary>
@@ -56,21 +56,26 @@ public class CollectionDragOperation : DragOperationBase
     protected override Control? ResolveDragVisual(PointerPressedEventArgs pressedEventArgs) =>
         LocatePayloadContainer(pressedEventArgs) ?? base.ResolveDragVisual(pressedEventArgs);
 
-    protected override DragInfo CreateMetadata(PointerEventArgs e)
+    protected override DragInfo CreateMetadata(PointerEventArgs e, Point origin)
     {
         var container = LocatePayloadContainer(e);
 
         return new CollectionDragInfo()
         {
             DragOperation = this,
-            DragOrigin = _dragOrigin!.Value,
+            DragOrigin = origin,
             DragIds = InteractionIds.ToList(),
             PointerId = e.Pointer.Id,
-            PayloadCollection = PayloadCollection,
+            PayloadCollection = ResolvePayloadCollection(container),
             PayloadContainer = container,
             PayloadContainerIndex = LocatePayloadContainerIndex(container)
         };
     }
+
+    /// <summary>
+    /// Resolves the collection the dragged item is removed from after a Move, given the pressed item container.
+    /// </summary>
+    protected virtual IList? ResolvePayloadCollection(Control? container) => PayloadCollection;
 
     protected virtual Control? LocatePayloadContainer(RoutedEventArgs triggerEvent)
     {
