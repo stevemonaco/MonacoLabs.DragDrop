@@ -40,7 +40,7 @@ public partial class TreeViewPageViewModel : PageViewModel
                     new FileNodeViewModel("ViewLocator.cs")
                 }
             },
-            new ProjectNodeViewModel("Monaco.DragDrop")
+            new ProjectNodeViewModel("MonacoLabs.DragDrop")
             {
                 Children = new()
                 {

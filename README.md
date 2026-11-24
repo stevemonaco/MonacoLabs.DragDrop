@@ -1,4 +1,4 @@
-# Monaco.DragDrop
+# MonacoLabs.DragDrop
 
 WIP/Prototype drag-and-drop library for Avalonia. Many things still unpolished, TreeView support currently unfinished.
 

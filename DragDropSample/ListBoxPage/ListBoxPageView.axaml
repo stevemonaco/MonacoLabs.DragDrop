@@ -5,7 +5,7 @@
     xmlns:cdd="using:DragDropSample.CustomDragDrop"
     xmlns:con="using:DragDropSample.Converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:dd="using:Monaco.DragDrop"
+    xmlns:dd="using:MonacoLabs.DragDrop"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:res="using:DragDropSample.Resources"
     xmlns:vm="using:DragDropSample.ViewModels"

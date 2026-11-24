@@ -23,6 +23,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Monaco.DragDrop\Monaco.DragDrop.csproj" />
+    <ProjectReference Include="..\MonacoLabs.DragDrop\MonacoLabs.DragDrop.csproj" />
   </ItemGroup>
 </Project>
