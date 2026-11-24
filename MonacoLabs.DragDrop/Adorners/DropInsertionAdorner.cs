@@ -38,6 +38,8 @@ public class DropInsertionAdorner : DropAdornerBase
         set => SetValue(LineBrushProperty, value);
     }
 
+    private double _gapOffset;
+
     static DropInsertionAdorner()
     {
         BorderBrushProperty.OverrideDefaultValue<DropInsertionAdorner>(Brushes.Transparent);
@@ -174,21 +176,36 @@ public class DropInsertionAdorner : DropAdornerBase
             }
         }
 
-        // Half adorner thickness on each side
-
-        var parent = TargetControl.Parent;
-        if (VerticalAlignment == VerticalAlignment.Stretch)
-        {
-            Margin = new Thickness(0);
-            Height = GetAdornerRect().Height;
-        }
-        else
-        {
-            Margin = new Thickness(0, -2, 0, -2);
-            Height = 4;
-        }
+        // Covering the target exactly keeps the adorner on its pixel-aligned bounds; the marker draws the line at the edge
+        _gapOffset = VerticalAlignment == VerticalAlignment.Stretch || SupportsChildInsertion
+            ? 0
+            : GetGapCenterOffset(VerticalAlignment == VerticalAlignment.Top);
+        Margin = default;
+        Height = TargetControl.Bounds.Height;
+        Child?.InvalidateVisual();
 
         UpdatePseudoclasses(VerticalAlignment == VerticalAlignment.Top);
+    }
+
+    /// <summary>
+    /// Gets the distance from the target's edge to the middle of the gap shared with its neighbor, so "below item N"
+    /// and "above item N+1" draw at the same place in flat lists.
+    /// </summary>
+    private double GetGapCenterOffset(bool isTop)
+    {
+        if (TargetControl is null || ItemsControl.ItemsControlFromItemContainer(TargetControl) is not { } owner)
+            return 0;
+
+        var index = owner.IndexFromContainer(TargetControl);
+        if (index < 0 || owner.ContainerFromIndex(isTop ? index - 1 : index + 1) is not { } neighbor)
+            return 0;
+
+        var neighborEdge = neighbor.TranslatePoint(new Point(0, isTop ? neighbor.Bounds.Height : 0), TargetControl);
+        if (neighborEdge is null)
+            return 0;
+
+        var targetEdge = isTop ? 0 : TargetControl.Bounds.Height;
+        return (neighborEdge.Value.Y - targetEdge) / 2;
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
@@ -220,17 +237,28 @@ public class DropInsertionAdorner : DropAdornerBase
                 return;
 
             var size = Bounds.Size;
-            var pen = new Pen(brush, Thickness, lineCap: PenLineCap.Round);
+            var scaling = TopLevel.GetTopLevel(this)?.RenderScaling ?? 1d;
+            var thicknessPixels = Math.Max(1, Math.Round(Thickness * scaling));
+            var thickness = thicknessPixels / scaling;
+            var pen = new Pen(brush, thickness, lineCap: PenLineCap.Round);
 
             if (owner.VerticalAlignment == VerticalAlignment.Stretch)
             {
-                context.DrawRectangle(null, pen, new Rect(size).Deflate(Thickness / 2), 4, 4);
+                context.DrawRectangle(null, pen, new Rect(size).Deflate(thickness / 2), 4, 4);
                 return;
             }
 
-            var y = size.Height / 2;
-            context.DrawEllipse(null, pen, new Point(MarkerRadius + Thickness / 2, y), MarkerRadius, MarkerRadius);
-            context.DrawLine(pen, new Point(MarkerRadius * 2 + Thickness / 2, y), new Point(size.Width - Thickness / 2, y));
+            var edge = owner.VerticalAlignment == VerticalAlignment.Top ? 0 : size.Height;
+            var y = SnapLineCenter(edge + owner._gapOffset, thicknessPixels, scaling);
+            context.DrawEllipse(null, pen, new Point(MarkerRadius + thickness / 2, y), MarkerRadius, MarkerRadius);
+            context.DrawLine(pen, new Point(MarkerRadius * 2 + thickness / 2, y), new Point(size.Width - thickness / 2, y));
+        }
+
+        // Aligns the stroke to whole device pixels so both sides of a shared edge rasterize identically
+        private static double SnapLineCenter(double y, double thicknessPixels, double scaling)
+        {
+            var topPixel = Math.Round(y * scaling - thicknessPixels / 2);
+            return (topPixel + thicknessPixels / 2) / scaling;
         }
     }
 

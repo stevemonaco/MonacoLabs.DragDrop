@@ -3,7 +3,6 @@ using Avalonia.Controls;
 using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.Layout;
 using Avalonia.LogicalTree;
 using MonacoLabs.DragDrop.Abstractions;
 using System.Collections;
@@ -107,22 +106,12 @@ public class CollectionDropOperation : DropOperationBase
 
     protected override void DragOver(object? sender, DragEventArgs e)
     {
-        var target = LocateTargetContainer(e);
         bool canDrop = CanDrop(e);
 
         if (DropAdorner is not null)
         {
             DropAdorner.IsDropValid = canDrop;
             DropAdorner.InvalidateVisual();
-        }
-
-        if (target is not null && target == ItemDropAdorner?.TargetControl)
-        {
-            var position = e.GetPosition(target);
-            if (position.Y < target.Bounds.Height / 2)
-                ItemDropAdorner.VerticalAlignment = VerticalAlignment.Top;
-            else
-                ItemDropAdorner.VerticalAlignment = VerticalAlignment.Bottom;
         }
 
         if (!canDrop)

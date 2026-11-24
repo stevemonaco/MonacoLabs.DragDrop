@@ -74,7 +74,7 @@
                                         <dd:DragDrop.DragOperation>
                                             <dd:ItemDragOperation AllowedEffects="Copy" InteractionIds="meal" />
                                         </dd:DragDrop.DragOperation>
-                                        <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource MenuItemTemplate}" />
+                                        <ContentControl Content="{Binding}" ContentTemplate="{StaticResource MenuItemTemplate}" />
                                     </Border>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
@@ -90,7 +90,7 @@
                                         <dd:DragDrop.DragOperation>
                                             <dd:ItemDragOperation AllowedEffects="Copy" InteractionIds="drink" />
                                         </dd:DragDrop.DragOperation>
-                                        <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource MenuItemTemplate}" />
+                                        <ContentControl Content="{Binding}" ContentTemplate="{StaticResource MenuItemTemplate}" />
                                     </Border>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
@@ -126,7 +126,7 @@
                                     Margin="12,8,6,8"
                                     ColumnDefinitions="*,Auto"
                                     IsVisible="{Binding SelectedMeal, Converter={x:Static ObjectConverters.IsNotNull}}">
-                                    <ContentPresenter Content="{Binding SelectedMeal}" ContentTemplate="{StaticResource MenuItemTemplate}" />
+                                    <ContentControl Content="{Binding SelectedMeal}" ContentTemplate="{StaticResource MenuItemTemplate}" />
                                     <Button
                                         Grid.Column="1"
                                         Classes="icon"
@@ -154,7 +154,7 @@
                                     Margin="12,8,6,8"
                                     ColumnDefinitions="*,Auto"
                                     IsVisible="{Binding SelectedDrink, Converter={x:Static ObjectConverters.IsNotNull}}">
-                                    <ContentPresenter Content="{Binding SelectedDrink}" ContentTemplate="{StaticResource MenuItemTemplate}" />
+                                    <ContentControl Content="{Binding SelectedDrink}" ContentTemplate="{StaticResource MenuItemTemplate}" />
                                     <Button
                                         Grid.Column="1"
                                         Classes="icon"

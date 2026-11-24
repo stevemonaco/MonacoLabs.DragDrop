@@ -83,7 +83,6 @@
     </Style>
     <Style Selector="Border.card ListBoxItem">
         <Setter Property="CornerRadius" Value="6" />
-        <Setter Property="Margin" Value="0,1" />
     </Style>
     <Style Selector="Border.pill">
         <Setter Property="Background" Value="{DynamicResource TileBackgroundBrush}" />
