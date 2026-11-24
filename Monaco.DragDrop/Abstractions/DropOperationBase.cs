@@ -163,7 +163,7 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
     /// <returns></returns>
     protected virtual bool CanGetPayload(DragEventArgs e)
     {
-        return InteractionIds.Any(x => e.Data.Get(x) is not null);
+        return InteractionIds.Any(x => e.DataTransfer.Contains(DragDropIds.PayloadFormat(x)));
     }
 
     /// <summary>
@@ -178,7 +178,7 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
     protected virtual bool TryGetPayload<TPayload>(DragEventArgs e, [MaybeNullWhen(false)] out TPayload payload)
         where TPayload : class
     {
-        if (InteractionIds.Select(e.Data.Get).OfType<object>().FirstOrDefault() is TPayload p)
+        if (InteractionIds.Select(x => e.DataTransfer.TryGetValue(DragDropIds.PayloadFormat(x))).OfType<object>().FirstOrDefault() is TPayload p)
         {
             payload = p;
             return true;
@@ -198,7 +198,7 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
     protected bool TryGetDragInfo<TDragMetadata>(DragEventArgs e, [MaybeNullWhen(false)] out TDragMetadata dragMetadata)
         where TDragMetadata : DragInfo
     {
-        if (e.Data.Get(DragDropIds.DragMetadata) is TDragMetadata metadata)
+        if (e.DataTransfer.TryGetValue(DragDropIds.DragMetadataFormat) is TDragMetadata metadata)
         {
             dragMetadata = metadata;
             return true;

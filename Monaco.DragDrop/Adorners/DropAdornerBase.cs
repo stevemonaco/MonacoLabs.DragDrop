@@ -3,7 +3,6 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Data;
 using Avalonia.Media;
-using Avalonia.VisualTree;
 using AvaDragDrop = Avalonia.Input.DragDrop;
 
 namespace Monaco.DragDrop;
@@ -82,7 +81,7 @@ public abstract class DropAdornerBase : Border, IDropAdorner
     /// <returns></returns>
     public Rect GetAdornerRect()
     {
-        var root = (Window)TargetControl!.GetVisualRoot()!;
+        var root = TopLevel.GetTopLevel(TargetControl)!;
         var bounds = TargetControl!.Bounds;
         var point = TargetControl.TranslatePoint(bounds.TopLeft, root)!.Value;
 

@@ -14,6 +14,7 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
 
     protected Control? _trackedControl; // Control that has been clicked and may be initiating a drag
     protected Point? _dragOrigin;
+    protected PointerPressedEventArgs? _pressedEventArgs; // DoDragDropAsync requires the press event, not the move event that crossed the threshold
     protected bool _isDragPending; // True if Control has been clicked, mouse is being held, but drag operation has not started yet
     protected bool _handledEventsToo = false;
 
@@ -63,6 +64,7 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
             {
                 _trackedControl = control;
                 _dragOrigin = point.Position;
+                _pressedEventArgs = e;
             }
         }
     }
@@ -71,6 +73,7 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
     {
         _trackedControl = null;
         _dragOrigin = null;
+        _pressedEventArgs = null;
         _isDragPending = false;
     }
 
@@ -94,29 +97,34 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
     protected virtual async Task StartDrag(PointerEventArgs e)
     {
         var payload = Payload ?? AttachedControl?.DataContext;
+        var pressedEventArgs = _pressedEventArgs;
 
-        if (payload is null || _dragOrigin is null)
+        if (payload is null || _dragOrigin is null || pressedEventArgs is null)
             return;
 
         var metadata = CreateMetadata(e);
 
         _trackedControl = null;
         _dragOrigin = null;
+        _pressedEventArgs = null;
         _isDragPending = false;
 
-        await DoDragDrop(e, metadata, payload);
+        await DoDragDrop(pressedEventArgs, metadata, payload);
     }
 
-    protected virtual async Task DoDragDrop(PointerEventArgs triggerEvent, DragInfo metadata, object payload)
+    protected virtual async Task DoDragDrop(PointerPressedEventArgs triggerEvent, DragInfo metadata, object payload)
     {
-        var data = new DataObject();
+        var item = new DataTransferItem();
         foreach (var id in InteractionIds)
-            data.Set(id, payload);
+            item.Set(DragDropIds.PayloadFormat(id), payload);
 
-        data.Set(DragDropIds.DragMetadata, metadata);
+        item.Set(DragDropIds.DragMetadataFormat, metadata);
+
+        var data = new DataTransfer();
+        data.Add(item);
 
         var effect = DragDropEffects.Move;
-        var result = await AvaDragDrop.DoDragDrop(triggerEvent, data, effect);
+        var result = await AvaDragDrop.DoDragDropAsync(triggerEvent, data, effect);
 
         //if (result != DragDropEffects.None)
         //    DropCompleted(result);
