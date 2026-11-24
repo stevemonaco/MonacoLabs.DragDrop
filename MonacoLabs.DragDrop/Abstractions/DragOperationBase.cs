@@ -164,9 +164,7 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
 
     protected virtual async Task DoDragDrop(PointerPressedEventArgs triggerEvent, DragInfo metadata, object payload)
     {
-        var data = new DataTransfer();
-        data.Add(CreateDataTransferItem(metadata, payload));
-
+        var data = CreateDataTransfer(metadata, payload);
         var dragVisual = ResolveDragVisual(triggerEvent);
         var grabOffset = dragVisual is null ? default : triggerEvent.GetPosition(dragVisual);
         using var session = new DragSession(TopLevel.GetTopLevel(AttachedControl), dragVisual, grabOffset, ShowDragPreview, RemoveOnDropOutside);
@@ -175,6 +173,13 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
 
         if (RemoveOnDropOutside && session.DroppedOutsideTarget)
             OnDroppedOutside(metadata, payload);
+    }
+
+    internal DataTransfer CreateDataTransfer(DragInfo metadata, object payload)
+    {
+        var data = new DataTransfer();
+        data.Add(CreateDataTransferItem(metadata, payload));
+        return data;
     }
 
     protected virtual DataTransferItem CreateDataTransferItem(DragInfo metadata, object payload)
