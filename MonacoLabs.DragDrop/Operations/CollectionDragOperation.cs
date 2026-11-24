@@ -14,7 +14,7 @@ namespace MonacoLabs.DragDrop;
 public class CollectionDragOperation : ItemDragOperation
 {
     public static readonly StyledProperty<IList?> PayloadCollectionProperty =
-    AvaloniaProperty.Register<DragOperationBase, IList?>(nameof(PayloadCollection));
+        AvaloniaProperty.Register<CollectionDragOperation, IList?>(nameof(PayloadCollection));
 
     /// <summary>
     /// Specifies the collection the Payload is inside of so it can be removed when 
@@ -30,6 +30,27 @@ public class CollectionDragOperation : ItemDragOperation
     {
         Routing = RoutingStrategies.Tunnel;
         _handledEventsToo = true;
+    }
+
+    protected override void Control_PointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (AttachedControl is ItemsControl && LocatePayloadContainerIndex(LocatePayloadContainer(e)) is null or < 0)
+            return;
+
+        base.Control_PointerPressed(sender, e);
+    }
+
+    /// <summary>
+    /// Uses the pressed item container's item so the transferred item always matches <see cref="CollectionDragInfo.PayloadContainerIndex"/>.
+    /// Falls back to <see cref="DragOperationBase.Payload"/> when the press isn't on an item container.
+    /// </summary>
+    protected override object? ResolvePayload(PointerPressedEventArgs pressedEventArgs)
+    {
+        if (LocatePayloadContainer(pressedEventArgs) is { } container
+            && ItemsControl.ItemsControlFromItemContainer(container) is { } owner)
+            return owner.ItemFromContainer(container);
+
+        return base.ResolvePayload(pressedEventArgs);
     }
 
     protected override DragInfo CreateMetadata(PointerEventArgs e)

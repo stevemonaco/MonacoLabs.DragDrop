@@ -16,7 +16,7 @@ namespace MonacoLabs.DragDrop;
 public class CollectionDropOperation : DropOperationBase
 {
     public static readonly StyledProperty<DropInsertionAdorner?> ItemDropAdornerProperty =
-        AvaloniaProperty.Register<CollectionDropOperation, DropInsertionAdorner?>(nameof(DropAdorner), defaultBindingMode: BindingMode.OneTime);
+        AvaloniaProperty.Register<CollectionDropOperation, DropInsertionAdorner?>(nameof(ItemDropAdorner), defaultBindingMode: BindingMode.OneTime);
 
     /// <summary>
     /// Adorner responsible for rendering overlay visual when dragging over and in a valid state
@@ -169,7 +169,8 @@ public class CollectionDropOperation : DropOperationBase
         
         e.Handled = true;
         ((IPseudoClasses)AttachedControl!.Classes).Set(":dropover", false);
-        ItemDropAdorner?.Detach();
+        // No DragLeave follows a drop, so clear the hovered item here or the next drop reuses a stale index
+        OnItemDragLeave();
         DropAdorner?.Detach();
     }
 

@@ -6,7 +6,6 @@
     xmlns:dd="using:MonacoLabs.DragDrop"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vm="using:DragDropSample.ViewModels"
-    x:Name="root"
     d:DesignHeight="450"
     d:DesignWidth="800"
     x:DataType="vm:SimpleCollectionPageViewModel"
@@ -28,11 +27,10 @@
             <dd:DragDrop.DragOperation>
                 <dd:CollectionDragOperation
                     InteractionIds="app:guid"
-                    Payload="{Binding #leftBox.SelectedItem}"
-                    PayloadCollection="{Binding #root.((vm:SimpleCollectionPageViewModel)DataContext).LeftGuids}" />
+                    PayloadCollection="{Binding LeftGuids}" />
             </dd:DragDrop.DragOperation>
             <dd:DragDrop.DropOperation>
-                <dd:CollectionDropOperation InteractionIds="app:guid" PayloadTarget="{Binding #root.((vm:SimpleCollectionPageViewModel)DataContext).LeftGuids}">
+                <dd:CollectionDropOperation InteractionIds="app:guid" PayloadTarget="{Binding LeftGuids}">
                     <!--<dd:CollectionDropOperation.DropAdorner>
                         <dd:DropInsertionAdorner />
                     </dd:CollectionDropOperation.DropAdorner>-->
@@ -48,11 +46,10 @@
             <dd:DragDrop.DragOperation>
                 <dd:CollectionDragOperation
                     InteractionIds="app:guid"
-                    Payload="{Binding #rightBox.SelectedItem}"
-                    PayloadCollection="{Binding #root.((vm:SimpleCollectionPageViewModel)DataContext).RightGuids}" />
+                    PayloadCollection="{Binding RightGuids}" />
             </dd:DragDrop.DragOperation>
             <dd:DragDrop.DropOperation>
-                <dd:CollectionDropOperation InteractionIds="app:guid" PayloadTarget="{Binding #root.((vm:SimpleCollectionPageViewModel)DataContext).RightGuids}" />
+                <dd:CollectionDropOperation InteractionIds="app:guid" PayloadTarget="{Binding RightGuids}" />
             </dd:DragDrop.DropOperation>
         </ListBox>
     </Grid>

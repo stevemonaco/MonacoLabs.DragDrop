@@ -34,7 +34,7 @@ public abstract partial class DragOperationBase
     /// <summary>
     /// Threshold in pixels that the user must move a pressed pointer to initiate a drag operation
     /// </summary>
-    public int? DragThreshold
+    public int DragThreshold
     {
         get => GetValue(DragThresholdProperty);
         set => SetValue(DragThresholdProperty, value);

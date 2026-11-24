@@ -63,27 +63,28 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
 
         if (e.Source is Control control)
         {
-            if (control is ISelectable { IsSelected: true })
-            {
-                _trackedControl = control;
-                _dragOrigin = point.Position;
-                _pressedEventArgs = e;
+            _trackedControl = control;
+            _dragOrigin = point.Position;
+            _pressedEventArgs = e;
+
+            // Selecting items ignore handled presses, so an unselected item must receive this one to become selected
+            if (FindSelectable(control) is not { IsSelected: false })
                 e.Handled = true;
-            }
-            else if (control is ISelectable { IsSelected: false })
-            {
-                _trackedControl = null;
-                _dragOrigin = null;
-                _pressedEventArgs = null;
-            }
-            else
-            {
-                _trackedControl = control;
-                _dragOrigin = point.Position;
-                _pressedEventArgs = e;
-                e.Handled = true;
-            }
         }
+    }
+
+    private ISelectable? FindSelectable(Control source)
+    {
+        foreach (var visual in source.GetSelfAndVisualAncestors())
+        {
+            if (visual is ISelectable selectable)
+                return selectable;
+
+            if (visual == AttachedControl)
+                break;
+        }
+
+        return null;
     }
 
     protected virtual void Control_PointerReleased(object? sender, PointerReleasedEventArgs e)
@@ -113,13 +114,15 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
 
     protected virtual async Task StartDrag(PointerEventArgs e)
     {
-        var payload = Payload ?? AttachedControl?.DataContext;
         var pressedEventArgs = _pressedEventArgs;
-
-        if (payload is null || _dragOrigin is null || pressedEventArgs is null)
+        if (_dragOrigin is null || pressedEventArgs is null)
             return;
 
-        var metadata = CreateMetadata(e);
+        var payload = ResolvePayload(pressedEventArgs);
+        if (payload is null)
+            return;
+
+        var metadata = CreateMetadata(pressedEventArgs);
 
         _trackedControl = null;
         _dragOrigin = null;
@@ -128,6 +131,11 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
 
         await DoDragDrop(pressedEventArgs, metadata, payload);
     }
+
+    /// <summary>
+    /// Resolves the object to transfer for a drag started by <paramref name="pressedEventArgs"/>.
+    /// </summary>
+    protected virtual object? ResolvePayload(PointerPressedEventArgs pressedEventArgs) => Payload ?? AttachedControl?.DataContext;
 
     protected virtual async Task DoDragDrop(PointerPressedEventArgs triggerEvent, DragInfo metadata, object payload)
     {

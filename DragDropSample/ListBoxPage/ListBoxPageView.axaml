@@ -9,7 +9,6 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:res="using:DragDropSample.Resources"
     xmlns:vm="using:DragDropSample.ViewModels"
-    x:Name="root"
     d:DesignHeight="450"
     d:DesignWidth="800"
     x:DataType="vm:ListBoxPageViewModel"
@@ -61,8 +60,7 @@
                 <dd:DragDrop.DragOperation>
                     <dd:CollectionDragOperation
                         InteractionIds="app:mining, app:crafting, app:combat"
-                        Payload="{Binding #workers.SelectedItem}"
-                        PayloadCollection="{Binding #root.((vm:ListBoxPageViewModel)DataContext).AvailableWorkers}" />
+                        PayloadCollection="{Binding AvailableWorkers}" />
                 </dd:DragDrop.DragOperation>
             </ListBox>
         </Grid>
@@ -79,7 +77,7 @@
             </StackPanel>
             <ListBox Grid.Row="1" ItemsSource="{Binding MiningTeam}">
                 <dd:DragDrop.DropOperation>
-                    <cdd:WorkerDropOperation InteractionIds="app:mining" PayloadTarget="{Binding #root.((vm:ListBoxPageViewModel)DataContext).MiningTeam}" />
+                    <cdd:WorkerDropOperation InteractionIds="app:mining" PayloadTarget="{Binding MiningTeam}" />
                 </dd:DragDrop.DropOperation>
             </ListBox>
         </Grid>
@@ -96,7 +94,7 @@
             </StackPanel>
             <ListBox Grid.Row="1" ItemsSource="{Binding CraftingTeam}">
                 <dd:DragDrop.DropOperation>
-                    <cdd:WorkerDropOperation InteractionIds="app:crafting" PayloadTarget="{Binding #root.((vm:ListBoxPageViewModel)DataContext).CraftingTeam}" />
+                    <cdd:WorkerDropOperation InteractionIds="app:crafting" PayloadTarget="{Binding CraftingTeam}" />
                 </dd:DragDrop.DropOperation>
             </ListBox>
         </Grid>
@@ -113,7 +111,7 @@
             </StackPanel>
             <ListBox Grid.Row="1" ItemsSource="{Binding CombatTeam}">
                 <dd:DragDrop.DropOperation>
-                    <cdd:WorkerDropOperation InteractionIds="app:combat" PayloadTarget="{Binding #root.((vm:ListBoxPageViewModel)DataContext).CombatTeam}" />
+                    <cdd:WorkerDropOperation InteractionIds="app:combat" PayloadTarget="{Binding CombatTeam}" />
                 </dd:DragDrop.DropOperation>
             </ListBox>
         </Grid>

@@ -1,5 +1,4 @@
-﻿using System.Windows.Input;
-using Avalonia.Data;
+﻿using Avalonia.Data;
 using Avalonia;
 using Avalonia.Controls;
 using MonacoLabs.DragDrop.Abstractions;
@@ -14,14 +13,13 @@ public partial class DragDrop
     }
 
     /// <summary>
-    /// Identifies the <seealso cref="CommandProperty"/> avalonia attached property.
+    /// Identifies the DragOperation attached property, which makes a control a drag source via an <see cref="IDragOperation"/>.
     /// </summary>
-    /// <value>Provide an <see cref="ICommand"/> derived object or binding.</value>
     public static readonly AttachedProperty<IDragOperation?> DragOperationProperty = AvaloniaProperty.RegisterAttached<DragDrop, Control, IDragOperation?>(
         "DragOperation", null, false, BindingMode.OneTime);
 
     /// <summary>
-    /// Accessor for Attached property <see cref="CommandProperty"/>.
+    /// Sets the <see cref="DragOperationProperty"/> attached property on <paramref name="element"/>.
     /// </summary>
     public static void SetDragOperation(AvaloniaObject element, IDragOperation value)
     {
@@ -29,7 +27,7 @@ public partial class DragDrop
     }
 
     /// <summary>
-    /// Accessor for Attached property <see cref="CommandProperty"/>.
+    /// Gets the <see cref="DragOperationProperty"/> attached property from <paramref name="element"/>.
     /// </summary>
     public static IDragOperation? GetDragOperation(AvaloniaObject element)
     {
@@ -50,14 +48,13 @@ public partial class DragDrop
     }
 
     /// <summary>
-    /// Identifies the <seealso cref="CommandProperty"/> avalonia attached property.
+    /// Identifies the DropOperation attached property, which makes a control a drop target via an <see cref="IDropOperation"/>.
     /// </summary>
-    /// <value>Provide an <see cref="ICommand"/> derived object or binding.</value>
     public static readonly AttachedProperty<IDropOperation?> DropOperationProperty = AvaloniaProperty.RegisterAttached<DragDrop, Control, IDropOperation?>(
         "DropOperation", null, false, BindingMode.OneTime);
 
     /// <summary>
-    /// Accessor for Attached property <see cref="CommandProperty"/>.
+    /// Sets the <see cref="DropOperationProperty"/> attached property on <paramref name="element"/>.
     /// </summary>
     public static void SetDropOperation(AvaloniaObject element, IDropOperation value)
     {
@@ -65,7 +62,7 @@ public partial class DragDrop
     }
 
     /// <summary>
-    /// Accessor for Attached property <see cref="CommandProperty"/>.
+    /// Gets the <see cref="DropOperationProperty"/> attached property from <paramref name="element"/>.
     /// </summary>
     public static IDropOperation? GetDropOperation(AvaloniaObject element)
     {

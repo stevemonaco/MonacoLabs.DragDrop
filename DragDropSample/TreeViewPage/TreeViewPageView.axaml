@@ -7,7 +7,6 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:node="using:DragDropSample.ViewModels.Nodes"
     xmlns:vm="using:DragDropSample.ViewModels"
-    x:Name="root"
     d:DesignHeight="450"
     d:DesignWidth="800"
     x:DataType="vm:TreeViewPageViewModel"
@@ -15,13 +14,10 @@
     <Grid ColumnDefinitions="*, auto, *">
         <TreeView x:Name="tree" ItemsSource="{Binding Solutions}">
             <dd:DragDrop.DragOperation>
-                <dd:TreeDragOperation
-                    InteractionIds="app:node"
-                    Payload="{Binding #tree.SelectedItem}"
-                    PayloadCollection="{ReflectionBinding $self.AttachedControl.Parent.DataContext.Children}" />
+                <dd:TreeDragOperation InteractionIds="app:node" />
             </dd:DragDrop.DragOperation>
             <dd:DragDrop.DropOperation>
-                <dd:TreeDropOperation InteractionIds="app:node" PayloadTarget="{ReflectionBinding $self.AttachedControl.DataContext.Children}" />
+                <dd:TreeDropOperation InteractionIds="app:node" />
             </dd:DragDrop.DropOperation>
 
             <TreeView.DataTemplates>
@@ -47,11 +43,10 @@
             <dd:DragDrop.DragOperation>
                 <dd:CollectionDragOperation
                     InteractionIds="app:node"
-                    Payload="{Binding #box.SelectedItem}"
-                    PayloadCollection="{Binding #root.((vm:ListBoxPageViewModel)DataContext).AvailableWorkers}" />
+                    PayloadCollection="{Binding FlatItems}" />
             </dd:DragDrop.DragOperation>
             <dd:DragDrop.DropOperation>
-                <dd:CollectionDropOperation InteractionIds="app:node" PayloadTarget="{Binding #root.((vm:TreeViewPageViewModel)DataContext).FlatItems}" />
+                <dd:CollectionDropOperation InteractionIds="app:node" PayloadTarget="{Binding FlatItems}" />
             </dd:DragDrop.DropOperation>
 
             <ListBox.ItemTemplate>
