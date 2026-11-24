@@ -7,25 +7,36 @@ using System.Linq;
 namespace DragDropSample.ViewModels;
 public partial class ListBoxPageViewModel : PageViewModel
 {
-    [ObservableProperty] private ObservableCollection<PersonViewModel> _availableStaff = [];
-    public ObservableCollection<PersonViewModel> MiningTeam { get; } = [];
-    public ObservableCollection<PersonViewModel> CraftingTeam { get; } = [];
-    public ObservableCollection<PersonViewModel> CombatTeam { get; } = [];
+    [ObservableProperty]
+    public partial ObservableCollection<WorkerViewModel> AvailableWorkers { get; set; } = [];
+    public ObservableCollection<WorkerViewModel> MiningTeam { get; } = [];
+    public ObservableCollection<WorkerViewModel> CraftingTeam { get; } = [];
+    public ObservableCollection<WorkerViewModel> CombatTeam { get; } = [];
 
-    [ObservableProperty] private int _miningBudgetRemaining = _maxBudget;
-    [ObservableProperty] private int _craftingBudgetRemaining = _maxBudget;
-    [ObservableProperty] private int _combatBudgetRemaining = _maxBudget;
+    [ObservableProperty]
+    public partial int MiningBudgetRemaining { get; set; } = _maxBudget;
 
-    [ObservableProperty] private int _miningTeamProficiency;
-    [ObservableProperty] private int _craftingTeamProficiency;
-    [ObservableProperty] private int _combatTeamProficiency;
+    [ObservableProperty]
+    public partial int CraftingBudgetRemaining { get; set; } = _maxBudget;
+
+    [ObservableProperty]
+    public partial int CombatBudgetRemaining { get; set; } = _maxBudget;
+
+    [ObservableProperty]
+    public partial int MiningTeamProficiency { get; set; }
+
+    [ObservableProperty]
+    public partial int CraftingTeamProficiency { get; set; }
+
+    [ObservableProperty]
+    public partial int CombatTeamProficiency { get; set; }
 
     private const int _maxBudget = 20000;
 
     public ListBoxPageViewModel()
     {
         Title = "ListBox";
-        InitializeNewStaff(30);
+        InitializeNewWorkers(30);
 
         MiningTeam.CollectionChanged += (s, e) =>
         {
@@ -46,12 +57,12 @@ public partial class ListBoxPageViewModel : PageViewModel
         };
     }
 
-    private void InitializeNewStaff(int staffCount)
+    private void InitializeNewWorkers(int workerCount)
     {
-        int personId = 1;
-        var personFaker = new Faker<PersonViewModel>()
+        int workerId = 1;
+        var workerFaker = new Faker<WorkerViewModel>()
             //.StrictMode(true)
-            .RuleFor(p => p.PersonId, f => personId++)
+            .RuleFor(p => p.PersonId, f => workerId++)
             .RuleFor(p => p.Name, f => f.Name.FullName())
             .RuleFor(p => p.Age, f => f.Random.Number(20, 60))
             .RuleFor(p => p.Salary, f => f.Random.Number(100, 5000))
@@ -59,10 +70,10 @@ public partial class ListBoxPageViewModel : PageViewModel
             .RuleFor(p => p.CraftingProficiency, f => f.Random.Number(1, 10).OrNull(f, 0.5f))
             .RuleFor(p => p.CombatProficiency, f => f.Random.Number(1, 10).OrNull(f, 0.5f));
 
-        var people = personFaker.Generate(staffCount);
-        var peopleIndices = Enumerable.Range(0, staffCount).ToArray();
+        var workers = workerFaker.Generate(workerCount);
+        var workerIndices = Enumerable.Range(0, workerCount).ToArray();
 
-        foreach (var person in people)
+        foreach (var worker in workers)
         {
             var rand = Random.Shared.NextDouble();
 
@@ -77,9 +88,9 @@ public partial class ListBoxPageViewModel : PageViewModel
             if (dislikedCount == 0)
                 continue;
             
-            person.DislikedPeople = new(peopleIndices.OrderBy(x => Random.Shared.Next()).Take(dislikedCount).Select(x => people[x]));
+            worker.DislikedWorkers = new(workerIndices.OrderBy(x => Random.Shared.Next()).Take(dislikedCount).Select(x => workers[x]));
         }
 
-        AvailableStaff = new(people.OrderBy(x => x.Name));
+        AvailableWorkers = new(workers.OrderBy(x => x.Name));
     }
 }

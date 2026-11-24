@@ -57,14 +57,31 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
         if (e.Source is Control sourceControl && sourceControl.GetVisualAncestors().Any(x => x is ScrollBar))
             return;
 
-        var point = e.GetCurrentPoint(c);
-        if (point.Properties.IsLeftButtonPressed)
+        var point = e.GetCurrentPoint(AttachedControl);
+        if (!point.Properties.IsLeftButtonPressed)
+            return;
+
+        if (e.Source is Control control)
         {
-            if (e.Source is Control control)
+            if (control is ISelectable { IsSelected: true })
             {
                 _trackedControl = control;
                 _dragOrigin = point.Position;
                 _pressedEventArgs = e;
+                e.Handled = true;
+            }
+            else if (control is ISelectable { IsSelected: false })
+            {
+                _trackedControl = null;
+                _dragOrigin = null;
+                _pressedEventArgs = null;
+            }
+            else
+            {
+                _trackedControl = control;
+                _dragOrigin = point.Position;
+                _pressedEventArgs = e;
+                e.Handled = true;
             }
         }
     }
@@ -85,7 +102,7 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
         if (_trackedControl is null || _dragOrigin is null)
             return;
 
-        var local = e.GetCurrentPoint(_trackedControl);
+        var local = e.GetCurrentPoint(AttachedControl);
         var delta = local.Position - _dragOrigin.Value;
         if (delta.X * delta.X + delta.Y * delta.Y < DragThreshold * DragThreshold)
             return;
@@ -136,7 +153,8 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
         {
             DragOperation = this,
             DragOrigin = _dragOrigin!.Value,
-            DragIds = InteractionIds.ToList()
+            DragIds = InteractionIds.ToList(),
+            PointerId = e.Pointer.Id
         };
     }
 

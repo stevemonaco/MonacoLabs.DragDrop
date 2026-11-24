@@ -14,7 +14,8 @@ public partial class MainWindowViewModel : ObservableObject
         new TreeViewPageViewModel()
     };
 
-    [ObservableProperty] private PageViewModel _selectedPage;
+    [ObservableProperty]
+    public partial PageViewModel SelectedPage { get; set; }
 
     public MainWindowViewModel()
     {

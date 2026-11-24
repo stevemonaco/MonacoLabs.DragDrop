@@ -15,6 +15,17 @@ namespace Monaco.DragDrop;
 /// </summary>
 public class DropInsertionAdorner : DropAdornerBase
 {
+    public static readonly StyledProperty<bool> SupportsChildInsertionProperty =
+        AvaloniaProperty.Register<DropInsertionAdorner, bool>("SupportsChildInsertion");
+
+    public bool SupportsChildInsertion
+    {
+        get => GetValue(SupportsChildInsertionProperty);
+        set => SetValue(SupportsChildInsertionProperty, value);
+    }
+
+    public DropTargetOffset Target { get; set; } = DropTargetOffset.BeforeTarget;
+    
     static DropInsertionAdorner()
     {
         OpacityProperty.OverrideDefaultValue<DropInsertionAdorner>(0.7d);
@@ -43,7 +54,9 @@ public class DropInsertionAdorner : DropAdornerBase
         Width = rect.Width;
         Height = 4;
 
-        Debug.WriteLine($"Attach: {TargetControl.GetType().ToString()}");
+        Debug.WriteLine($"Attach: {TargetControl.GetType()}");
+
+        Target = DropTargetOffset.BeforeTarget;
         //IsVisible = false;
 
         //TargetControl.RenderTransform = new TranslateTransform(0, 40);
@@ -117,24 +130,51 @@ public class DropInsertionAdorner : DropAdornerBase
 
         IsVisible = true;
 
-        if (dragLocation.Y < (Math.Floor(TargetControl.Bounds.Height / 2)))
+        if (SupportsChildInsertion)
         {
-            VerticalAlignment = VerticalAlignment.Top;
+            if (dragLocation.Y < (Math.Floor(TargetControl.Bounds.Height / 4)))
+            {
+                Target = DropTargetOffset.AfterTarget;
+                VerticalAlignment = VerticalAlignment.Top;
+            }
+            else if (dragLocation.Y > TargetControl.Bounds.Height - (Math.Floor(TargetControl.Bounds.Height / 4)))
+            {
+                Target = DropTargetOffset.BeforeTarget;
+                VerticalAlignment = VerticalAlignment.Bottom;
+            }
+            else
+            {
+                Target = DropTargetOffset.OnTarget;
+                VerticalAlignment = VerticalAlignment.Stretch;
+            }
         }
         else
         {
-            VerticalAlignment = VerticalAlignment.Bottom;
+            if (dragLocation.Y < Math.Floor(TargetControl.Bounds.Height / 2))
+            {
+                Target = DropTargetOffset.AfterTarget;
+                VerticalAlignment = VerticalAlignment.Top;
+            }
+            else
+            {
+                Target = DropTargetOffset.BeforeTarget;
+                VerticalAlignment = VerticalAlignment.Bottom;
+            }
         }
 
         // Half adorner thickness on each side
-        if (VerticalAlignment == VerticalAlignment.Top)
-            Margin = new Thickness(0, -2, 0, -2);
-        else if (VerticalAlignment == VerticalAlignment.Bottom)
-            Margin = new Thickness(0, -2, 0, -2);
 
         var parent = TargetControl.Parent;
-        
-
+        if (VerticalAlignment == VerticalAlignment.Stretch)
+        {
+            Margin = new Thickness(0);
+            Height = GetAdornerRect().Height;
+        }
+        else
+        {
+            Margin = new Thickness(0, -2, 0, -2);
+            Height = 4;
+        }
 
         UpdatePseudoclasses(VerticalAlignment == VerticalAlignment.Top);
     }
@@ -151,25 +191,14 @@ public class DropInsertionAdorner : DropAdornerBase
         }
         else if (change.Property == IsDropValidProperty)
         {
-            if (change.NewValue is true)
-                Background = Brushes.Orange;
-            else
-                Background = Brushes.Transparent;
+            Background = change.NewValue is true ? Brushes.Orange : Brushes.Transparent;
         }
     }
 
     private void UpdatePseudoclasses(bool isTop)
     {
-        if (isTop)
-        {
-            ((IPseudoClasses)TargetControl!.Classes).Set(":droptop", true);
-            ((IPseudoClasses)TargetControl!.Classes).Set(":dropbottom", false);
-        }
-        else
-        {
-            ((IPseudoClasses)TargetControl!.Classes).Set(":dropbottom", true);
-            ((IPseudoClasses)TargetControl!.Classes).Set(":droptop", false);
-        }
+        ((IPseudoClasses)TargetControl!.Classes).Set(":droptop", isTop);
+        ((IPseudoClasses)TargetControl!.Classes).Set(":dropbottom", !isTop);
     }
 
     private void RemovePseudoclasses()

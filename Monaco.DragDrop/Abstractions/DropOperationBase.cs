@@ -3,9 +3,13 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using System.Diagnostics.CodeAnalysis;
+using Avalonia.Styling;
+using Monaco.DragDrop.Adorners;
 using AvaDragDrop = Avalonia.Input.DragDrop;
+using System.Diagnostics;
 
 namespace Monaco.DragDrop.Abstractions;
+
 public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
 {
     public IList<string> InteractionIds { get; set; } = [DragDropIds.DefaultOperation];
@@ -13,15 +17,19 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
     public RoutingStrategies Routing { get; set; } = RoutingStrategies.Bubble;
     protected bool _handledEventsToo = false;
 
+    protected DragDropEffects _lastEffects;
+    
+    protected DropAdornerKind DropAdornerType { get; set; } = DropAdornerKind.Solid;
+    
     public virtual void Attach(Control control)
     {
         ThrowIf.NotNull(AttachedControl);
-
+        
         AttachedControl = control;
         AvaDragDrop.SetAllowDrop(control, true);
         SubscribeDropEvents(control);
 
-        DropAdorner ??= new DropHighlightAdorner();
+        DropAdorner ??= new DropHighlightAdorner(DropAdornerType);
         DropAdorner.TargetControl = AttachedControl;
     }
 
@@ -54,46 +62,93 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
     protected virtual void DragEnter(object? sender, DragEventArgs e)
     {
         bool canDrop = CanDrop(e);
-        e.DragEffects = OnDragEnter(canDrop);
+        e.DragEffects = OnDragEnter(e, canDrop);
+        _lastEffects = e.DragEffects;
+    }
+    
+    protected virtual void DragLeave(object? sender, DragEventArgs e)
+    {
+        OnDragLeave(e);
     }
 
-    protected virtual void DragLeave(object? sender, RoutedEventArgs e)
+    protected void InvokePayloadCommand(DragEventArgs e, DragInfo dragInfo, DropTargetOffset offset)
     {
-        OnDragLeave();
+        if (PayloadCommand is null)
+        {
+            return;
+        }
+
+        IEnumerable<object> items;
+        if (dragInfo is CollectionDragInfo { PayloadCollection: not null } collectionDragInfo)
+        {
+            items = collectionDragInfo.PayloadCollection.Cast<object>().ToArray();
+        }
+        else if (dragInfo.DragOperation.Payload is not null)
+        {
+            items = [dragInfo.DragOperation.Payload];
+        }
+        else
+        {
+            items = Array.Empty<object>();
+        }
+
+        object? targetContext = null;
+        if (e.Source is StyledElement layoutable)
+        {
+            targetContext = layoutable.DataContext;
+        }
+            
+        DropEventArgs args = new(e.Source, targetContext, items, offset);
+        
+        if (PayloadCommand.CanExecute(args))
+            PayloadCommand.Execute(args);
     }
 
     /// <summary>
     /// Invoked when a drag enters the AttachedControl
     /// </summary>
+    /// <param name="dragEventArgs"></param>
     /// <param name="canDrop"></param>
-    protected virtual DragDropEffects OnDragEnter(bool canDrop)
+    protected virtual DragDropEffects OnDragEnter(DragEventArgs dragEventArgs, bool canDrop)
     {
+        if (!canDrop)
+        {
+            //e.DragEffects = DragDropEffects.None;
+            return DragDropEffects.None;
+        }
+        
         if (DropAdorner is not null)
         {
             DropAdorner.Attach();
             DropAdorner.IsDropValid = canDrop;
         }
 
-        if (!canDrop)
-        {
-            //e.DragEffects = DragDropEffects.None;
-            return DragDropEffects.None;
-        }
-
         ((IPseudoClasses)AttachedControl!.Classes).Set(":dropover", true);
         return DragDropEffects.Move;
+    }
+
+    protected virtual DragDropEffects OnDragOver()
+    {
+        return _lastEffects;
     }
 
     /// <summary>
     /// Invoked when a drag leaves the AttachedControl
     /// </summary>
-    /// <param name="canDrop"></param>
-    protected virtual void OnDragLeave()
+    /// <param name="dragEventArgs"></param>
+    protected virtual void OnDragLeave(DragEventArgs dragEventArgs)
     {
         ((IPseudoClasses)AttachedControl!.Classes).Set(":dropover", false);
         DropAdorner?.Detach();
     }
 
+    /// <summary>
+    /// Invoked when a drag is over the AttachedControl
+    /// This event fires repeatedly while the drag is over the control, so it should
+    /// be reasonably efficient with validation
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="e"></param>
     protected virtual void DragOver(object? sender, DragEventArgs e)
     {
         bool canDrop = CanDrop(e);
@@ -109,6 +164,8 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
             e.DragEffects = DragDropEffects.None;
             return;
         }
+
+        e.DragEffects = OnDragOver();
     }
 
     /// <summary>
@@ -133,6 +190,10 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
         };
 
         dragInfo.DragOperation.DropCompleted(e.DragEffects, dragInfo, dropMetadata);
+        
+        InvokePayloadCommand(e, dragInfo, DropTargetOffset.OnTarget);
+
+        OnDrop(e);
 
         ((IPseudoClasses)AttachedControl!.Classes).Set(":dropover", false);
 
@@ -141,6 +202,10 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
             DropAdorner.IsDropValid = false;
             DropAdorner.Detach();
         }
+    }
+    
+    protected virtual void OnDrop(DragEventArgs dragEventArgs)
+    {
     }
 
     /// <summary>

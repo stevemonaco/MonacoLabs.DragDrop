@@ -1,4 +1,5 @@
-﻿using Avalonia.Data;
+﻿using System.Windows.Input;
+using Avalonia.Data;
 using Avalonia;
 using Avalonia.Controls;
 
@@ -27,6 +28,20 @@ public abstract partial class DropOperationBase
     {
         get => GetValue(PayloadTargetProperty);
         set => SetValue(PayloadTargetProperty, value);
+    }
+
+    private ICommand? _payloadCommand;
+
+    public static readonly DirectProperty<DropOperationBase, ICommand?> PayloadCommandProperty =
+        AvaloniaProperty.RegisterDirect<DropOperationBase, ICommand?>(nameof(PayloadCommand), o => o.PayloadCommand, (o, v) => o.PayloadCommand = v);
+
+    /// <summary>
+    /// PayloadCommand will be executed when the Drop is applied.
+    /// </summary>
+    public ICommand? PayloadCommand
+    {
+        get => _payloadCommand;
+        set => SetAndRaise(PayloadCommandProperty, ref _payloadCommand, value);
     }
 
     public static readonly StyledProperty<DropAdornerBase?> DropAdornerProperty =
