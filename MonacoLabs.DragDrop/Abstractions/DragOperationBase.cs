@@ -112,9 +112,27 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
             e.Handled = true;
     }
 
-    // Scrollbars and buttons (e.g. a tree item's expander) must keep receiving their presses
-    private bool IsInsideIgnoredControl(Control source) =>
-        SelfAndAncestorsWithinAttachedControl(source).Any(x => x is ScrollBar or Button);
+    /// <summary>
+    /// Whether a press on <paramref name="element"/>, or inside it, is left to the element by default instead of being tracked as a drag.
+    /// True for scroll bars, buttons (including a tree item's expander), text boxes and thumbs.
+    /// </summary>
+    /// <remarks>Called for the pressed element and each ancestor up to the attached control that has no <see cref="DragDrop.IgnoresPressProperty"/>
+    /// value. Prefer that property for per-element or styled choices; override for rules that need code.</remarks>
+    protected virtual bool IsIgnoredPressSource(Visual element) => element is ScrollBar or Button or TextBox or Thumb;
+
+    private bool IsInsideIgnoredControl(Control source)
+    {
+        foreach (var element in SelfAndAncestorsWithinAttachedControl(source))
+        {
+            if (DragDrop.GetIgnoresPress(element) is { } ignores)
+                return ignores;
+
+            if (IsIgnoredPressSource(element))
+                return true;
+        }
+
+        return false;
+    }
 
     private bool IsInsideDragHandle(Control source) =>
         SelfAndAncestorsWithinAttachedControl(source).Any(DragDrop.GetIsDragHandle);

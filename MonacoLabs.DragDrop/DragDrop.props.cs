@@ -65,4 +65,22 @@ public static partial class DragDrop
     {
         return element.GetValue(IsDragHandleProperty);
     }
+
+    /// <summary>
+    /// Identifies the IgnoresPress attached property. True leaves presses on or inside an element to the element instead of starting a drag;
+    /// false lets them start drags even inside a control that is ignored by default, such as a read-only <see cref="TextBox"/>.
+    /// </summary>
+    /// <remarks>Not inherited. Drag sources read it from the pressed element up to their attached control, and the nearest element with a value,
+    /// or that <see cref="DragOperationBase.IsIgnoredPressSource"/> ignores, decides.</remarks>
+    public static readonly AttachedProperty<bool?> IgnoresPressProperty = AvaloniaProperty.RegisterAttached<Control, bool?>("IgnoresPress", typeof(DragDrop));
+
+    public static void SetIgnoresPress(AvaloniaObject element, bool? value)
+    {
+        element.SetValue(IgnoresPressProperty, value);
+    }
+
+    public static bool? GetIgnoresPress(AvaloniaObject element)
+    {
+        return element.GetValue(IgnoresPressProperty);
+    }
 }

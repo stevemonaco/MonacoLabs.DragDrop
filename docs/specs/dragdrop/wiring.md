@@ -24,7 +24,7 @@ depends: []
 
 ## Purpose
 
-`DragDrop` is the XAML entry point: the `DragOperation` and `DropOperation` attached properties turn a control into a drag source or a drop target by attaching an operation object to it, and `IsDragHandle` marks where drags may start. Every other spec builds on the attach/detach contract defined here. The drag-handle rule itself is in DD-DRAG.
+`DragDrop` is the XAML entry point: the `DragOperation` and `DropOperation` attached properties turn a control into a drag source or a drop target by attaching an operation object to it, `IsDragHandle` marks where drags may start, and `IgnoresPress` marks elements whose presses never start one, or opts them back in. Every other spec builds on the attach/detach contract defined here. The drag-handle and ignored-press rules themselves are in DD-DRAG.
 
 ## Requirements
 
