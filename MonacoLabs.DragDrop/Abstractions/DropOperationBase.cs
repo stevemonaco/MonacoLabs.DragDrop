@@ -71,25 +71,11 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
         OnDragLeave(e);
     }
 
-    protected void InvokePayloadCommand(DragEventArgs e, DragInfo dragInfo, DropTargetOffset offset)
+    protected void InvokePayloadCommand(DragEventArgs e, object payload, DropTargetOffset offset)
     {
         if (PayloadCommand is null)
         {
             return;
-        }
-
-        IEnumerable<object> items;
-        if (dragInfo is CollectionDragInfo { PayloadCollection: not null } collectionDragInfo)
-        {
-            items = collectionDragInfo.PayloadCollection.Cast<object>().ToArray();
-        }
-        else if (dragInfo.DragOperation.Payload is not null)
-        {
-            items = [dragInfo.DragOperation.Payload];
-        }
-        else
-        {
-            items = Array.Empty<object>();
         }
 
         object? targetContext = null;
@@ -98,7 +84,7 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
             targetContext = layoutable.DataContext;
         }
             
-        DropEventArgs args = new(e.Source, targetContext, items, offset);
+        DropEventArgs args = new(e.Source, targetContext, [payload], offset);
         
         if (PayloadCommand.CanExecute(args))
             PayloadCommand.Execute(args);
@@ -191,7 +177,7 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
 
         dragInfo.DragOperation.DropCompleted(e.DragEffects, dragInfo, dropMetadata);
         
-        InvokePayloadCommand(e, dragInfo, DropTargetOffset.OnTarget);
+        InvokePayloadCommand(e, payload, DropTargetOffset.OnTarget);
 
         OnDrop(e);
 

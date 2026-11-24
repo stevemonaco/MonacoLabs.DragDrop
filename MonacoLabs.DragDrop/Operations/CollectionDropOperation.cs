@@ -165,7 +165,7 @@ public class CollectionDropOperation : DropOperationBase
             dragInfo.DragOperation.DropCompleted(e.DragEffects, dragInfo, dropInfo);
         }
         
-        InvokePayloadCommand(e, dragInfo, ItemDropAdorner?.Target ?? DropTargetOffset.AfterTarget);
+        InvokePayloadCommand(e, payload, ItemDropAdorner?.Target ?? DropTargetOffset.AfterTarget);
         
         e.Handled = true;
         ((IPseudoClasses)AttachedControl!.Classes).Set(":dropover", false);
