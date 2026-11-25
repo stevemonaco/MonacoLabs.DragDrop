@@ -14,6 +14,7 @@ types:
 tests:
   - TreeDragTests
   - TreeDropTests
+  - HoverExpandTests
 depends:
   - DD-COLLECTION
 ---
@@ -40,51 +41,51 @@ depends:
 ### Drop side: zones
 
 - **DD-TREE-005** — The hovered container shall be the nearest `TreeViewItem` at or above the event source, below the attached control.
-  - Tests: untested
+  - Tests: `TreeDropTests.TheHoveredContainerIsTheNearestTreeViewItem`
 - **DD-TREE-006** — Zones, the insertion line and the hover position shall be measured against the node's `PART_Header`, not the whole `TreeViewItem`.
-  - Tests: untested
+  - Tests: `TreeDropTests.ZonesAndTheInsertionLineUseTheHeaderNotTheWholeItem`
 - **DD-TREE-007** — When the hovered node's container has an `IList` `ItemsSource`, the offset shall be `BeforeTarget` in the header's top quarter, `AfterTarget` in its bottom quarter and `OnTarget` in between.
-  - Tests: untested
+  - Tests: `TreeDropTests.ANodeWithAListOfChildrenHasBeforeInsideAndAfterZones`
 - **DD-TREE-008** — When the hovered node's container has no `IList` `ItemsSource`, the offset shall follow the halves rule of DD-COLLECTION-014.
-  - Tests: untested
+  - Tests: `TreeDropTests.ANodeWithoutAListOfChildrenHasBeforeAndAfterHalves`
 
 ### Drop side: locations
 
 - **DD-TREE-009** — For `OnTarget`, the location shall be the end of the hovered node's children, with that node as parent.
-  - Tests: untested
+  - Tests: `TreeDropTests.DroppingInsideANodeAppendsToItsChildren`
 - **DD-TREE-010** — For `AfterTarget` on an expanded node with at least one child, the location shall be index 0 of its children, with that node as parent, because that spot is drawn directly above its first child.
-  - Tests: untested
+  - Tests: `TreeDropTests.DroppingAfterAnExpandedNodeInsertsAsItsFirstChild`
 - **DD-TREE-011** — Otherwise the location shall be in the hovered node's sibling collection (its parent's `ItemsSource`), at the node's index for `BeforeTarget` or the index plus one for `AfterTarget`, with the parent node as parent, or null at the root.
-  - Tests: untested
+  - Tests: `TreeDropTests.DroppingBeforeAChildInsertsAmongItsSiblings`, `TreeDropTests.DroppingAfterACollapsedRootInsertsAmongTheRoots`
 - **DD-TREE-012** — While no node is hovered, the location shall append to the `TreeView`'s `ItemsSource` with no parent, or there shall be no location when that is not an `IList`.
-  - Tests: untested
+  - Tests: `TreeDropTests.DroppingBelowTheNodesAppendsToTheRoots`, `TreeDropTests.WithoutALocationTheDropIsRejected`
 - **DD-TREE-013** — The tree drop operation shall always transfer the payload, ignoring `PayloadTarget`.
-  - Tests: untested
+  - Tests: `TreeDropTests.TheTreeAlwaysTransfersAndIgnoresPayloadTarget`
 
 ### Drop side: validation
 
 - **DD-TREE-014** — When there is no location, the drop operation shall reject the drop.
-  - Tests: untested
+  - Tests: `TreeDropTests.WithoutALocationTheDropIsRejected`
 - **DD-TREE-015** — When the location's parent container is the dragged node or one of its descendants, the drop operation shall reject the drop with `SelfDropMessage` as its error message.
   - Tests: `TreeDropTests.DroppingANodeIntoItselfShowsTheSelfDropMessage`
 - **DD-TREE-016** — The subtree check shall run in `CanDropAtLocation`, before `CanDrop` (DD-COLLECTION-023), so a `CanDrop` override cannot allow a node into itself.
-  - Tests: untested
+  - Tests: `TreeDropTests.ACanDropOverrideCannotAllowANodeIntoItself`
 
 ### Hover expand
 
 - **DD-TREE-017** — While the pointer stays over the middle zone of a collapsed node that has children, the drop operation shall expand the node after `HoverExpandDelay`.
-  - Tests: untested
+  - Tests: `HoverExpandTests.HoveringTheMiddleOfACollapsedNodeExpandsItAfterTheDelay`, `HoverExpandTests.ANodeWithoutChildrenIsNotExpanded`
 - **DD-TREE-018** — When the hovered node or zone changes, or the drag ends, before the delay elapses, the drop operation shall cancel the pending expand.
-  - Tests: untested
+  - Tests: `HoverExpandTests.MovingToAnotherZoneCancelsThePendingExpand`, `HoverExpandTests.MovingToAnotherNodeCancelsThePendingExpand`, `HoverExpandTests.LeavingCancelsThePendingExpand`
 - **DD-TREE-019** — When `HoverExpandDelay` is zero or less, the drop operation shall never expand nodes on hover.
-  - Tests: untested
+  - Tests: `HoverExpandTests.AZeroDelayNeverExpands`
 
 ### Defaults
 
 - **DD-TREE-020** (inherited) — When `HoverExpandDelay` is not set, the delay shall be 700 ms.
-  - Tests: untested
+  - Tests: `HoverExpandTests.TheDelayDefaultsTo700Milliseconds`
 - **DD-TREE-021** (inherited) — When `SelfDropMessage` is not set, the message shall be "A node can't be moved into itself".
-  - Tests: untested
+  - Tests: `TreeDropTests.SelfDropMessageHasADefault`
 
 ## Invariants
 

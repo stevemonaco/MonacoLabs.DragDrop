@@ -27,6 +27,7 @@ tests:
   - CollectionRemovalTests
   - AutoScrollStepTests
   - EndToEndTests
+  - AutoScrollTests
 depends:
   - DD-DRAG
   - DD-DROP
@@ -73,32 +74,32 @@ depends:
 ### Drop side: hover
 
 - **DD-COLLECTION-012** — The collection drop operation shall allow self-drops, so items can be reordered within one control.
-  - Tests: untested
+  - Tests: `CollectionDropTests.ItemsCanBeReorderedWithinOneList`
 - **DD-COLLECTION-013** — While a drag meant for the target is over it, the drop operation shall find the hovered item container: the topmost logical ancestor of the event source below the attached control, or none when that is part of the attached control's own template.
-  - Tests: untested
+  - Tests: `CollectionDropTests.TheHoveredContainerIsTheItemContainerUnderThePointer`
 - **DD-COLLECTION-014** — While an item container is hovered, the drop operation shall set the offset to `BeforeTarget` when the pointer is in the top half of the container and `AfterTarget` otherwise.
-  - Tests: untested
+  - Tests: `CollectionDropTests.TheTopHalfOfAContainerIsBeforeItAndTheBottomHalfAfterIt`
 - **DD-COLLECTION-015** — While no item container is hovered, the offset shall be `AfterTarget`.
-  - Tests: untested
+  - Tests: `CollectionDropTests.WithoutAHoveredContainerTheDropAppendsAfterTheItems`
 - **DD-COLLECTION-016** — While an item container is hovered, the drop operation shall set `:dropover` on it, plus `:droptop`, `:dropbottom` or `:dropinside` for the `BeforeTarget`, `AfterTarget` or `OnTarget` offset, only while the drop is valid.
-  - Tests: untested
+  - Tests: `CollectionDropTests.TheHoveredContainerHasTheDropPseudoClassesOnlyWhileTheDropIsValid`, `TreeDropTests.ANodeWithAListOfChildrenHasBeforeInsideAndAfterZones`
 - **DD-COLLECTION-017** — When the hovered container changes or the drag ends, the drop operation shall clear those pseudo-classes from the previous container.
-  - Tests: untested
+  - Tests: `CollectionDropTests.MovingToAnotherContainerClearsThePreviousOne`, `CollectionDropTests.ADropClearsTheHoverAndTheAdorners`
 - **DD-COLLECTION-018** — While an item container is hovered, the drop operation shall retarget its single `ItemDropAdorner` to the container's insertion target and update it with the offset and validity.
-  - Tests: untested
+  - Tests: `CollectionDropTests.TheInsertionAdornerFollowsTheHoveredContainer`
 - **DD-COLLECTION-019** — When attached with no `ItemDropAdorner`, the drop operation shall create a `DropInsertionAdorner`.
-  - Tests: untested
+  - Tests: `CollectionDropTests.AttachingWithoutAnItemAdornerCreatesAnInsertionAdorner`
 - **DD-COLLECTION-020** — The drop operation shall run hover, location, validation, adorners, pseudo-classes and auto-scroll on both DragEnter and DragOver, and mark those events handled when the drop is valid.
-  - Tests: untested
+  - Tests: `CollectionDropTests.EnterAndOverBothRunTheHoverAndAreHandledOnlyWhenValid`, `AutoScrollTests.HoveringNearAnEdgeScrollsTheListTowardsIt`
 
 ### Drop side: location and validation
 
 - **DD-COLLECTION-021** — The drop location's collection shall be `PayloadTarget` when it is an `IList`, and otherwise the attached control's `ItemsSource` when that is an `IList`; with neither, there shall be no location.
-  - Tests: untested
+  - Tests: `CollectionDropTests.TheLocationIsInPayloadTargetWhenItIsAList`, `CollectionDropTests.WithoutAListPayloadTargetTheLocationIsInTheItemsSource`, `CollectionDropTests.WithoutAnyListThereIsNoLocation`
 - **DD-COLLECTION-022** — While an item container at index *i* is hovered, the location's index shall be *i* for `BeforeTarget` and *i* + 1 for `AfterTarget`; while none is hovered, the index shall be null, meaning append.
-  - Tests: untested
+  - Tests: `CollectionDropTests.TheLocationIndexIsTheContainersIndexOrTheNextOne`, `CollectionDropTests.WithoutAHoveredContainerTheDropAppendsAfterTheItems`
 - **DD-COLLECTION-023** — The drop operation shall evaluate `CanDropAtLocation` before `CanDrop`, inside the same validation (DD-DROP-007), and reject the drop when either is false, so overrides of `CanDrop` cannot skip the structural check and a message passed to `Reject` by either reaches `ErrorMessage`.
-  - Tests: `TreeDropTests.DroppingANodeIntoItselfShowsTheSelfDropMessage`
+  - Tests: `TreeDropTests.DroppingANodeIntoItselfShowsTheSelfDropMessage`, `CollectionDropTests.TheStructuralCheckRunsFirstAndItsMessageWins`
 - ~~**DD-COLLECTION-024**~~ — Removed by api-design: see the decision "No logical-descendant check".
 - **DD-COLLECTION-037** — The drop operation shall validate drags over the attached control's own surface like drags over its content.
   - Tests: `CollectionDropTests.ADragOverTheTargetsOwnSurfaceIsAccepted`
@@ -106,39 +107,39 @@ depends:
 ### Drop side: dropping
 
 - **DD-COLLECTION-025** — When an in-process payload is dropped and accepted, `TransfersPayload` is true and there is a location, the drop operation shall insert the payload at the location's index, or append it when the index is null, and then call `DropCompleted` with a `CollectionDropInfo` carrying the target collection, the index actually used, the hovered container and the location's parent.
-  - Tests: untested
+  - Tests: `CollectionDropTests.AnAcceptedDropInsertsThenCompletesWithWhereItLanded`
 - **DD-COLLECTION-026** — `TransfersPayload` shall be true exactly when `PayloadTarget` is an `IList`, unless a subclass overrides it.
-  - Tests: untested
+  - Tests: `CollectionDropTests.AnAcceptedDropInsertsThenCompletesWithWhereItLanded`, `CollectionDropTests.ANonListPayloadTargetDoesNotTransfer`, `CollectionDropTests.ASubclassCanTransferWithoutAPayloadTarget`
 - **DD-COLLECTION-027** — When an in-process payload is dropped and accepted and nothing is transferred but `PayloadCommand` ran, the drop operation shall call `DropCompleted` after the command with a `CollectionDropInfo` whose target collection and index are the location's.
   - Tests: `CollectionDropTests.ACommandOnlyTargetCompletesAMove`, `EndToEndTests.ReorderingThroughACommandRemovesTheOriginal`
 - **DD-COLLECTION-038** — When an in-process drop neither transfers nor runs `PayloadCommand` (there is no command, or `CanExecute` is false), the drop operation shall report effect None and not call `DropCompleted`.
   - Tests: `CollectionDropTests.ADropThatNeitherTransfersNorRunsACommandReportsNone`, `CollectionDropTests.ACommandWhoseCanExecuteIsFalseReportsNone`
 - **DD-COLLECTION-028** — After an accepted in-process drop, the drop operation shall run `PayloadCommand` with the payload, the hovered offset and the location, whether or not it transferred.
-  - Tests: untested
+  - Tests: `CollectionDropTests.ATransferringDropAlsoRunsTheCommandWithThePayloadOffsetAndLocation`, `CollectionDropTests.ACommandOnlyTargetCompletesAMove`
 - **DD-COLLECTION-029** — When platform data is dropped and accepted, the drop operation shall run `PayloadCommand` with the platform items, the hovered offset and the location (from `ItemsSource` when there is no `PayloadTarget`), and shall insert nothing.
-  - Tests: untested
+  - Tests: `CollectionDropTests.APlatformDropRunsTheCommandAtTheItemsSourceLocationAndInsertsNothing`
 - **DD-COLLECTION-030** — A Copy drop shall insert the value `CreateCopy` returns (DD-DROP-026), which by default is the reference the source holds; any other effect shall insert the payload.
   - Tests: `CollectionDropTests.ACopyDropInsertsTheCreatedCopy`, `CollectionDropTests.AMoveDropIgnoresCreateCopy`, `EndToEndTests.CopyingWithAnOverriddenCreateCopyLeavesTheSourceUnchanged`
 - **DD-COLLECTION-031** — After a drop, or when a drag leaves or stops being meant for the target, the drop operation shall clear the hovered container, its pseudo-classes, the location, auto-scrolling, `:dropover` and both adorners.
-  - Tests: untested
+  - Tests: `CollectionDropTests.ADropClearsTheHoverAndTheAdorners`, `CollectionDropTests.ALeaveClearsTheHoverAndTheAdorners`, `CollectionDropTests.ADragThatStopsBeingMeantForTheTargetClearsTheHover`, `AutoScrollTests.LeavingStopsTheScrolling`
 - **DD-COLLECTION-039** — When detached, the collection drop operation shall clear its hovered container's pseudo-classes and hide its insertion adorner.
   - Tests: `CollectionDropTests.DetachingMidDragClearsTheHoveredContainer`
 
 ### Auto-scroll
 
 - **DD-COLLECTION-032** — While a drag meant for the target is within `AutoScrollMargin` of an edge of the scroll viewer (the attached control itself, or its first descendant `ScrollViewer`), the drop operation shall scroll that viewer towards the edge on a 16 ms timer.
-  - Tests: untested
+  - Tests: `AutoScrollTests.HoveringNearAnEdgeScrollsTheListTowardsIt`, `AutoScrollTests.AnAttachedScrollViewerScrollsItself`, `AutoScrollTests.OutsideTheMarginsTheListDoesNotScroll`
 - **DD-COLLECTION-033** — The scroll step shall grow linearly from 0 at the margin's inner edge to 14 DIPs per tick at the viewer's edge, per axis.
   - Tests: `AutoScrollStepTests.TheStepGrowsLinearlyFromTheMarginsInnerEdgeToTheViewersEdge`
 - **DD-COLLECTION-034** — The effective margin shall be at most a third of the viewer's extent on that axis, so small viewers keep a middle zone that does not scroll.
   - Tests: `AutoScrollStepTests.TheMarginIsAtMostAThirdOfTheExtent`
 - **DD-COLLECTION-035** — When `AutoScrollMargin` is zero or less, the drop operation shall not auto-scroll.
-  - Tests: `AutoScrollStepTests.AMarginOfZeroOrLessNeverScrolls`
+  - Tests: `AutoScrollStepTests.AMarginOfZeroOrLessNeverScrolls`, `AutoScrollTests.AMarginOfZeroOrLessNeverScrolls`
 
 ### Defaults
 
 - **DD-COLLECTION-036** (inherited) — When `AutoScrollMargin` is not set, the margin shall be 28 DIPs.
-  - Tests: untested
+  - Tests: `AutoScrollTests.TheMarginDefaultsTo28Dips`
 
 ## Invariants
 
