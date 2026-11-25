@@ -13,7 +13,6 @@ A new test project, `MonacoLabs.DragDrop.Tests/`, built on xUnit v3 and Avalonia
 1. **Pure unit tests** (`[Fact]`/`[Theory]`, no Avalonia platform) for logic extracted into internal static helpers: effect resolution (DD-EFFECTS), the collection removal index (DD-COLLECTION-007 to 011), the auto-scroll step (DD-COLLECTION-033, 034), `ThrowIf` and the interaction-id format mapping (DD-PLATFORM-001). The extraction does not change behavior.
 2. **Headless component tests** (`[AvaloniaFact]`) for each operation inside a real `Window` with the Fluent theme. Drop targets get synthetic drag events through the headless `TopLevel.DragDrop(...)` raw-event extension. Drag sources get synthetic mouse input (`MouseDown`/`MouseMove`/`MouseUp`).
 3. **End-to-end tests**, where synthetic mouse input drags from a real drag source into a real drop target. Headless `DoDragDropAsync` runs Avalonia's in-process drag loop, so the real `DataTransfer`, the drag session (DD-SESSION) and `DropCompleted` all run, with nothing in the library replaced.
-4. **`SpecTests`**, which checks the specs themselves: front matter, unique ids, existing sources, every public type owned by exactly one spec, and every cited test existing.
 
 **Test setup.** A `TestAppBuilder` (`AppBuilder.Configure<TestApp>().UseSkia().UseHeadless(new() { UseHeadlessDrawing = false })`) registered with `[assembly: AvaloniaTestApplication(...)]`. `TestApp` adds `FluentTheme`. Without a theme, `ListBox` and `TreeView` have no templates, so they have no containers, no `ScrollViewer` and no `PART_Header`. Shared helpers live in `MonacoLabs.DragDrop.Tests/Infrastructure/`:
 
@@ -37,6 +36,7 @@ A new test project, `MonacoLabs.DragDrop.Tests/`, built on xUnit v3 and Avalonia
 - **Fixed-size item templates.** Test item templates set explicit heights and widths, so hover zones and insertion indexes do not depend on font metrics. Reason: headless text measurement uses the machine's default font, which differs between Windows and Linux runners.
 - **Tests drive the real platform drag.** Drag-side and end-to-end tests start drags with `MouseDrag`, and the library calls `DoDragDropAsync` as it does in production. Reason: the headless in-process drag source delivers the real `DataTransfer` and allowed effects to the target and returns its effect, so nothing has to be replaced and the drag session runs as shipped. What the source offered (DD-DRAG-015, DD-TRANSFER) is asserted at the target's DragEnter. Session tests hold a real drag between moves with `HeldMouseDrag` to look at it in flight. The Win32-only sequence (a None DragOver followed by DragLeave) cannot be raised while a session runs, so the tests assert the non-None effect that prevents it (DD-SESSION-010). A failing platform drag is simulated by a test subclass overriding `DoDragDrop`. Rejected: an internal per-instance hook in place of `DoDragDropAsync` with `RecordingDragOperation` subclasses, which the spike made unnecessary and which would leave the in-process path untested.
 - **Pure logic is extracted, not mocked.** Effect resolution, the removal index and the auto-scroll step become internal static functions that the operations call. Reason: they are the densest logic and need many cases, which run in microseconds without a window. Rejected: a mocking library over `DragEventArgs` (Avalonia types are not designed for mocking).
+- **No spec-format tests.** The specs and their `Tests:` lines are maintained by AI agents, which read past small format drift, so tests enforcing the spec schema (front matter, section order, id format, type ownership) cost more in friction than they return. Rejected: a `SpecTests` class, built and then removed in task 9.
 - **Plain xUnit `Assert`.** Rejected: FluentAssertions (commercial license since v8) and Shouldly (an extra dependency for little gain).
 - **Tests are named as behaviors and cited from the specs.** Each test method reads as a sentence (`DroppingInTheTopHalfInsertsBeforeTheItem`), and each requirement's `Tests:` line lists the tests that pin it, in the same commit as the test.
 - **CI runs on Windows and Linux.** Fixed-size templates remove the font dependence that keeps other Avalonia suites Windows-only. Rejected: Windows only. If the Linux leg fails for environment reasons (native Skia libraries), it is dropped and a backlog item is added.
@@ -47,9 +47,9 @@ A new test project, `MonacoLabs.DragDrop.Tests/`, built on xUnit v3 and Avalonia
 
 **DD-EFFECTS** Open items: remove the item about extracting the effect logic once `DropEffectResolverTests` exists.
 
-**`docs/specs/README.md`**: "Once the test suite exists, `SpecTests` enforces the format" becomes "`SpecTests` enforces the format".
+**`docs/specs/README.md`**: the sentence saying `SpecTests` will enforce the format is removed (done with the decision "No spec-format tests").
 
-**`docs/ARCHITECTURE.md` §3** is rewritten to describe the four layers, the test app, the helpers, the fixed-size rule and the manual checks that remain.
+**`docs/ARCHITECTURE.md` §3** is rewritten to describe the three layers, the test app, the helpers, the fixed-size rule and the manual checks that remain.
 
 **`CLAUDE.md`**: "There are no tests, CI, or lint/format configs" is replaced; Commands gains `dotnet test --project MonacoLabs.DragDrop.Tests`; a short testing paragraph names the helpers, says drags run for real through `MouseDrag`, and warns that headless timers need an async wait. Done early, after the pre-1.0 API changes, except a CI mention, which task 10 adds; task 11 still makes the ARCHITECTURE §3 and specs README edits.
 
@@ -99,15 +99,9 @@ A new test project, `MonacoLabs.DragDrop.Tests/`, built on xUnit v3 and Avalonia
 8. **Session and end-to-end tests.**
    - `DragSessionTests`: DD-SESSION-001 to 012 and 014. Window `AllowDrop` injection and restoration, preview visibility and pseudo-classes, drops outside targets through `MouseDrag`, and the non-None effect over areas without a target that keeps Win32 raising Drop.
    - `EndToEndTests`: DD-DRAG-020 and 021, DD-ITEM-001 to 007 and 009, DD-COLLECTION-007 to 009 and 011, DD-TRANSFER-002 to 014, DD-EFFECTS-008 and 009. Each test drags from a real source into a real target with `MouseDrag`.
-9. **`SpecTests`.** Parse every spec's front matter and requirements. Check:
-   - ids are unique and well formed
-   - `sources` exist
-   - every exported type of `MonacoLabs.DragDrop` is in exactly one spec's `types`
-   - every `Class.Method` in a `Tests:` line exists in the test assembly
-
-   Verify: it passes, and fails on a deliberately broken citation (then reverted).
+9. ~~**`SpecTests`.**~~ Dropped: see the decision "No spec-format tests".
 10. **CI.** Add `.github/workflows/ci.yml` on push and pull request, with `windows-latest` and `ubuntu-latest`. It runs `actions/setup-dotnet` from `global.json`, builds the solution, runs `dotnet test` with results uploaded on failure, and caches NuGet keyed on `Directory.Packages.props`. Verify: a branch push goes green on both legs.
-11. **Docs.** Make the ARCHITECTURE §3, specs README and CLAUDE.md edits listed above. Verify: `SpecTests` passes, and every non-manual requirement outside those the correctness fixes changed cites a test or says why it is `untested` in its spec's Open items.
+11. **Docs.** Make the ARCHITECTURE §3, specs README and CLAUDE.md edits listed above. Verify: every cited test exists, and every non-manual requirement outside those the correctness fixes changed cites a test or says why it is `untested` in its spec's Open items.
 12. **Backlog.** Add what this change leaves out: code coverage reporting (`Microsoft.Testing.Extensions.CodeCoverage`), pixel tests for the adorners and preview, and a macOS CI leg for DD-EFFECTS-005.
 
 ## Open questions

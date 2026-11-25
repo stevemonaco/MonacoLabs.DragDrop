@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-MonacoLabs.DragDrop is a WIP/prototype MVVM-friendly drag-and-drop library for Avalonia 12, plus a demo app (`DragDropSample`) that exercises it, and a headless xUnit v3 test project (`MonacoLabs.DragDrop.Tests`). There is no CI or lint/format config yet ([docs/changes/test-suite.md](docs/changes/test-suite.md) plans CI).
+MonacoLabs.DragDrop is a WIP/prototype MVVM-friendly drag-and-drop library for Avalonia 12, plus a demo app (`DragDropSample`) that exercises it, and a headless xUnit v3 test project (`MonacoLabs.DragDrop.Tests`). CI (`.github/workflows/ci.yml`) builds the solution and runs the tests on Windows and Linux for every push and pull request. There is no lint/format config yet.
 
 ## Docs
 

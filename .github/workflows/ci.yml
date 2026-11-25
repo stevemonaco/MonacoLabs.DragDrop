@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  # main and PRs only, so a PR branch is not built twice per push.
+  push:
+    branches: [main]
+    paths: ['**', '!**.md', '!.claude/**']
+  pull_request:
+    paths: ['**', '!**.md', '!.claude/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  build-and-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+      - run: dotnet --info
+      - uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('Directory.Packages.props') }}
+      - run: dotnet restore MonacoLabs.DragDrop.slnx
+      - run: dotnet build MonacoLabs.DragDrop.slnx --configuration Release --no-restore
+      - run: dotnet test --project MonacoLabs.DragDrop.Tests --configuration Release --no-build --report-xunit --results-directory TestResults
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-results-${{ runner.os }}
+          path: TestResults

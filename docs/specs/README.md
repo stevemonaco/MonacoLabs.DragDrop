@@ -21,7 +21,7 @@ The sample app (`DragDropSample`) has no specs. Its decisions are in [ARCHITECTU
 
 ## Format
 
-Copy [`_template.md`](_template.md). Once the test suite exists ([changes/test-suite.md](../changes/test-suite.md)), `SpecTests` enforces the format.
+Copy [`_template.md`](_template.md).
 
 **Front matter** (between `---` lines; a scalar is `key: value`, a list is `key:` followed by `  - item` lines, or `key: []` when empty):
 

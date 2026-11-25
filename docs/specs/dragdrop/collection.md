@@ -28,6 +28,7 @@ tests:
   - AutoScrollStepTests
   - EndToEndTests
   - AutoScrollTests
+  - TreeDropTests
 depends:
   - DD-DRAG
   - DD-DROP
