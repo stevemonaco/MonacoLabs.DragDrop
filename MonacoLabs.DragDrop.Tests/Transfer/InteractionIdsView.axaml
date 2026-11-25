@@ -1,0 +1,10 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:dd="using:MonacoLabs.DragDrop"
+             x:Class="MonacoLabs.DragDrop.Tests.InteractionIdsView">
+  <Border x:Name="Slot">
+    <dd:DragDrop.DragOperation>
+      <dd:ItemDragOperation InteractionIds="app:meal, app:drink" />
+    </dd:DragDrop.DragOperation>
+  </Border>
+</UserControl>

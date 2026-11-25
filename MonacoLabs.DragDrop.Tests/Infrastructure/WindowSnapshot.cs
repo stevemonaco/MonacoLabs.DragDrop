@@ -30,7 +30,15 @@ public sealed class WindowSnapshot
         var size = PixelSize.FromSize(window.ClientSize, 1);
         using var bitmap = new RenderTargetBitmap(size);
         bitmap.Render(window);
+        return Of(bitmap);
+    }
 
+    /// <summary>
+    /// Reads the pixels of <paramref name="bitmap"/>, such as a drag preview's snapshot.
+    /// </summary>
+    public static WindowSnapshot Of(Bitmap bitmap)
+    {
+        var size = bitmap.PixelSize;
         var pixels = new byte[size.Width * size.Height * 4];
         var handle = GCHandle.Alloc(pixels, GCHandleType.Pinned);
         try

@@ -63,13 +63,13 @@ depends:
 - **DD-COLLECTION-007** — When a drop completes with effect Move and `PayloadCollection` is set, the drag operation shall remove the original from `PayloadCollection`, whatever kind of target received the drop.
   - Tests: `CollectionRemovalTests.AMoveToAnotherListRemovesThePressedIndex`, `CollectionRemovalTests.AMoveOntoATargetWithoutACollectionRemovesThePressedIndex`, `EndToEndTests.MovingAListItemOntoASingleValueTargetRemovesItFromTheList`
 - **DD-COLLECTION-008** — The drag operation shall remove at the pressed index, shifted by one when the drop inserted into the same collection at or before it, when that index holds an item equal to the payload.
-  - Tests: `CollectionRemovalTests.AMoveWithinOneListRemovesTheOriginalAfterTheInsertionShiftsIt`, `CollectionRemovalTests.AnAppendWithinOneListRemovesThePressedIndex`, `CollectionRemovalTests.MovingOneOfTwoEqualItemsRemovesThatOne`
+  - Tests: `CollectionRemovalTests.AMoveWithinOneListRemovesTheOriginalAfterTheInsertionShiftsIt`, `CollectionRemovalTests.AnAppendWithinOneListRemovesThePressedIndex`, `CollectionRemovalTests.MovingOneOfTwoEqualItemsRemovesThatOne`, `CollectionDropTests.ItemsCanBeReorderedWithinOneList`
 - **DD-COLLECTION-009** — When the pressed index is unknown or no longer holds an equal item, the drag operation shall remove the first item equal to the payload that is not the item the drop inserted (the one at the target index, or the last one when the drop appended).
   - Tests: `CollectionRemovalTests.WithoutAPressedIndexTheMoveRemovesThePayloadByEquality`, `CollectionRemovalTests.AStalePressedIndexFallsBackToTheFirstEqualItem`, `CollectionRemovalTests.TheEqualitySearchSkipsTheItemTheDropInserted`, `CollectionRemovalTests.WithoutAPressedIndexAnAppendRemovesTheOriginalNotTheAppendedItem`
 - **DD-COLLECTION-010** — When the effect is not Move or `PayloadCollection` is null, the drag operation shall remove nothing.
   - Tests: `CollectionDragTests.OnlyAMoveWithAPayloadCollectionRemovesTheOriginal`
 - **DD-COLLECTION-011** — When the drag is dropped outside any target with `RemoveOnDropOutside` (DD-SESSION), the drag operation shall remove the item at the pressed index if that index still holds an equal item, and otherwise remove the payload by equality.
-  - Tests: `CollectionRemovalTests.ADropOutsideRemovesThePressedIndexWhenItHoldsThePayload`, `CollectionRemovalTests.ADropOutsideRemovesByEqualityWhenThePressedIndexDoesNotHoldThePayload`
+  - Tests: `CollectionRemovalTests.ADropOutsideRemovesThePressedIndexWhenItHoldsThePayload`, `CollectionRemovalTests.ADropOutsideRemovesByEqualityWhenThePressedIndexDoesNotHoldThePayload`, `EndToEndTests.DroppingAListItemWhereNothingAcceptsItRemovesItWithRemoveOnDropOutside`
 
 ### Drop side: hover
 

@@ -10,6 +10,7 @@ sources:
 types: []
 tests:
   - DropEffectResolverTests
+  - EndToEndTests
 depends:
   - DD-TRANSFER
   - DD-PLATFORM
@@ -46,9 +47,9 @@ How a drop target turns the effects a drag source allows and the modifier keys h
 ### When the effect is computed
 
 - **DD-EFFECTS-008** — The target shall compute the effect afresh on every DragEnter, DragOver and Drop, from that event's allowed effects and modifiers.
-  - Tests: untested
+  - Tests: `EndToEndTests.TheEffectFollowsTheModifiersOfEachEvent`
 - **DD-EFFECTS-009** — The effect passed to `DropCompleted` shall be the effect computed on Drop.
-  - Tests: untested
+  - Tests: `EndToEndTests.DropCompletedGetsTheEffectComputedOnDrop`, `EndToEndTests.TheEffectFollowsTheModifiersOfEachEvent`
 
 ## Invariants
 

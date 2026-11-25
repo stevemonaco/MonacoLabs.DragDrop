@@ -12,6 +12,8 @@ types:
 tests:
   - DragGestureTests
   - CollectionDragTests
+  - EndToEndTests
+  - DragSessionTests
 depends:
   - DD-WIRING
   - DD-TRANSFER
@@ -89,9 +91,9 @@ depends:
 ### Completion
 
 - **DD-DRAG-020** — When the drop side calls `DropCompleted`, the base drag source shall do nothing; removing the payload from its source is each subclass's job (DD-ITEM, DD-COLLECTION).
-  - Tests: untested
+  - Tests: `EndToEndTests.TheBaseDragSourceKeepsItsPayloadAfterAMove`
 - **DD-DRAG-021** — When `RemoveOnDropOutside` is true and the drag session reports a drop outside any target (DD-SESSION), the drag source shall call `OnDroppedOutside` after the platform drag returns.
-  - Tests: untested
+  - Tests: `EndToEndTests.ADropOutsideAnyTargetPassesTheDragAndItsPayloadToOnDroppedOutside`, `DragSessionTests.ADropWhereNothingAllowsDropsIsOutsideAnyTargetWithRemoveOnDropOutside`
 
 ### Defaults
 

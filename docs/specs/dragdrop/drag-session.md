@@ -26,44 +26,44 @@ One internal `DragSession` exists per drag, created by the drag source (DD-DRAG)
 ### Dragging pseudo-class
 
 - **DD-SESSION-001** — While a drag runs, the drag visual shall have the `:dragging` pseudo-class, and it shall be removed when the drag ends, whatever its outcome.
-  - Tests: untested
+  - Tests: `DragSessionTests.TheDragVisualIsDraggingUntilTheDragEndsWhateverTheOutcome`
 
 ### Preview
 
 - **DD-SESSION-002** — When `ShowDragPreview` is true and the drag visual has an adorner layer and a size of at least 1×1 DIP, the session shall add a snapshot of the drag visual to that adorner layer.
-  - Tests: untested
+  - Tests: `DragSessionTests.ThePreviewIsAddedToTheSourcesAdornerLayerWhenShown`, `DragSessionTests.AVisualWithoutSizeHasNoPreview`
 - **DD-SESSION-003** — The snapshot shall be taken before `:dragging` is applied, so it shows the visual's normal look.
-  - Tests: untested
+  - Tests: `DragSessionTests.TheSnapshotShowsTheVisualsNormalLook`
 - **DD-SESSION-004** — The snapshot shall be rendered at the window's render scaling, and keep the visual's corner radius when the visual is a `Border` or a templated control.
-  - Tests: untested
+  - Tests: `DragSessionTests.TheSnapshotUsesTheRenderScalingAndKeepsABordersCornerRadius`, `DragSessionTests.TheSnapshotKeepsATemplatedControlsCornerRadius`
 - **DD-SESSION-005** — The preview shall paint the nearest ancestor's opaque background behind the snapshot (a solid brush with full alpha and opacity, or any non-solid brush), so transparent drag visuals stay legible.
-  - Tests: untested
+  - Tests: `DragSessionTests.ATransparentVisualShowsTheNearestOpaqueBackgroundBehindIt`, `DragSessionTests.ANonSolidBackgroundCountsAsOpaque`
 - **DD-SESSION-006** — The preview shall be hidden until the drag first enters or moves over the source's window, then follow the pointer with the press point under it.
-  - Tests: untested
+  - Tests: `DragSessionTests.ThePreviewIsHiddenUntilTheDragReachesTheWindowThenFollowsThePointer`
 - **DD-SESSION-007** — When the drag leaves the window or is dropped, the preview shall be hidden; when the drag ends, it shall be removed from the adorner layer.
-  - Tests: untested
+  - Tests: `DragSessionTests.ThePreviewHidesWhenTheDragLeavesTheWindow`, `DragSessionTests.ThePreviewHidesOnDropAndLeavesTheLayer`, `DragSessionTests.EndingTheDragDisposesThePreview`
 - **DD-SESSION-015** — When the drag ends, the session shall dispose the preview, releasing its snapshot bitmap.
   - Tests: `DragSessionTests.EndingTheDragDisposesThePreview`
 - **DD-SESSION-008** — While the pointer is over the window, the preview shall have `:nodrop` when the current effect is None, `:copy` when it is Copy and the drop would not remove the payload, and `:remove` when dropping there would remove the payload.
-  - Tests: untested
+  - Tests: `DragSessionTests.ThePreviewShowsWhetherTheDropWouldCopyOrRemove`, `DragSessionTests.ThePreviewShowsNoDropWhereNothingAcceptsTheDrag`
 
 ### Watching the window
 
 - **DD-SESSION-009** — When a preview is shown or `RemoveOnDropOutside` is true, and the window does not already set `AllowDrop`, the session shall set it for the drag's duration and clear it afterwards.
-  - Tests: untested
+  - Tests: `DragSessionTests.TheSessionAllowsDropsOnTheWindowOnlyForTheDrag`, `DragSessionTests.AWindowThatAlreadyAllowsDropsKeepsIt`
 - **DD-SESSION-010** — While the pointer is over a part of the window where no element up to the window sets `AllowDrop` explicitly, and the session set the window's `AllowDrop`, the session shall report effect None, or, when `RemoveOnDropOutside` is true, Move if allowed, else Copy, else Link.
-  - Tests: untested
+  - Tests: `DragSessionTests.WhereNothingAllowsDropsTheSessionReportsNoneOrTheRemoveEffect`, `DragSessionTests.OverAnElementThatAllowsDropsTheSessionLeavesTheEffectAlone`
 - **DD-SESSION-011** — When the drag is dropped on such a part of the window and `RemoveOnDropOutside` is true, the session shall report the drop as outside any target (DD-DRAG-021).
-  - Tests: untested
+  - Tests: `DragSessionTests.ADropWhereNothingAllowsDropsIsOutsideAnyTargetWithRemoveOnDropOutside`, `DragSessionTests.ADropOnATargetIsNotOutside`
 - **DD-SESSION-012** — Drops outside the window and canceled drags shall never count as outside any target.
-  - Tests: untested
+  - Tests: `DragSessionTests.ACanceledDragOrADropOutsideTheWindowIsNeverOutsideAnyTarget`
 - **DD-SESSION-013** — Dropping an order slot's item on the window background shall clear the slot, and dropping it on the desktop or pressing Esc shall not.
   - Tests: manual — Win32, `DragDropSample/SingleItemPage` (slots use `RemoveOnDropOutside`); repeat for the Desktop page's file list.
 
 ### Preview defaults
 
 - **DD-SESSION-014** (inherited) — The preview shall not be hit-testable, shall have opacity 0.9, a `0 8 20 0 #40000000` box shadow and the highest z-index in its layer.
-  - Tests: untested
+  - Tests: `DragSessionTests.ThePreviewIsPassiveTranslucentShadowedAndOnTop`
 
 ## Invariants
 
