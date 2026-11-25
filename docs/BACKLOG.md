@@ -12,6 +12,7 @@ In progress elsewhere: the test suite in [changes/test-suite.md](changes/test-su
   - Direction: one template flow in the base (target check → hover resolution → location → validation → adorners → effect), with protected steps that collection and tree targets override (`LocateTargetContainer`, `ResolveDropLocation`, `GetDropOffset`, `CanDropAtLocation` already exist), private subscribed handlers, and one set of `On*` notifications that every target raises.
   - The drag side already has this shape (DD-DRAG, "Pointer hooks, not event handlers"). Rewrites much of DD-DROP and DD-COLLECTION, so it is best done before `PublicApiAnalyzers` baselines the API.
 
+- [DD-DROP] `DropOperationBase.Routing` accepts `Tunnel`, but Avalonia raises drag events as bubbling only, so a tunneling target never sees a drag. Reject `Tunnel` in the setter, or replace the option with `HandledEventsToo` alone.
 - [DD-SESSION] An app that sets `AllowDrop` on its window silently disables `RemoveOnDropOutside` and the preview's `:remove`, because the session only tracks outside-target areas when it injected `AllowDrop` itself.
 - [DD-DRAG] A press whose payload resolves to null stays tracked and re-resolves the payload on every move until release. Reset the press instead.
 - [DD-COLLECTION] Insertion and removal indexes come from item containers, so a `PayloadTarget` that differs from the displayed order (a filtered or sorted view over it) inserts at the wrong position.

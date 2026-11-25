@@ -11,7 +11,8 @@ sources:
 types:
   - ItemDragOperation
   - ItemDropOperation
-tests: []
+tests:
+  - ItemDropTests
 depends:
   - DD-DRAG
   - DD-DROP
@@ -46,7 +47,7 @@ depends:
 ### Drop side
 
 - **DD-ITEM-008** — `ItemDropOperation` shall behave exactly as DD-DROP specifies, including refusing drags that started from its own attached control.
-  - Tests: untested
+  - Tests: `ItemDropTests.ItemDropOperationAddsNothingToTheDropTarget`, `ItemDropTests.ASlotDroppedOnItselfKeepsItsValue`
 
 ### Defaults
 

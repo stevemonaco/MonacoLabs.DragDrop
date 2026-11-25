@@ -11,6 +11,7 @@ types:
   - PlatformInteractionIds
 tests:
   - InteractionIdTests
+  - PlatformDropTests
 depends:
   - DD-TRANSFER
 ---
@@ -26,17 +27,17 @@ depends:
 - **DD-PLATFORM-001** — `PlatformInteractionIds.Files` (`platform:files`) shall map to the platform file format, and `PlatformInteractionIds.Text` (`platform:text`) to the platform text format; every other id shall map to an in-process format.
   - Tests: `InteractionIdTests.TheFilesIdMapsToThePlatformFileFormat`, `InteractionIdTests.TheTextIdMapsToThePlatformTextFormat`, `InteractionIdTests.OtherIdsMapToAnInProcessFormat`
 - **DD-PLATFORM-002** — A drop target listing a platform id shall accept that platform data from any source, including other applications and drags from this app that advertise the same platform id.
-  - Tests: untested
+  - Tests: `PlatformDropTests.ATargetListingThePlatformTextIdAcceptsTextFromAnotherApp`, `PlatformDropTests.ADragFromThisAppAdvertisingOnlyAPlatformIdTheTargetListsIsAPlatformDrop`
 - **DD-PLATFORM-003** — A drop shall be a platform drop when the drag carries no in-process payload for the target's non-platform ids.
-  - Tests: untested
+  - Tests: `PlatformDropTests.ADragFromThisAppAdvertisingOnlyAPlatformIdTheTargetListsIsAPlatformDrop`, `PlatformDropTests.AMatchingInProcessIdMakesTheDropInProcess`
 - **DD-PLATFORM-004** — When a platform drop carries files and the target lists `platform:files`, `DropEventArgs.Items` shall hold the dropped `IStorageItem`s; otherwise, when it carries text and the target lists `platform:text`, `Items` shall hold that one string.
-  - Tests: untested
+  - Tests: `PlatformDropTests.APlatformDropOfFilesPassesTheStorageItems`, `PlatformDropTests.APlatformDropOfTextPassesTheTextAsTheOnlyItem`
 - **DD-PLATFORM-005** — A platform drop shall never change `PayloadTarget`, never call `DropCompleted` and always set `DropEventArgs.IsPlatformDrop`.
-  - Tests: untested
+  - Tests: `PlatformDropTests.APlatformDropLeavesPayloadTargetAndNeverCompletesTheDrag`
 - **DD-PLATFORM-006** — When a drag carries both files and text and the target lists both ids, `Items` shall hold the files.
-  - Tests: untested
+  - Tests: `PlatformDropTests.FilesWinOverTextWhenTheTargetListsBoth`
 - **DD-PLATFORM-007** — When a drag lists a platform id but `ResolvePlatformText` or `ResolvePlatformFile` returns null, the drag shall carry no data for that id.
-  - Tests: untested
+  - Tests: `PlatformDropTests.APlatformIdWhoseResolverReturnsNullCarriesNoData`
 - **DD-PLATFORM-008** — Dragging a file from Explorer onto the Desktop page's file list shall add it, and Explorer shall keep the original.
   - Tests: manual — real OLE drag from Explorer onto `DragDropSample/DesktopPage`.
 - **DD-PLATFORM-009** — Dragging a snippet from the Desktop page into another application's text field (Notepad, a browser) shall insert its text.

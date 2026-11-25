@@ -85,7 +85,7 @@ A new test project, `MonacoLabs.DragDrop.Tests/`, built on xUnit v3 and Avalonia
    - `DropTargetTests`: DD-DROP-001 to 022 on `ItemDropOperation`.
    - `PlatformDropTests`: DD-PLATFORM-002 to 007, DD-DROP-016.
    - `ItemDropTests`: DD-ITEM-008.
-   - `DropAdornerTests`: DD-ADORNERS-001 to 012, 015, 017 to 020, through pseudo-classes, `IsAttached` and visibility, not pixels.
+   - `DropAdornerTests`: DD-ADORNERS-001 to 012, 015, 017 to 020, through pseudo-classes, `IsAttached` and visibility. Only 015, 017 and 020 read pixels, from a `WindowSnapshot` of the rendered window.
 6. **Collection and tree drop tests.**
    - `CollectionDropTests`: DD-COLLECTION-012 to 026, 028 to 031, using fixed-height items.
    - `AutoScrollTests`: DD-COLLECTION-032, 035, with a short list in a small viewer.
