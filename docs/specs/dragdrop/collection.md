@@ -121,6 +121,8 @@ depends:
   - Tests: `CollectionDropTests.ACopyDropInsertsTheCreatedCopy`, `CollectionDropTests.AMoveDropIgnoresCreateCopy`, `EndToEndTests.CopyingWithAnOverriddenCreateCopyLeavesTheSourceUnchanged`
 - **DD-COLLECTION-031** — After a drop, or when a drag leaves or stops being meant for the target, the drop operation shall clear the hovered container, its pseudo-classes, the location, auto-scrolling, `:dropover` and both adorners.
   - Tests: untested
+- **DD-COLLECTION-039** — When detached, the collection drop operation shall clear its hovered container's pseudo-classes and hide its insertion adorner.
+  - Tests: `CollectionDropTests.DetachingMidDragClearsTheHoveredContainer`
 
 ### Auto-scroll
 

@@ -70,6 +70,11 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
         if (AttachedControl is null)
             return;
 
+        CancelPendingDragLeave();
+        ((IPseudoClasses)AttachedControl.Classes).Set(":dropover", false);
+        DropAdorner?.Detach();
+        ClearErrorMessage();
+
         AvaDragDrop.SetAllowDrop(control, false);
         UnsubscribeDropEvents(control);
         AttachedControl = null;

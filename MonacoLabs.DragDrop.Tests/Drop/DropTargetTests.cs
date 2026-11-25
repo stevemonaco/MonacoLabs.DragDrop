@@ -3,6 +3,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.Threading;
 using MonacoLabs.DragDrop.Abstractions;
 using Xunit;
 
@@ -109,6 +110,42 @@ public class DropTargetTests
         Assert.Equal(expected, args?.Effect);
     }
 
+    [AvaloniaFact]
+    public void DetachingCancelsAPendingLeave()
+    {
+        var target = new Border { Background = Brushes.Blue, Width = 100, Height = 100 };
+        var operation = new LeaveCountingDropOperation();
+        DragDrop.SetDropOperation(target, operation);
+        var window = TestWindow.Show(target);
+        var data = DragData.For(new ItemDragOperation(), "A");
+        using var drag = window.SimulateDrag(data);
+        drag.Enter(window.PointIn(target));
+        // Raised directly, because the headless platform's drag events run pending jobs before returning
+        target.RaiseEvent(new DragEventArgs(Avalonia.Input.DragDrop.DragLeaveEvent, data, target, default, KeyModifiers.None));
+
+        DragDrop.SetDropOperation(target, null);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(0, operation.Leaves);
+    }
+
+    [AvaloniaFact]
+    public void DetachingClearsDropoverAndHidesTheAdorner()
+    {
+        var target = new Border { Background = Brushes.Blue, Width = 100, Height = 100 };
+        var operation = new ItemDropOperation();
+        DragDrop.SetDropOperation(target, operation);
+        var window = TestWindow.Show(target);
+        using var drag = window.SimulateDrag(DragData.For(new ItemDragOperation(), "A"));
+        drag.Enter(window.PointIn(target));
+        Assert.True(operation.DropAdorner!.IsAttached);
+
+        DragDrop.SetDropOperation(target, null);
+
+        Assert.DoesNotContain(":dropover", target.Classes);
+        Assert.False(operation.DropAdorner.IsAttached);
+    }
+
     private static (Window, Border, RejectingDropOperation) ShowRejectingTarget(string message)
     {
         var target = new Border { Background = Brushes.Blue, Width = 100, Height = 100 };
@@ -120,6 +157,17 @@ public class DropTargetTests
     private sealed class CopyingDropOperation : ItemDropOperation
     {
         protected override object CreateCopy(object payload) => $"{payload} copy";
+    }
+
+    private sealed class LeaveCountingDropOperation : ItemDropOperation
+    {
+        public int Leaves { get; private set; }
+
+        protected override void OnDragLeave(DragEventArgs dragEventArgs)
+        {
+            Leaves++;
+            base.OnDragLeave(dragEventArgs);
+        }
     }
 
     private sealed class RejectingDropOperation : ItemDropOperation

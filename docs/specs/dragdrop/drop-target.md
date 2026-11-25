@@ -35,6 +35,10 @@ depends:
   - Tests: `DropTargetTests.AttachingWithoutAnAdornerCreatesASolidHighlight`
 - **DD-DROP-003** — When detached, the drop target shall clear `AllowDrop` on the control and remove its handlers.
   - Tests: untested
+- **DD-DROP-027** — When detached, the drop target shall cancel a pending deferred leave, clear `:dropover` from the control and clear `ErrorMessage`, and hide its adorner.
+  - Tests: `DropTargetTests.DetachingClearsDropoverAndHidesTheAdorner`
+- **DD-DROP-028** — A deferred leave that runs after the drop target was detached shall do nothing.
+  - Tests: `DropTargetTests.DetachingCancelsAPendingLeave`
 - **DD-DROP-023** — When `Routing` or `HandledEventsToo` is set while the operation is attached, the drop target shall throw `InvalidOperationException`.
   - Tests: `DropTargetTests.SettingHandledEventsTooWhileAttachedThrows`
 
@@ -113,7 +117,7 @@ depends:
 ## Threading and lifetime
 
 - UI thread only. The deferred leave (DD-DROP-013) is posted to the UI dispatcher.
-- Detach does not cancel a pending deferred leave. If one runs after Detach, `OnDragLeave` dereferences the now-null `AttachedControl` and throws.
+- Detach cancels a pending deferred leave (DD-DROP-028), so a leave posted just before Detach never reaches `OnDragLeave` with a null `AttachedControl`. `DropAdorner.TargetControl` keeps pointing at the old control until the next Attach.
 
 ## Platform behavior
 
@@ -135,5 +139,4 @@ depends:
 
 ## Open items
 
-- Detach leaves a pending deferred leave able to throw, and leaves `:dropover`, the adorner and `DropAdorner.TargetControl` in place. Addressed by [changes/correctness-fixes.md](../../changes/correctness-fixes.md).
 - Subclasses can override either the subscribed handlers (`DragEnter`, `DragOver`, `DragLeave`, `Drop`) or the hooks they call (`OnDragEnter`, `OnDragOver`, `OnDragLeave`, `OnDrop`). Collection targets replace the handlers, so which hooks run depends on the base class (see DD-COLLECTION Open items). Logged in the backlog (drop-side redesign).

@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Templates;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Media;
@@ -91,6 +92,34 @@ public class CollectionDropTests
 
         Assert.False(executed);
         Assert.Equal(["A", "B"], source);
+    }
+
+    [AvaloniaFact]
+    public void DetachingMidDragClearsTheHoveredContainer()
+    {
+        var items = new List<string> { "a", "b", "c" };
+        var list = new ListBox
+        {
+            ItemsSource = items,
+            Width = 150,
+            Height = 200,
+            ItemTemplate = new FuncDataTemplate<string>((_, _) => new TextBlock { Height = 30 })
+        };
+        var operation = new CollectionDropOperation { PayloadTarget = items };
+        DragDrop.SetDropOperation(list, operation);
+        var window = TestWindow.Show(list);
+        var container = list.ContainerFromIndex(1)!;
+        using var drag = window.SimulateDrag(DragData.For(new CollectionDragOperation(), "x"));
+        drag.Enter(window.PointIn(container));
+        Assert.Contains(":dropover", container.Classes);
+        Assert.True(operation.ItemDropAdorner!.IsAttached);
+
+        DragDrop.SetDropOperation(list, null);
+
+        Assert.DoesNotContain(container.Classes, c => c is ":dropover" or ":droptop" or ":dropbottom" or ":dropinside");
+        Assert.DoesNotContain(":dropover", list.Classes);
+        Assert.False(operation.ItemDropAdorner.IsAttached);
+        Assert.False(operation.DropAdorner!.IsAttached);
     }
 
     private static (Window, Border) ShowTarget(CollectionDropOperation operation)

@@ -41,7 +41,7 @@ dotnet test --project MonacoLabs.DragDrop.Tests
 ## Library architecture (`MonacoLabs.DragDrop`)
 
 ### Wiring
-`DragDrop` exposes two attached properties, `DragDrop.DragOperation` and `DragDrop.DropOperation` (`BindingMode.OneTime`). Setting one calls `Attach(control)` on the operation and `Detach` on the old one. An operation instance can attach to only one control and throws if reused.
+`DragDrop` exposes two attached properties, `DragDrop.DragOperation` and `DragDrop.DropOperation` (`BindingMode.OneTime`). Setting one calls `Attach(control)` on the operation and `Detach` on the old one. Detaching a drop operation mid-drag clears its hover feedback and cancels a pending deferred leave. An operation instance can attach to only one control and throws if reused.
 
 Operations are `AvaloniaObject`s, not `StyledElement`s, so they have no `DataContext` of their own. A plain `{Binding Items}` still works: Avalonia anchors bindings on non-control targets to the nearest parent `Control` in the XAML and uses that control's `DataContext`. Don't use `#root.DataContext...` paths. Named-element bindings on non-`ILogical` targets log "Value is null" while the view's `DataContext` is still unset, and `ViewLocator` only sets it after construction.
 
