@@ -6,11 +6,7 @@ Small fixes that need no design skip the proposal: take the item from [`docs/BAC
 
 ## Current proposals
 
-| Proposal | Depends on |
-|---|---|
-| [multiple-selection.md](multiple-selection.md): drag and drop several selected items, in flat lists and trees | — |
-
-It changes protected API, so it lands before the 1.0 API freeze.
+None.
 
 ## Format
 

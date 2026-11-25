@@ -2,7 +2,9 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
+using Avalonia.Layout;
 using Avalonia.Media;
+using System.Globalization;
 using Avalonia.Media.Imaging;
 using Avalonia.VisualTree;
 
@@ -12,6 +14,7 @@ namespace MonacoLabs.DragDrop;
 /// Snapshot of the dragged control that follows the pointer while a drag is over the source's window.
 /// Has the <c>:nodrop</c> pseudo-class while the hovered location rejects the drag, <c>:copy</c> while it would copy,
 /// and <c>:remove</c> while dropping would remove the payload (see <see cref="Abstractions.DragOperationBase.RemoveOnDropOutside"/>).
+/// A drag of several payloads shows their count in a badge and has the <c>:multiple</c> pseudo-class.
 /// </summary>
 public class DragPreviewAdorner : Border, IDisposable
 {
@@ -27,18 +30,26 @@ public class DragPreviewAdorner : Border, IDisposable
         ZIndexProperty.OverrideDefaultValue<DragPreviewAdorner>(int.MaxValue);
     }
 
-    private DragPreviewAdorner(Point grabOffset, RenderTargetBitmap snapshot, Size size)
+    private DragPreviewAdorner(Point grabOffset, RenderTargetBitmap snapshot, Size size, int payloadCount)
     {
         _grabOffset = grabOffset;
         _snapshot = snapshot;
         _image = new Image { Source = snapshot, Width = size.Width, Height = size.Height };
+        PayloadCount = payloadCount;
+        PseudoClasses.Set(":multiple", payloadCount > 1);
     }
+
+    /// <summary>
+    /// Number of payloads the drag carries.
+    /// </summary>
+    public int PayloadCount { get; }
 
     /// <summary>
     /// Creates a preview from a snapshot of <paramref name="source"/>, or null if it has no visible size.
     /// </summary>
     /// <param name="grabOffset">Pointer position relative to <paramref name="source"/> when the drag started.</param>
-    public static DragPreviewAdorner? Create(Control source, Point grabOffset)
+    /// <param name="payloadCount">Number of payloads the drag carries; above 1, the preview shows it in a badge.</param>
+    public static DragPreviewAdorner? Create(Control source, Point grabOffset, int payloadCount = 1)
     {
         var size = source.Bounds.Size;
         if (size.Width < 1 || size.Height < 1)
@@ -55,16 +66,39 @@ public class DragPreviewAdorner : Border, IDisposable
             _ => default
         };
 
-        var preview = new DragPreviewAdorner(grabOffset, snapshot, size) { CornerRadius = cornerRadius };
-        preview.Child = new Border
+        var preview = new DragPreviewAdorner(grabOffset, snapshot, size, payloadCount) { CornerRadius = cornerRadius };
+        var backdrop = new Border
         {
             CornerRadius = cornerRadius,
             ClipToBounds = true,
             Background = FindBackdrop(source),
             Child = preview._image
         };
+        preview.Child = payloadCount > 1 ? new Panel { Children = { backdrop, CreateCountBadge(payloadCount) } } : backdrop;
         return preview;
     }
+
+    private static Border CreateCountBadge(int count) => new()
+    {
+        Name = "PART_CountBadge",
+        Background = AdornerBrushes.Accent,
+        CornerRadius = new CornerRadius(10),
+        MinWidth = 20,
+        Height = 20,
+        Padding = new Thickness(6, 0),
+        HorizontalAlignment = HorizontalAlignment.Right,
+        VerticalAlignment = VerticalAlignment.Top,
+        Margin = new Thickness(0, -8, -8, 0),
+        Child = new TextBlock
+        {
+            Text = count.ToString(CultureInfo.CurrentCulture),
+            Foreground = Brushes.White,
+            FontSize = 12,
+            FontWeight = FontWeight.SemiBold,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center
+        }
+    };
 
     /// <summary>
     /// Positions the preview so its grab point sits under <paramref name="pointer"/>, in AdornerLayer coordinates.

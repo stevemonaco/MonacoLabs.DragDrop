@@ -13,6 +13,7 @@ tests:
   - DropTargetTests
   - DropNotificationTests
   - PlatformDropTests
+  - ItemDropTests
 depends:
   - DD-WIRING
   - DD-TRANSFER
@@ -52,6 +53,8 @@ depends:
   - Tests: `DropTargetTests.ADragWithoutAnyOfTheTargetsIdsIsNotMeantForIt`, `DropTargetTests.ADragFromTheTargetsOwnControlIsNotMeantForIt`
 - **DD-DROP-006** — A single-value drop target shall not allow self-drops.
   - Tests: `DropTargetTests.ADragFromTheTargetsOwnControlIsNotMeantForIt`
+- **DD-DROP-035** — When `AcceptsMultiplePayloads` is false, the drop target shall not treat a drag carrying more than one in-process payload for its ids as meant for it.
+  - Tests: `ItemDropTests.ASingleValueTargetRefusesSeveralPayloads`, `ItemDropTests.AnItemTargetThatAcceptsSeveralPayloadsTakesTheFirst`, `CollectionDropTests.SeveralPayloadsAreInsertedTogetherInOrder`, `CollectionDropTests.ATargetThatRefusesSeveralPayloadsIsNotMeantForTheirDrag`
 - **DD-DROP-031** — When a drag stops being meant for the target while it is over it, the drop target shall clear its hover feedback.
   - Tests: `DropTargetTests.ADragThatStopsBeingMeantForTheTargetClearsTheHover`, `CollectionDropTests.ADragThatStopsBeingMeantForTheTargetClearsTheHover`
 
@@ -63,8 +66,8 @@ depends:
   - Tests: `DropTargetTests.RejectSetsTheMessageAndTheAdornerMirrorsIt`
 - **DD-DROP-025** — When a drag leaves the target or drops on it, the drop target shall clear `ErrorMessage` and the adorner's message.
   - Tests: `DropTargetTests.TheMessageIsClearedWhenTheDragLeaves`
-- **DD-DROP-026** — When an in-process drop's effect is Copy, the drop target shall transfer the value `CreateCopy` returns, which by default is the payload itself, and call `CreateCopy` once per drop; for any other effect it shall transfer the payload.
-  - Tests: `DropTargetTests.ACopyDropAssignsTheCreatedCopy`
+- **DD-DROP-026** — When an in-process drop's effect is Copy, the drop target shall transfer the values `CreateCopy` returns, which by default are the payloads themselves, calling `CreateCopy` once per payload per drop; for any other effect it shall transfer the payloads.
+  - Tests: `DropTargetTests.ACopyDropAssignsTheCreatedCopy`, `CollectionDropTests.ACopyDropCopiesEachPayload`
 - **DD-DROP-008** — The drop target shall evaluate `CanDrop` on every DragEnter, DragOver and Drop of a drag meant for it.
   - Tests: `DropTargetTests.CanDropIsEvaluatedOnEveryEnterOverAndDrop`
 - **DD-DROP-009** — When `CanDrop` is not overridden, the drop target shall accept every drag meant for it.
@@ -87,7 +90,7 @@ depends:
 
 - **DD-DROP-014** — When a drag meant for the target is dropped and `CanDrop` is false, the drop target shall report effect None and clear its hover feedback without changing anything else.
   - Tests: `DropTargetTests.ARejectedDropReportsNoneAndOnlyClearsTheHover`
-- **DD-DROP-015** — When an in-process payload is dropped and accepted, the drop target shall recompute the effect, run its transfer step and, when the step transferred the payload, call the drag operation's `DropCompleted` with that effect and the step's `DropInfo`, and then run `PayloadCommand`.
+- **DD-DROP-015** — When an in-process drag is dropped and accepted, the drop target shall recompute the effect, run its transfer step with every payload and, when the step transferred them, call the drag operation's `DropCompleted` with that effect and the step's `DropInfo`, and then run `PayloadCommand`.
   - Tests: `DropTargetTests.AnAcceptedDropAssignsThePayloadCompletesTheDragThenRunsTheCommand`, `CollectionDropTests.AnAcceptedDropInsertsThenCompletesWithWhereItLanded`
 - **DD-DROP-029** — When the transfer step transferred nothing but `PayloadCommand` ran, the drop target shall call `DropCompleted` after the command; when neither happened (there is no command, or `CanExecute` is false), it shall report effect None and not call `DropCompleted`.
   - Tests: `DropTargetTests.ACommandOnlyBaseSubclassCompletesAMove`, `DropTargetTests.ABaseSubclassWithoutACommandReportsNone`, `CollectionDropTests.ACommandOnlyTargetCompletesAMove`, `CollectionDropTests.ADropThatNeitherTransfersNorRunsACommandReportsNone`, `CollectionDropTests.ACommandWhoseCanExecuteIsFalseReportsNone`, `EndToEndTests.ReorderingThroughACommandRemovesTheOriginal`
@@ -109,10 +112,17 @@ depends:
 - **DD-DROP-034** — The drop target shall call `OnDrop` after an accepted drop, before clearing its hover.
   - Tests: `DropNotificationTests.EveryTargetRaisesEnterThenOverThenDrop`, `DropNotificationTests.NotificationsSeeTheFeedbackOfTheirEvent`, `DropTargetTests.AnAcceptedDropCallsOnDropAndHidesTheFeedback`
 
+### Defaults
+
+- **DD-DROP-037** (inherited) — When `AcceptsMultiplePayloads` is not set, it shall be true, except on `ItemDropOperation` (DD-ITEM-010).
+  - Tests: `DropTargetTests.AcceptsMultiplePayloadsDefaultsToTrueExceptOnItemTargets`
+
 ### Helpers for overrides
 
-- **DD-DROP-020** — `TryGetPayload<T>` shall succeed when the in-process payload (DD-TRANSFER-007) is a `T`.
-  - Tests: `DropTargetTests.TryGetPayloadSucceedsForThePayloadsType`
+- **DD-DROP-020** — `TryGetPayload<T>` shall succeed when the first in-process payload (DD-TRANSFER-007) is a `T`.
+  - Tests: `DropTargetTests.TryGetPayloadSucceedsForThePayloadsType`, `DropTargetTests.TryGetPayloadsSucceedsOnlyWhenEveryPayloadIsOfTheType`
+- **DD-DROP-036** — `TryGetPayloads<T>` shall succeed only when every in-process payload is a `T`, and return them in order.
+  - Tests: `DropTargetTests.TryGetPayloadsSucceedsOnlyWhenEveryPayloadIsOfTheType`
 - **DD-DROP-021** — `TryGetDragInfo<T>` shall succeed when the drag's `DragInfo` is a `T`.
   - Tests: `DropTargetTests.TryGetDragInfoSucceedsForTheDragInfosType`
 - **DD-DROP-022** — `TryGetFiles` shall succeed only when `PlatformInteractionIds.Files` is among the target's ids and the drag holds at least one storage item; `TryGetText` only when `PlatformInteractionIds.Text` is among them and the drag holds text.
@@ -147,7 +157,7 @@ depends:
 ## Decisions
 
 - **The base owns the flow; subclasses override steps.** The subscribed handlers are private. Subclasses override `IsDropTargetFor`, `CanDrop`, `GetDropEffect`, `CreateCopy` and `Transfer`, and the library's collection targets override internal steps for hover, feedback and location. Reason: one flow means every target raises the same notifications and gets the same fixes. Rejected: overridable handlers next to hooks, where collection targets replaced the handlers and silently skipped `OnDragEnter` and `OnDragOver`; separate flows per base class with documentation (nothing enforces it).
-- **Transfer is a step, not a handler.** `Transfer` does what the target does with an accepted in-process payload and returns the `DropInfo` to report, or null. Reason: assignment is the single-value behavior, and the base holding it is why collection targets had to replace the base's Drop. Rejected: keeping assignment in the base with a flag for collections.
+- **Transfer is a step, not a handler.** `Transfer` does what the target does with the accepted in-process payloads and returns the `DropInfo` to report, or null. Reason: assignment is the single-value behavior, and the base holding it is why collection targets had to replace the base's Drop. Rejected: keeping assignment in the base with a flag for collections.
 - **Every accepted in-process drop that did something reports back.** A target calls `DropCompleted` after it transferred the payload or ran `PayloadCommand`. Reason: the drag side owns removal, and a target that silently skips the report turns every Move into a Copy. Rejected: leaving the move to the command, which cannot reach the source collection through `DropEventArgs`.
 - **A drop that does nothing reports None.** When a target neither transfers nor runs its command (DD-DROP-029), it reports effect None and does not call `DropCompleted`. Reason: reporting Move for a drop that went nowhere would let the source remove the item into nothing. Rejected: consulting `CanExecute` during DragOver to show None early, which is a separate behavior change (backlog).
 - **Notifications cannot change the effect.** `OnDragEnter`, `OnDragOver`, `OnDragLeave` and `OnDrop` return nothing. Reason: two ways to set the effect (hook return values and `GetDropEffect`) let them disagree, so `GetDropEffect` stays the one place. Rejected: hooks that return an effect.
@@ -155,6 +165,8 @@ depends:
 - **Notifications fire on every DragOver.** Reason: it matches the event and is simpler; overrides that do work can compare against the state they saw last. Rejected: raising `OnDragOver` only when the hovered container, offset or validity changes.
 - **Every target marks valid drag events handled.** Reason: with nested targets (an item target inside a list target), the inner target that accepted the drag should win, instead of the outer target recomputing the effect after it. An outer target that wants the events anyway sets `HandledEventsToo`.
 - **`Routing` is removed from the drop side.** Reason: Avalonia's drag events bubble only, so `Bubble` is the only routing that works, and `Tunnel` left the target deaf to every drag. Rejected: rejecting `Tunnel` in the setter (keeps an option with one valid value); keeping it for symmetry with the drag side, where tunneling does work.
+- **Accepting several payloads is a styled property.** `AcceptsMultiplePayloads` can be set in XAML or a style, and `ItemDropOperation` overrides its default. Reason: a target with logic that handles one item at a time should not need a subclass to say so. Rejected: a protected virtual, which only subclasses can change.
+- **`TryGetPayloads` is the one place to transform payloads.** It is virtual, and `TryGetPayload<T>` reads its first entry and is not. Reason: the drop flow reads every payload through `TryGetPayloads`, so a transform in an override of `TryGetPayload` would reach `CanDrop` but not the transfer. Rejected: keeping both virtual.
 - **Copies come from a hook, not `ICloneable`.** `CreateCopy` returns the value a Copy drop transfers. Reason: what a copy of a view model means (deep or shallow, a new id or the same) is a domain decision, and `ICloneable` does not say. Rejected: calling `ICloneable.Clone` automatically; a bindable factory property (XAML cannot easily supply a delegate).
 - **The operation owns the validation message.** `ErrorMessage` lives on the operation and is mirrored to the adorner. Reason: validation belongs to the operation, overrides should not need `DropAdorner!`, and MVVM apps want to show the message outside the adorner, which is why it is also cleared when the drag ends. Rejected: a `Reject` helper that writes only to the adorner (no bindable message); a `CanDrop` that returns a result object (a larger break for every override).
 - **Targeting and validation are separate steps.** `IsDropTargetFor` decides whether the target is involved at all, and `CanDrop` decides whether this particular drop is valid. Reason: a drag meant for another target should leave this one visually untouched, while a meant-for-me drag that fails validation should explain itself with the error adorner.
@@ -164,7 +176,7 @@ depends:
 ## Non-goals
 
 - Accepting a drop without an interaction id match.
-- Transforming the payload on the way in. `TryGetPayload` is virtual for that, but no built-in target overrides it.
+- Transforming payloads on the way in. `TryGetPayloads` is virtual for that, but no built-in target overrides it.
 
 ## Open items
 

@@ -219,18 +219,18 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
 
     private void CompleteDrop(DragEventArgs e)
     {
-        if (TryGetDragInfo<DragInfo>(e, out var dragInfo) && TryGetPayload<object>(e, out var payload))
+        if (TryGetDragInfo<DragInfo>(e, out var dragInfo) && TryGetPayloads<object>(e, out var payloads))
         {
-            var value = e.DragEffects == DragDropEffects.Copy ? CreateCopy(payload) : payload;
+            IReadOnlyList<object> values = e.DragEffects == DragDropEffects.Copy ? [.. payloads.Select(CreateCopy)] : payloads;
 
-            if (Transfer(e, dragInfo, value) is { } dropInfo)
+            if (Transfer(e, dragInfo, values) is { } dropInfo)
             {
                 dragInfo.DragOperation.DropCompleted(e.DragEffects, dragInfo, dropInfo);
-                InvokePayloadCommand(e, [value], isPlatformDrop: false);
+                InvokePayloadCommand(e, values, isPlatformDrop: false);
             }
-            else if (InvokePayloadCommand(e, [value], isPlatformDrop: false))
+            else if (InvokePayloadCommand(e, values, isPlatformDrop: false))
             {
-                dragInfo.DragOperation.DropCompleted(e.DragEffects, dragInfo, CreateUntransferredDropInfo(e));
+                dragInfo.DragOperation.DropCompleted(e.DragEffects, dragInfo, CreateUntransferredDropInfo(e, values));
             }
             else
             {
@@ -245,15 +245,15 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
     }
 
     /// <summary>
-    /// Does what this target does with an accepted in-process payload, and returns the <see cref="DropInfo"/> to report to the drag source,
+    /// Does what this target does with the accepted in-process payloads, and returns the <see cref="DropInfo"/> to report to the drag source,
     /// or null when it transferred nothing. Does nothing by default, so a target that doesn't override it only runs <see cref="PayloadCommand"/>.
     /// </summary>
     /// <param name="e">The drop event.</param>
     /// <param name="dragInfo">The drag's metadata.</param>
-    /// <param name="value">The payload, or its <see cref="CreateCopy"/> on a Copy drop.</param>
-    protected virtual DropInfo? Transfer(DragEventArgs e, DragInfo dragInfo, object value) => null;
+    /// <param name="values">The payloads in order, or their <see cref="CreateCopy"/> on a Copy drop.</param>
+    protected virtual DropInfo? Transfer(DragEventArgs e, DragInfo dragInfo, IReadOnlyList<object> values) => null;
 
-    private protected virtual DropInfo CreateUntransferredDropInfo(DragEventArgs e) => new()
+    private protected virtual DropInfo CreateUntransferredDropInfo(DragEventArgs e, IReadOnlyList<object> values) => new()
     {
         DragEventArgs = e,
         HoveredControl = AttachedControl!,
@@ -310,12 +310,16 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
     }
 
     /// <summary>
-    /// Checks whether the drag is meant for this target at all: it carries one of <see cref="InteractionIds"/> and,
-    /// unless <see cref="AllowsSelfDrop"/>, didn't start from <see cref="AttachedControl"/>. Drags that fail this get no adorner.
+    /// Checks whether the drag is meant for this target at all: it carries one of <see cref="InteractionIds"/>, carries one payload unless
+    /// <see cref="AcceptsMultiplePayloads"/>, and, unless <see cref="AllowsSelfDrop"/>, didn't start from <see cref="AttachedControl"/>.
+    /// Drags that fail this get no adorner.
     /// </summary>
     protected virtual bool IsDropTargetFor(DragEventArgs e)
     {
         if (!CanGetPayload(e))
+            return false;
+
+        if (!AcceptsMultiplePayloads && TryGetPayloads<object>(e, out var payloads) && payloads.Count > 1)
             return false;
 
         return AllowsSelfDrop
@@ -370,28 +374,40 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
         InteractionIds.Any(x => !DragDropIds.IsPlatform(x) && e.DataTransfer.Contains(DragDropIds.PayloadFormat(x)));
 
     /// <summary>
-    /// Tries to get the in-process Payload to be assigned to the DropTarget
-    /// Overriding this allows a data transform from the Payload set by the Drag operation into
-    /// what the DropTarget expects, if it's not 1:1 compatible
+    /// Tries to get the first in-process payload of the drag (see <see cref="TryGetPayloads"/>). Succeeds when it is a <typeparamref name="TPayload"/>.
     /// </summary>
-    /// <typeparam name="TPayload">Compatible type of payload expected</typeparam>
-    /// <param name="e">Drag event that started the operation</param>
-    /// <param name="payload">Payload to be transferred by the operation</param>
-    protected virtual bool TryGetPayload<TPayload>(DragEventArgs e, [MaybeNullWhen(false)] out TPayload payload)
+    protected bool TryGetPayload<TPayload>(DragEventArgs e, [MaybeNullWhen(false)] out TPayload payload)
         where TPayload : class
     {
-        var value = InteractionIds
-            .Where(x => !DragDropIds.IsPlatform(x))
-            .Select(x => e.DataTransfer.TryGetValue(DragDropIds.PayloadFormat(x)))
-            .FirstOrDefault(x => x is not null);
-
-        if (value is TPayload p)
+        if (TryGetPayloads<object>(e, out var payloads) && payloads[0] is TPayload first)
         {
-            payload = p;
+            payload = first;
             return true;
         }
 
         payload = null;
+        return false;
+    }
+
+    /// <summary>
+    /// Tries to get every in-process payload of the drag, in order, from the first of <see cref="InteractionIds"/> that carries any.
+    /// Succeeds only when each is a <typeparamref name="TPayload"/>. Overriding this transforms the payloads a drop transfers.
+    /// </summary>
+    protected virtual bool TryGetPayloads<TPayload>(DragEventArgs e, [MaybeNullWhen(false)] out IReadOnlyList<TPayload> payloads)
+        where TPayload : class
+    {
+        var values = InteractionIds
+            .Where(x => !DragDropIds.IsPlatform(x))
+            .Select(x => e.DataTransfer.TryGetValues(DragDropIds.PayloadFormat(x)))
+            .FirstOrDefault(x => x is not null && x.Any(v => v is not null));
+
+        if (values is not null && values.All(x => x is TPayload))
+        {
+            payloads = [.. values.Cast<TPayload>()];
+            return true;
+        }
+
+        payloads = null;
         return false;
     }
 

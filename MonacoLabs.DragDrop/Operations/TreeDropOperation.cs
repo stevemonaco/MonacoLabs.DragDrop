@@ -92,14 +92,14 @@ public partial class TreeDropOperation : CollectionDropOperation
     }
 
     /// <summary>
-    /// Rejects drops into the dragged node itself or any of its descendants.
+    /// Rejects drops into any dragged node itself or any of its descendants.
     /// </summary>
     protected override bool CanDropAtLocation(DragEventArgs e)
     {
         if (DropLocation is null)
             return false;
 
-        if (!TryGetPayload<object>(e, out var payload) || !IsWithinSubtreeOf(DropLocation.ParentContainer, payload))
+        if (!TryGetPayloads<object>(e, out var payloads) || !payloads.Any(x => IsWithinSubtreeOf(DropLocation.ParentContainer, x)))
             return true;
 
         return Reject(SelfDropMessage);

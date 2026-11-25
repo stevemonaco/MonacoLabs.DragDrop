@@ -78,6 +78,66 @@ public class EndToEndTests
         Assert.Equal(["second", "third", "first"], items.Select(x => x.Name));
     }
 
+    [AvaloniaTheory]
+    [InlineData(0, new[] { "b", "d", "a", "c", "e" })]
+    [InlineData(4, new[] { "a", "c", "e", "b", "d" })]
+    public void MovingASelectionWithinOneListKeepsItsOrder(int targetIndex, string[] expected)
+    {
+        var items = new ObservableCollection<Card>(new[] { "a", "b", "c", "d", "e" }.Select(x => new Card(x)));
+        var list = CardList(items);
+        list.SelectionMode = SelectionMode.Multiple;
+        list.Height = 300;
+        DragDrop.SetDragOperation(list, new CollectionDragOperation { PayloadCollection = items });
+        DragDrop.SetDropOperation(list, new CollectionDropOperation { PayloadTarget = items });
+        var window = TestWindow.Show(list);
+        list.Selection.Select(3);
+        list.Selection.Select(1);
+        var target = list.ContainerFromIndex(targetIndex)!;
+        var point = targetIndex == 0 ? new Point(10, 3) : new Point(10, target.Bounds.Height - 3);
+
+        window.MouseDrag(window.PointIn(list.ContainerFromIndex(3)!), window.PointIn(target, point));
+
+        Assert.Equal(expected, items.Select(x => x.Name));
+    }
+
+    [AvaloniaFact]
+    public void MovingASelectionToAnotherListRemovesEveryOriginal()
+    {
+        var sourceItems = new ObservableCollection<Card> { new("a"), new("b"), new("c") };
+        var targetItems = new ObservableCollection<Card> { new("x") };
+        var source = CardList(sourceItems);
+        source.SelectionMode = SelectionMode.Multiple;
+        var target = CardList(targetItems);
+        DragDrop.SetDragOperation(source, new CollectionDragOperation { PayloadCollection = sourceItems });
+        DragDrop.SetDropOperation(target, new CollectionDropOperation { PayloadTarget = targetItems });
+        var window = TestWindow.Show(new StackPanel { Orientation = Orientation.Horizontal, Spacing = 50, Children = { source, target } });
+        source.Selection.Select(0);
+        source.Selection.Select(2);
+
+        window.MouseDrag(window.PointIn(source.ContainerFromIndex(2)!), window.PointIn(target, new Point(10, 150)));
+
+        Assert.Equal(["b"], sourceItems.Select(x => x.Name));
+        Assert.Equal(["x", "a", "c"], targetItems.Select(x => x.Name));
+    }
+
+    [AvaloniaFact]
+    public void MovingNodesFromSeveralParentsRemovesEachFromItsParent()
+    {
+        var tree = new TestTree(new TreeDropOperation());
+        tree.View.SelectionMode = SelectionMode.Multiple;
+        DragDrop.SetDragOperation(tree.View, new TreeDragOperation());
+        tree.Expand(tree.A);
+        tree.Expand(tree.B);
+        tree.View.SelectedItems.Add(tree.B1);
+        tree.View.SelectedItems.Add(tree.A1);
+
+        tree.Window.MouseDrag(tree.At(tree.B1, 0.5), tree.BelowTheNodes);
+
+        Assert.Equal([tree.A, tree.B, tree.L, tree.A1, tree.B1], tree.RootList);
+        Assert.Equal([tree.A2], tree.A.ChildList);
+        Assert.Empty(tree.B.ChildList);
+    }
+
     [AvaloniaFact]
     public void DroppingAListItemWhereNothingAcceptsItRemovesItWithRemoveOnDropOutside()
     {
@@ -106,15 +166,15 @@ public class EndToEndTests
     }
 
     [AvaloniaFact]
-    public void ADropOutsideAnyTargetPassesTheDragAndItsPayloadToOnDroppedOutside()
+    public void ADropOutsideAnyTargetPassesTheDragToOnDroppedOutside()
     {
         var drag = new OutsideRecordingDragOperation { Payload = "A", RemoveOnDropOutside = true };
         var (window, source, _) = Slots(drag, new ItemDropOperation());
 
         window.MouseDrag(window.PointIn(source), OnBackground);
 
-        var (info, payload) = Assert.Single(drag.Outside);
-        Assert.Equal("A", payload);
+        var info = Assert.Single(drag.Outside);
+        Assert.Equal(["A"], info.Payloads);
         Assert.Same(drag, info.DragOperation);
     }
 
@@ -247,6 +307,20 @@ public class EndToEndTests
         Assert.Equal("A", data.TryGetValue(DragDropIds.PayloadFormat("app:drinks")));
         Assert.Same(drop.LastDragInfo, data.TryGetValue(DragDropIds.DragMetadataFormat));
         Assert.Equal("app:dragmetadata", DragDropIds.DragMetadataFormat.Identifier);
+    }
+
+    [AvaloniaFact]
+    public void SeveralPayloadsTravelOneItemEachInOrderWithTheDragInfoOnTheFirst()
+    {
+        var drag = new CollectionDragOperation { InteractionIds = ["app:meals", "app:drinks"] };
+
+        IDataTransfer data = DragData.For(drag, ["A", "B", "C"]);
+
+        Assert.Equal(3, data.Items.Count);
+        foreach (var id in drag.InteractionIds)
+            Assert.Equal(["A", "B", "C"], data.Items.Select(x => x.TryGetValue(DragDropIds.PayloadFormat(id))));
+        Assert.Equal(["A", "B", "C"], data.Items[0].TryGetValue(DragDropIds.DragMetadataFormat)?.Payloads);
+        Assert.All(data.Items.Skip(1), x => Assert.Null(x.TryGetValue(DragDropIds.DragMetadataFormat)));
     }
 
     [AvaloniaFact]
@@ -400,12 +474,12 @@ public class EndToEndTests
 
     private sealed class OutsideRecordingDragOperation : ItemDragOperation
     {
-        public List<(DragInfo DragInfo, object Payload)> Outside { get; } = [];
+        public List<DragInfo> Outside { get; } = [];
 
-        protected override void OnDroppedOutside(DragInfo dragInfo, object payload)
+        protected override void OnDroppedOutside(DragInfo dragInfo)
         {
-            Outside.Add((dragInfo, payload));
-            base.OnDroppedOutside(dragInfo, payload);
+            Outside.Add(dragInfo);
+            base.OnDroppedOutside(dragInfo);
         }
     }
 }

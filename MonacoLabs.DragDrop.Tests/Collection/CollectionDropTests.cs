@@ -396,6 +396,65 @@ public class CollectionDropTests
     }
 
     [AvaloniaFact]
+    public void ACopyDropCopiesEachPayload()
+    {
+        var (window, target, items, commandItems) = ShowCopyingTarget();
+        using var drag = window.SimulateDrag(DragData.For(new CollectionDragOperation(), ["A", "B"]), DragDropEffects.Copy | DragDropEffects.Move);
+
+        drag.Enter(window.PointIn(target), RawInputModifiers.Control);
+        Assert.Equal(DragDropEffects.Copy, drag.Drop(window.PointIn(target), RawInputModifiers.Control));
+
+        Assert.Equal(["A copy", "B copy"], items);
+        Assert.Equal(["A copy", "B copy"], commandItems());
+    }
+
+    [AvaloniaTheory]
+    [InlineData(0.25, new[] { "a", "x", "y", "b" }, 1)]
+    [InlineData(-1, new[] { "a", "b", "x", "y" }, 2)]
+    public void SeveralPayloadsAreInsertedTogetherInOrder(double height, string[] expected, int index)
+    {
+        var items = new ObservableCollection<string> { "a", "b" };
+        DropEventArgs? args = null;
+        var (window, list) = ShowList(new CollectionDropOperation { PayloadTarget = items, PayloadCommand = Record(a => args = a) }, items);
+        var container = Container(list, 1);
+        var source = new RecordingDragOperation();
+        var point = height < 0 ? Below(window, list) : window.PointIn(container, new Point(10, container.Bounds.Height * height));
+        using var drag = window.SimulateDrag(DragData.For(source, ["x", "y"]));
+
+        drag.Enter(point);
+        drag.Drop(point);
+
+        Assert.Equal(expected, items);
+        Assert.Equal(["x", "y"], args?.Items);
+        var info = Assert.IsType<CollectionDropInfo>(Assert.Single(source.Completions).DropInfo);
+        Assert.Equal(index, info.TargetIndex);
+        Assert.Equal(2, info.TargetCount);
+    }
+
+    [AvaloniaFact]
+    public void ATargetThatRefusesSeveralPayloadsIsNotMeantForTheirDrag()
+    {
+        var items = new List<string> { "a" };
+        var operation = new CollectionDropOperation { PayloadTarget = items, AcceptsMultiplePayloads = false };
+        var (window, target) = ShowTarget(operation);
+
+        using (var several = window.SimulateDrag(DragData.For(new CollectionDragOperation(), ["x", "y"])))
+        {
+            Assert.Equal(DragDropEffects.None, several.Enter(window.PointIn(target)));
+            Assert.False(operation.DropAdorner!.IsAttached);
+            Assert.Equal(DragDropEffects.None, several.Drop(window.PointIn(target)));
+        }
+
+        using (var one = window.SimulateDrag(DragData.For(new CollectionDragOperation(), "x")))
+        {
+            Assert.Equal(DragDropEffects.Move, one.Enter(window.PointIn(target)));
+            one.Drop(window.PointIn(target));
+        }
+
+        Assert.Equal(["a", "x"], items);
+    }
+
+    [AvaloniaFact]
     public void AMoveDropIgnoresCreateCopy()
     {
         var (window, target, items, commandItems) = ShowCopyingTarget();

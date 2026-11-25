@@ -601,6 +601,32 @@ public class DropTargetTests
         Assert.Null(operation.PayloadTarget);
     }
 
+    [AvaloniaTheory]
+    [InlineData(new object[] { "a", "b" }, true, true)]
+    [InlineData(new object[] { "a", 42 }, false, true)]
+    [InlineData(new object[] { 42, "a" }, false, false)]
+    public void TryGetPayloadsSucceedsOnlyWhenEveryPayloadIsOfTheType(object[] payloads, bool allStrings, bool firstIsString)
+    {
+        var operation = new PayloadsProbingDropOperation();
+        var (window, target) = Show(operation);
+        using var drag = window.SimulateDrag(DragData.For(new CollectionDragOperation(), payloads));
+
+        drag.Enter(window.PointIn(target));
+
+        Assert.Equal(allStrings, operation.Strings is not null);
+        Assert.Equal(payloads, operation.Objects);
+        Assert.Equal(firstIsString, operation.FirstString is not null);
+    }
+
+    [AvaloniaFact]
+    public void AcceptsMultiplePayloadsDefaultsToTrueExceptOnItemTargets()
+    {
+        Assert.True(new CommandOnlyDropOperation().AcceptsMultiplePayloads);
+        Assert.True(new CollectionDropOperation().AcceptsMultiplePayloads);
+        Assert.True(new TreeDropOperation().AcceptsMultiplePayloads);
+        Assert.False(new ItemDropOperation().AcceptsMultiplePayloads);
+    }
+
     private static (Window, Border) Show(DropOperationBase operation, Control? child = null)
     {
         var target = new Border { Background = Brushes.Blue, Width = 100, Height = 100, Child = child };
@@ -620,6 +646,21 @@ public class DropTargetTests
     }
 
     private sealed class CommandOnlyDropOperation : DropOperationBase;
+
+    private sealed class PayloadsProbingDropOperation : DropOperationBase
+    {
+        public IReadOnlyList<string>? Strings { get; private set; }
+        public IReadOnlyList<object>? Objects { get; private set; }
+        public string? FirstString { get; private set; }
+
+        protected override bool CanDrop(DragEventArgs e)
+        {
+            Strings = TryGetPayloads<string>(e, out var strings) ? strings : null;
+            Objects = TryGetPayloads<object>(e, out var objects) ? objects : null;
+            FirstString = TryGetPayload<string>(e, out var first) ? first : null;
+            return base.CanDrop(e);
+        }
+    }
 
     private sealed class CopyingDropOperation : ItemDropOperation
     {

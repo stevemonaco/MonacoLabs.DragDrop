@@ -1,5 +1,4 @@
 ﻿using Avalonia.Controls;
-using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.LogicalTree;
 using Avalonia.VisualTree;
@@ -16,14 +15,34 @@ public class TreeDragOperation : CollectionDragOperation
     protected override IList? ResolvePayloadCollection(Control? container) =>
         PayloadCollection ?? (container is null ? null : ItemsControl.ItemsControlFromItemContainer(container)?.ItemsSource as IList);
 
-    // A TreeViewItem's bounds include its expanded children, so only the header row is snapshotted
-    protected override Control? ResolveDragVisual(PointerPressedEventArgs pressedEventArgs)
-    {
-        var container = base.ResolveDragVisual(pressedEventArgs);
-        if (container is not TreeViewItem item)
-            return container;
+    // A TreeViewItem's bounds include its expanded children, so only the header row is snapshotted and marked dragging
+    private protected override Control DragVisualOf(Control container) => container is TreeViewItem item ? FindHeader(item) : container;
 
-        return FindHeader(item);
+    // Walks the shown nodes top to bottom and stops at a selected one, whose selected descendants move with it
+    private protected override IReadOnlyList<CollectionDragItem>? ResolveSelectedItems(Control pressedContainer)
+    {
+        if (AttachedControl is not TreeView { SelectedItems.Count: > 1 } tree || pressedContainer is not TreeViewItem { IsSelected: true })
+            return null;
+
+        var items = new List<CollectionDragItem>();
+        Collect(tree);
+        return items;
+
+        void Collect(ItemsControl parent)
+        {
+            foreach (var node in parent.GetRealizedContainers().OfType<TreeViewItem>().OrderBy(parent.IndexFromContainer))
+            {
+                if (node.IsSelected)
+                {
+                    if (ToDragItem(node) is { } item)
+                        items.Add(item);
+                }
+                else if (node.IsExpanded)
+                {
+                    Collect(node);
+                }
+            }
+        }
     }
 
     protected override Control? LocatePayloadContainer(RoutedEventArgs triggerEvent)

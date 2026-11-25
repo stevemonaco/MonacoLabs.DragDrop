@@ -46,7 +46,10 @@
         <Border Classes="card">
             <Grid RowDefinitions="Auto,*" RowSpacing="12">
                 <TextBlock Classes="card-title" Text="Solution" />
-                <TreeView Grid.Row="1" ItemsSource="{Binding Solutions}">
+                <TreeView
+                    Grid.Row="1"
+                    ItemsSource="{Binding Solutions}"
+                    SelectionMode="Multiple">
                     <dd:DragDrop.DragOperation>
                         <dd:TreeDragOperation InteractionIds="app:node" />
                     </dd:DragDrop.DragOperation>
@@ -65,7 +68,10 @@
         <Border Grid.Column="2" Classes="card">
             <Grid RowDefinitions="Auto,*" RowSpacing="12">
                 <TextBlock Classes="card-title" Text="Flat list" />
-                <ListBox Grid.Row="1" ItemsSource="{Binding FlatItems}">
+                <ListBox
+                    Grid.Row="1"
+                    ItemsSource="{Binding FlatItems}"
+                    SelectionMode="Multiple">
                     <dd:DragDrop.DragOperation>
                         <dd:CollectionDragOperation InteractionIds="app:node" PayloadCollection="{Binding FlatItems}" />
                     </dd:DragDrop.DragOperation>

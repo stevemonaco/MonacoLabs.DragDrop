@@ -217,67 +217,85 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
         if (_dragOrigin is not { } origin || pressedEventArgs is null)
             return;
 
-        var payload = ResolvePayload(pressedEventArgs);
-        if (payload is null)
+        var payloads = ResolvePayloads(pressedEventArgs);
+        if (payloads.Count == 0)
             return;
 
-        var metadata = CreateMetadata(pressedEventArgs, origin);
-        metadata.Payload = payload;
+        var dragInfo = CreateMetadata(pressedEventArgs, origin);
+        dragInfo.Payloads = payloads;
 
         StopTrackingPress();
 
-        await DoDragDrop(pressedEventArgs, metadata, payload);
+        await DoDragDrop(pressedEventArgs, dragInfo);
     }
 
     /// <summary>
-    /// Resolves the object to transfer for a drag started by <paramref name="pressedEventArgs"/>.
+    /// Resolves the objects to transfer, in order, for a drag started by <paramref name="pressedEventArgs"/>. An empty list starts no drag.
     /// </summary>
-    protected virtual object? ResolvePayload(PointerPressedEventArgs pressedEventArgs) =>
-        IsSet(PayloadProperty) ? Payload : AttachedControl?.DataContext;
+    protected virtual IReadOnlyList<object> ResolvePayloads(PointerPressedEventArgs pressedEventArgs) =>
+        ResolveDefaultPayload() is { } payload ? [payload] : [];
+
+    private protected object? ResolveDefaultPayload() => IsSet(PayloadProperty) ? Payload : AttachedControl?.DataContext;
 
     /// <summary>
     /// Resolves the control that represents the dragged item. It receives the <c>:dragging</c> pseudo-class and is snapshotted for the drag preview.
     /// </summary>
     protected virtual Control? ResolveDragVisual(PointerPressedEventArgs pressedEventArgs) => AttachedControl;
 
+    private protected virtual IEnumerable<Control> ResolveDraggingControls(DragInfo dragInfo, Control? dragVisual) =>
+        dragVisual is null ? [] : [dragVisual];
+
     /// <summary>
     /// Resolves the text offered to other applications when <see cref="PlatformInteractionIds.Text"/> is in <see cref="InteractionIds"/>.
+    /// By default, each payload's text (the payload itself when it is a string, otherwise its <c>ToString()</c>), joined by newlines.
     /// </summary>
-    protected virtual string? ResolvePlatformText(object payload) => payload as string ?? payload.ToString();
+    protected virtual string? ResolvePlatformText(IReadOnlyList<object> payloads) =>
+        string.Join(Environment.NewLine, payloads.Select(x => x as string ?? x.ToString()));
 
     /// <summary>
     /// Resolves the file or folder offered to other applications when <see cref="PlatformInteractionIds.Files"/> is in <see cref="InteractionIds"/>.
     /// </summary>
     protected virtual IStorageItem? ResolvePlatformFile(object payload) => payload as IStorageItem;
 
-    protected virtual async Task DoDragDrop(PointerPressedEventArgs triggerEvent, DragInfo metadata, object payload)
+    /// <summary>
+    /// Runs the platform drag for <paramref name="dragInfo"/>'s payloads inside a drag session, and completes once the drag has ended.
+    /// </summary>
+    protected virtual async Task DoDragDrop(PointerPressedEventArgs triggerEvent, DragInfo dragInfo)
     {
-        var data = CreateDataTransfer(metadata, payload);
+        var data = CreateDataTransfer(dragInfo);
         var dragVisual = ResolveDragVisual(triggerEvent);
         var grabOffset = dragVisual is null ? default : triggerEvent.GetPosition(dragVisual);
-        using var session = new DragSession(TopLevel.GetTopLevel(AttachedControl), dragVisual, grabOffset, ShowDragPreview, RemoveOnDropOutside);
+        using var session = new DragSession(TopLevel.GetTopLevel(AttachedControl), dragVisual, [.. ResolveDraggingControls(dragInfo, dragVisual)],
+            grabOffset, dragInfo.Payloads.Count, ShowDragPreview, RemoveOnDropOutside);
 
         await AvaDragDrop.DoDragDropAsync(triggerEvent, data, AllowedEffects);
 
         if (RemoveOnDropOutside && session.DroppedOutsideTarget)
-            OnDroppedOutside(metadata, payload);
+            OnDroppedOutside(dragInfo);
     }
 
-    internal DataTransfer CreateDataTransfer(DragInfo metadata, object payload)
+    internal DataTransfer CreateDataTransfer(DragInfo dragInfo)
     {
         var data = new DataTransfer();
-        data.Add(CreateDataTransferItem(metadata, payload));
+        for (var i = 0; i < dragInfo.Payloads.Count; i++)
+            data.Add(CreateDataTransferItem(dragInfo, i));
+
         return data;
     }
 
-    protected virtual DataTransferItem CreateDataTransferItem(DragInfo metadata, object payload)
+    /// <summary>
+    /// Creates the data transfer item for the payload at <paramref name="index"/> in <see cref="DragInfo.Payloads"/>. The first item also carries
+    /// the platform text and <paramref name="dragInfo"/>.
+    /// </summary>
+    protected virtual DataTransferItem CreateDataTransferItem(DragInfo dragInfo, int index)
     {
+        var payload = dragInfo.Payloads[index];
         var item = new DataTransferItem();
         foreach (var id in InteractionIds)
         {
             if (id == PlatformInteractionIds.Text)
             {
-                if (ResolvePlatformText(payload) is { } text)
+                if (index == 0 && ResolvePlatformText(dragInfo.Payloads) is { } text)
                     item.SetText(text);
             }
             else if (id == PlatformInteractionIds.Files)
@@ -291,7 +309,9 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
             }
         }
 
-        item.Set(DragDropIds.DragMetadataFormat, metadata);
+        if (index == 0)
+            item.Set(DragDropIds.DragMetadataFormat, dragInfo);
+
         return item;
     }
 
@@ -321,10 +341,10 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
     }
 
     /// <summary>
-    /// Occurs when <see cref="RemoveOnDropOutside"/> is set and the payload was dropped where no drop target lives.
-    /// Responsible for removing the payload from its source.
+    /// Occurs when <see cref="RemoveOnDropOutside"/> is set and the drag was dropped where no drop target lives.
+    /// Responsible for removing <see cref="DragInfo.Payloads"/> from their source.
     /// </summary>
-    protected virtual void OnDroppedOutside(DragInfo dragInfo, object payload)
+    protected virtual void OnDroppedOutside(DragInfo dragInfo)
     {
     }
 }

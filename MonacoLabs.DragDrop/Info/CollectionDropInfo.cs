@@ -16,10 +16,14 @@ public class CollectionDropInfo : DropInfo
     public Control? TargetContainer { get; init; }
 
     /// <summary>
-    /// Index of the TargetCollection where the payload was dropped
-    /// Should match the index in the PayloadCollection
+    /// Index in <see cref="TargetCollection"/> of the first dropped payload, or null when unknown.
     /// </summary>
     public int? TargetIndex { get; init; }
+
+    /// <summary>
+    /// Number of payloads dropped at <see cref="TargetIndex"/>, consecutively.
+    /// </summary>
+    public int TargetCount { get; init; } = 1;
 
     /// <summary>
     /// Data item that owns <see cref="TargetCollection"/>, such as the parent tree node. Null for a flat list or a tree's root.

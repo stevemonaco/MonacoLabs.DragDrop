@@ -31,7 +31,7 @@ depends:
 - **DD-PLATFORM-003** — A drop shall be a platform drop when the drag carries no in-process payload for the target's non-platform ids.
   - Tests: `PlatformDropTests.ADragFromThisAppAdvertisingOnlyAPlatformIdTheTargetListsIsAPlatformDrop`, `PlatformDropTests.AMatchingInProcessIdMakesTheDropInProcess`
 - **DD-PLATFORM-004** — When a platform drop carries files and the target lists `platform:files`, `DropEventArgs.Items` shall hold the dropped `IStorageItem`s; otherwise, when it carries text and the target lists `platform:text`, `Items` shall hold that one string.
-  - Tests: `PlatformDropTests.APlatformDropOfFilesPassesTheStorageItems`, `PlatformDropTests.APlatformDropOfTextPassesTheTextAsTheOnlyItem`
+  - Tests: `PlatformDropTests.APlatformDropOfFilesPassesTheStorageItems`, `PlatformDropTests.APlatformDropOfTextPassesTheTextAsTheOnlyItem`, `PlatformDropTests.ADragOfSeveralFilesFromThisAppPassesEveryFile`
 - **DD-PLATFORM-005** — A platform drop shall never change `PayloadTarget`, never call `DropCompleted` and always set `DropEventArgs.IsPlatformDrop`.
   - Tests: `PlatformDropTests.APlatformDropLeavesPayloadTargetAndNeverCompletesTheDrag`
 - **DD-PLATFORM-006** — When a drag carries both files and text and the target lists both ids, `Items` shall hold the files.
@@ -41,6 +41,10 @@ depends:
 - **DD-PLATFORM-008** — Dragging a file from Explorer onto the Desktop page's file list shall add it, and Explorer shall keep the original.
   - Tests: manual — real OLE drag from Explorer onto `DragDropSample/DesktopPage`.
 - **DD-PLATFORM-009** — Dragging a snippet from the Desktop page into another application's text field (Notepad, a browser) shall insert its text.
+  - Tests: manual — real OLE drag from `DragDropSample/DesktopPage` into another app.
+- **DD-PLATFORM-010** — Dragging several selected files from the Desktop page into Explorer shall copy every one of them, and the list shall keep them.
+  - Tests: manual — real OLE drag from `DragDropSample/DesktopPage` into Explorer.
+- **DD-PLATFORM-011** — Dragging several selected snippets from the Desktop page into another application's text field shall insert their texts, one per line.
   - Tests: manual — real OLE drag from `DragDropSample/DesktopPage` into another app.
 
 ## Invariants
@@ -73,4 +77,4 @@ depends:
 
 ## Open items
 
-- DD-PLATFORM-008 and DD-PLATFORM-009 have not been recorded as checked by hand. Logged in the backlog.
+- DD-PLATFORM-008 to DD-PLATFORM-011 have not been recorded as checked by hand. Logged in the backlog.

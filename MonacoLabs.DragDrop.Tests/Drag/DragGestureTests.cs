@@ -477,6 +477,31 @@ public class DragGestureTests
     }
 
     [AvaloniaFact]
+    public void SeveralPayloadsOfferTheirTextsJoinedByNewlinesOnce()
+    {
+        var operation = new CollectionDragOperation { InteractionIds = [PlatformInteractionIds.Text] };
+
+        IDataTransfer data = DragData.For(operation, ["hello", 42]);
+
+        Assert.Equal($"hello{Environment.NewLine}42", data.TryGetText());
+        Assert.Single(data.Items, x => x.Contains(DataFormat.Text));
+    }
+
+    [AvaloniaFact]
+    public async Task SeveralFilePayloadsAreSeveralFiles()
+    {
+        var window = TestWindow.Show(new Border());
+        var first = await TestFiles.CreateAsync(window, "a.txt");
+        var second = await TestFiles.CreateAsync(window, "b.txt");
+        var operation = new CollectionDragOperation { InteractionIds = [PlatformInteractionIds.Files] };
+
+        IDataTransfer data = DragData.For(operation, [first, second]);
+
+        Assert.Equal([first, second], data.TryGetFiles());
+        Assert.Equal([first, second], data.Items.Select(x => x.TryGetFile()));
+    }
+
+    [AvaloniaFact]
     public void AllowedEffectsDefaultsToMove() => Assert.Equal(DragDropEffects.Move, new ItemDragOperation().AllowedEffects);
 
     [AvaloniaFact]
@@ -528,8 +553,8 @@ public class DragGestureTests
     {
         public bool Throws { get; set; } = true;
 
-        protected override Task DoDragDrop(PointerPressedEventArgs triggerEvent, DragInfo metadata, object payload) =>
-            Throws ? throw new InvalidOperationException("platform drag failed") : base.DoDragDrop(triggerEvent, metadata, payload);
+        protected override Task DoDragDrop(PointerPressedEventArgs triggerEvent, DragInfo dragInfo) =>
+            Throws ? throw new InvalidOperationException("platform drag failed") : base.DoDragDrop(triggerEvent, dragInfo);
     }
 
     private sealed class ThrowingMoveDragOperation : ItemDragOperation
@@ -545,10 +570,10 @@ public class DragGestureTests
     {
         public Point? TriggerPosition { get; private set; }
 
-        protected override Task DoDragDrop(PointerPressedEventArgs triggerEvent, DragInfo metadata, object payload)
+        protected override Task DoDragDrop(PointerPressedEventArgs triggerEvent, DragInfo dragInfo)
         {
             TriggerPosition = triggerEvent.GetPosition(AttachedControl);
-            return base.DoDragDrop(triggerEvent, metadata, payload);
+            return base.DoDragDrop(triggerEvent, dragInfo);
         }
     }
 
@@ -569,7 +594,7 @@ public class DragGestureTests
 
     private sealed class CustomTextDragOperation : ItemDragOperation
     {
-        protected override string? ResolvePlatformText(object payload) => "custom";
+        protected override string? ResolvePlatformText(IReadOnlyList<object> payloads) => "custom";
     }
 
     private sealed class CountingDragOperation : ItemDragOperation

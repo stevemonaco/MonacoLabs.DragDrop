@@ -18,7 +18,7 @@ One spec per feature; format and usage in [../README.md](../README.md). Find a t
 | Spec | Id | Owns |
 |---|---|---|
 | [Single-value operations](item.md) | DD-ITEM | `ItemDragOperation`, `ItemDropOperation` |
-| [Collection operations](collection.md) | DD-COLLECTION | `CollectionDragOperation`, `CollectionDropOperation`, `CollectionDragInfo`, `CollectionDropInfo`, `CollectionDropLocation`, `DropTargetOffset` |
+| [Collection operations](collection.md) | DD-COLLECTION | `CollectionDragOperation`, `CollectionDropOperation`, `CollectionDragInfo`, `CollectionDragItem`, `DraggedItems`, `CollectionDropInfo`, `CollectionDropLocation`, `DropTargetOffset` |
 | [Tree operations](tree.md) | DD-TREE | `TreeDragOperation`, `TreeDropOperation` |
 
 ## Visuals

@@ -115,37 +115,48 @@ public partial class CollectionDropOperation : DropOperationBase
     }
 
     /// <summary>
-    /// Inserts <paramref name="value"/> at <see cref="DropLocation"/>, or appends it when the location has no index, and reports where it landed.
-    /// Transfers nothing when <see cref="TransfersPayload"/> is false or there is no location.
+    /// Inserts <paramref name="values"/> consecutively, in order, at <see cref="DropLocation"/>, or appends them when the location has no index,
+    /// and reports where the first landed. Transfers nothing when <see cref="TransfersPayload"/> is false or there is no location.
     /// </summary>
-    protected override DropInfo? Transfer(DragEventArgs e, DragInfo dragInfo, object value)
+    protected override DropInfo? Transfer(DragEventArgs e, DragInfo dragInfo, IReadOnlyList<object> values)
     {
         if (!TransfersPayload || DropLocation is not { } location)
             return null;
 
-        var payloadCollection = (dragInfo as CollectionDragInfo)?.PayloadCollection;
-        var payloadIndex = (dragInfo as CollectionDragInfo)?.PayloadContainerIndex;
+        var origins = (dragInfo as CollectionDragInfo)?.Items;
+        int? firstIndex = null;
+        var nextIndex = location.Index;
 
-        var actualIndex = location.Index is int index
-            ? TransferPayloadIndexed(value, location.Collection, index, payloadCollection, payloadIndex)
-            : TransferPayload(value, location.Collection, payloadCollection, payloadIndex);
+        for (var i = 0; i < values.Count; i++)
+        {
+            var origin = origins?.ElementAtOrDefault(i);
+            var actualIndex = nextIndex is int index
+                ? TransferPayloadIndexed(values[i], location.Collection, index, origin?.Collection, origin?.Index)
+                : TransferPayload(values[i], location.Collection, origin?.Collection, origin?.Index);
 
-        return CreateDropInfo(e, actualIndex);
+            firstIndex ??= actualIndex;
+            if (nextIndex is not null)
+                nextIndex = actualIndex + 1;
+        }
+
+        return CreateDropInfo(e, firstIndex, values.Count);
     }
 
-    private protected override DropInfo CreateUntransferredDropInfo(DragEventArgs e) => CreateDropInfo(e, DropLocation?.Index);
+    private protected override DropInfo CreateUntransferredDropInfo(DragEventArgs e, IReadOnlyList<object> values) =>
+        CreateDropInfo(e, DropLocation?.Index, values.Count);
 
     private protected override DropTargetOffset CommandOffset => HoveredOffset;
 
     private protected override CollectionDropLocation? CommandLocation => DropLocation;
 
-    private CollectionDropInfo CreateDropInfo(DragEventArgs e, int? targetIndex) => new()
+    private CollectionDropInfo CreateDropInfo(DragEventArgs e, int? targetIndex, int targetCount) => new()
     {
         DragEventArgs = e,
         HoveredControl = HoveredContainer ?? AttachedControl!,
         HoverLocation = e.GetPosition(AttachedControl!),
         TargetCollection = DropLocation?.Collection,
         TargetIndex = targetIndex,
+        TargetCount = targetCount,
         TargetContainer = HoveredContainer,
         TargetParent = DropLocation?.Parent
     };

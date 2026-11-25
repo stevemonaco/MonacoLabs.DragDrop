@@ -5,16 +5,23 @@ namespace MonacoLabs.DragDrop;
 
 /// <summary>
 /// Drops a single value: an accepted in-process drop replaces <see cref="DropOperationBase.PayloadTarget"/> with the payload.
+/// Drags carrying more than one payload are not meant for it unless <see cref="DropOperationBase.AcceptsMultiplePayloads"/> is set.
 /// </summary>
 public class ItemDropOperation : DropOperationBase
 {
+    static ItemDropOperation()
+    {
+        AcceptsMultiplePayloadsProperty.OverrideDefaultValue<ItemDropOperation>(false);
+    }
+
     /// <summary>
-    /// Sets <see cref="DropOperationBase.PayloadTarget"/> to <paramref name="value"/> and reports the previous value as <see cref="DropInfo.ReplacedPayload"/>.
+    /// Sets <see cref="DropOperationBase.PayloadTarget"/> to the first of <paramref name="values"/> and reports the previous value as
+    /// <see cref="DropInfo.ReplacedPayload"/>.
     /// </summary>
-    protected override DropInfo? Transfer(DragEventArgs e, DragInfo dragInfo, object value)
+    protected override DropInfo? Transfer(DragEventArgs e, DragInfo dragInfo, IReadOnlyList<object> values)
     {
         var replaced = PayloadTarget;
-        SetCurrentValue(PayloadTargetProperty, value);
+        SetCurrentValue(PayloadTargetProperty, values[0]);
 
         return new DropInfo
         {

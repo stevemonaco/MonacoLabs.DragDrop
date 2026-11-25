@@ -7,14 +7,13 @@ An MVVM-friendly drag-and-drop library for Avalonia 12, plus a sample app that e
 **Goals**
 
 - Drag and drop declared entirely in XAML, with view models that only expose properties, collections and commands. No drag-and-drop code in view models or code-behind.
-- Correct move semantics between single values, flat lists and trees, within one control and between controls, including reordering.
+- Correct move semantics between single values, flat lists and trees, within one control and between controls, including reordering and dragging a selection of several items.
 - Validation that explains itself: a drop target can reject a drag and say why, in place.
 - Exchange of files and text with other applications through the same mechanism as in-app drags.
 - Styling hooks (pseudo-classes, themeable adorners) rather than hard-coded visuals.
 
 **Non-goals**
 
-- Dragging several items at once (the pressed item is the payload). Planned for 1.0 in [changes/multiple-selection.md](changes/multiple-selection.md).
 - Cross-process in-app payloads. Only files and text leave the process.
 - Touch-specific gestures, keyboard drags, and native OS drag images.
 - Hierarchical controls other than `TreeView` (no `TreeDataGrid`).
@@ -29,10 +28,10 @@ One package, `MonacoLabs.DragDrop` (`net10.0`, depends only on `Avalonia`). The 
 
 ### 2.2 Drag → drop data flow
 
-1. The drag source (DD-DRAG) tracks a press, waits for the threshold, resolves the payload and starts Avalonia's `DoDragDropAsync` inside a drag session (DD-SESSION).
-2. The `DataTransfer` holds the payload once per interaction id, plus a `DragInfo` (DD-TRANSFER). Platform ids add files or text (DD-PLATFORM).
+1. The drag source (DD-DRAG) tracks a press, waits for the threshold, resolves the payloads (the selection, for collection and tree sources) and starts Avalonia's `DoDragDropAsync` inside a drag session (DD-SESSION).
+2. The `DataTransfer` holds one item per payload, each holding its payload once per interaction id, plus a `DragInfo` on the first (DD-TRANSFER). Platform ids add files or text (DD-PLATFORM).
 3. The drop target (DD-DROP) runs one flow on every DragEnter and DragOver, for every kind of target: it decides whether the drag is meant for it, resolves what is under the pointer, validates it with `CanDrop`, shows its adorners (DD-ADORNERS) and reports an effect (DD-EFFECTS).
-4. On drop, the same steps run, then the target's `Transfer` step assigns or inserts the payload, the target calls the drag operation's `DropCompleted`, and runs `PayloadCommand`. The drag side removes its original when the effect is Move.
+4. On drop, the same steps run, then the target's `Transfer` step assigns or inserts the payloads, the target calls the drag operation's `DropCompleted`, and runs `PayloadCommand`. The drag side removes its originals when the effect is Move.
 5. Every target raises the same notifications, `OnDragEnter`, `OnDragOver`, `OnDragLeave` and `OnDrop`, after the library has done its work for the event.
 
 ### 2.3 Operations
@@ -113,11 +112,11 @@ All derive from `DragOperationBase` / `DropOperationBase` in `MonacoLabs.DragDro
 | Page | Exercises |
 |---|---|
 | `SingleItemPage` | DD-ITEM: menu (Copy only) → order slots, slot ↔ slot with `SwapOnDrop`, drag handles, `RemoveOnDropOutside`, validation messages |
-| `SimpleCollectionPage` | DD-COLLECTION: two lists with Move and Copy |
-| `ListBoxPage` | DD-COLLECTION: one source feeding three targets through interaction ids, domain validation (`WorkerDropOperation`) |
-| `TreeViewPage` | DD-TREE: tree ↔ flat list, node rules (`NodeDropOperation`) |
-| `TreeToTreePage` | DD-TREE: two trees |
-| `DesktopPage` | DD-PLATFORM: files and text with other applications, image validation (`ImageDropOperation`) |
+| `SimpleCollectionPage` | DD-COLLECTION: two lists with Move and Copy, selection drags |
+| `ListBoxPage` | DD-COLLECTION: one source feeding three targets through interaction ids, domain validation of every dragged worker (`WorkerDropOperation`) |
+| `TreeViewPage` | DD-TREE: tree ↔ flat list, node rules (`NodeDropOperation`), selection drags |
+| `TreeToTreePage` | DD-TREE: two trees, selection drags |
+| `DesktopPage` | DD-PLATFORM: files and text with other applications (several at once from a selection), image validation (`ImageDropOperation`) |
 
 Decisions:
 
