@@ -9,7 +9,8 @@ sources:
   - MonacoLabs.DragDrop/Adorners/DragPreviewAdorner.cs
 types:
   - DragPreviewAdorner
-tests: []
+tests:
+  - DragSessionTests
 depends:
   - DD-DRAG
 ---
@@ -41,6 +42,8 @@ One internal `DragSession` exists per drag, created by the drag source (DD-DRAG)
   - Tests: untested
 - **DD-SESSION-007** — When the drag leaves the window or is dropped, the preview shall be hidden; when the drag ends, it shall be removed from the adorner layer.
   - Tests: untested
+- **DD-SESSION-015** — When the drag ends, the session shall dispose the preview, releasing its snapshot bitmap.
+  - Tests: `DragSessionTests.EndingTheDragDisposesThePreview`
 - **DD-SESSION-008** — While the pointer is over the window, the preview shall have `:nodrop` when the current effect is None, `:copy` when it is Copy and the drop would not remove the payload, and `:remove` when dropping there would remove the payload.
   - Tests: untested
 
@@ -76,7 +79,7 @@ One internal `DragSession` exists per drag, created by the drag source (DD-DRAG)
 ## Threading and lifetime
 
 - UI thread only. The session lives exactly as long as `DoDragDropAsync`: created before it, disposed by `using` after it returns or throws.
-- The preview's `RenderTargetBitmap` is not disposed when the session ends; it is left to the finalizer.
+- The session disposes the preview when the drag ends (DD-SESSION-015), which releases its `RenderTargetBitmap`. A disposed preview shows nothing; a caller of the public `DragPreviewAdorner.Create` owns the preview and disposes it.
 
 ## Platform behavior
 
@@ -87,6 +90,7 @@ One internal `DragSession` exists per drag, created by the drag source (DD-DRAG)
 
 - **The preview is an adorner, not the OS drag image.** Reason: Avalonia exposes no cross-platform drag image API. An adorner can be styled with pseudo-classes and matches the app's look. Rejected: native drag images per platform.
 - **Removing on drop outside is limited to the source window.** Reason: outside the window the library cannot tell a drop on the desktop from a cancel (Platform behavior), and removing on cancel would lose data.
+- **The preview owns its snapshot.** `DragPreviewAdorner` implements `IDisposable` and disposes its bitmap. Reason: the adorner creates the bitmap in `Create`, so it is the natural owner, and `IDisposable` tells other callers of `Create` to release it. Rejected: an internal release method called only by the session, which leaks for any other caller of the public `Create`.
 - **The session only injects `AllowDrop` when the window lacks it.** Reason: changing an app's own `AllowDrop` value would change which drops the app accepts.
 
 ## Non-goals
@@ -96,6 +100,5 @@ One internal `DragSession` exists per drag, created by the drag source (DD-DRAG)
 
 ## Open items
 
-- The preview's `RenderTargetBitmap` is never disposed. Addressed by [changes/correctness-fixes.md](../../changes/correctness-fixes.md).
 - An app that sets `AllowDrop` on its window silently disables `RemoveOnDropOutside` (Edge cases). Logged in the backlog.
 - DD-SESSION-013 has not been recorded as checked by hand.

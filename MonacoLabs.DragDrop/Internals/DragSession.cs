@@ -128,7 +128,10 @@ internal sealed class DragSession : IDisposable
             ((IPseudoClasses)_source.Classes).Set(":dragging", false);
 
         if (_preview is not null)
+        {
             _layer!.Children.Remove(_preview);
+            _preview.Dispose();
+        }
 
         if (_topLevel is null)
             return;

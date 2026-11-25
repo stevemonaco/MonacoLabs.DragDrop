@@ -15,7 +15,7 @@ public static partial class DragDrop
     /// <summary>
     /// Sets the <see cref="DragOperationProperty"/> attached property on <paramref name="element"/>.
     /// </summary>
-    public static void SetDragOperation(AvaloniaObject element, IDragOperation value)
+    public static void SetDragOperation(AvaloniaObject element, IDragOperation? value)
     {
         element.SetValue(DragOperationProperty, value);
     }
@@ -37,7 +37,7 @@ public static partial class DragDrop
     /// <summary>
     /// Sets the <see cref="DropOperationProperty"/> attached property on <paramref name="element"/>.
     /// </summary>
-    public static void SetDropOperation(AvaloniaObject element, IDropOperation value)
+    public static void SetDropOperation(AvaloniaObject element, IDropOperation? value)
     {
         element.SetValue(DropOperationProperty, value);
     }

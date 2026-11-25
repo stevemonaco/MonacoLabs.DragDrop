@@ -13,9 +13,11 @@ namespace MonacoLabs.DragDrop;
 /// Has the <c>:nodrop</c> pseudo-class while the hovered location rejects the drag, <c>:copy</c> while it would copy,
 /// and <c>:remove</c> while dropping would remove the payload (see <see cref="Abstractions.DragOperationBase.RemoveOnDropOutside"/>).
 /// </summary>
-public class DragPreviewAdorner : Border
+public class DragPreviewAdorner : Border, IDisposable
 {
     private readonly Point _grabOffset;
+    private readonly RenderTargetBitmap _snapshot;
+    private readonly Image _image;
 
     static DragPreviewAdorner()
     {
@@ -25,9 +27,11 @@ public class DragPreviewAdorner : Border
         ZIndexProperty.OverrideDefaultValue<DragPreviewAdorner>(int.MaxValue);
     }
 
-    private DragPreviewAdorner(Point grabOffset)
+    private DragPreviewAdorner(Point grabOffset, RenderTargetBitmap snapshot, Size size)
     {
         _grabOffset = grabOffset;
+        _snapshot = snapshot;
+        _image = new Image { Source = snapshot, Width = size.Width, Height = size.Height };
     }
 
     /// <summary>
@@ -51,17 +55,15 @@ public class DragPreviewAdorner : Border
             _ => default
         };
 
-        return new DragPreviewAdorner(grabOffset)
+        var preview = new DragPreviewAdorner(grabOffset, snapshot, size) { CornerRadius = cornerRadius };
+        preview.Child = new Border
         {
             CornerRadius = cornerRadius,
-            Child = new Border
-            {
-                CornerRadius = cornerRadius,
-                ClipToBounds = true,
-                Background = FindBackdrop(source),
-                Child = new Image { Source = snapshot, Width = size.Width, Height = size.Height }
-            }
+            ClipToBounds = true,
+            Background = FindBackdrop(source),
+            Child = preview._image
         };
+        return preview;
     }
 
     /// <summary>
@@ -82,6 +84,21 @@ public class DragPreviewAdorner : Border
         PseudoClasses.Set(":nodrop", effect == DragDropEffects.None);
         PseudoClasses.Set(":copy", effect == DragDropEffects.Copy && !isRemoving);
         PseudoClasses.Set(":remove", isRemoving);
+    }
+
+    internal bool IsDisposed { get; private set; }
+
+    /// <summary>
+    /// Releases the snapshot bitmap. The preview shows nothing afterwards.
+    /// </summary>
+    public void Dispose()
+    {
+        if (IsDisposed)
+            return;
+
+        IsDisposed = true;
+        _image.Source = null;
+        _snapshot.Dispose();
     }
 
     // The snapshot omits whatever is painted behind the source, so transparent sources need the nearest opaque backdrop
