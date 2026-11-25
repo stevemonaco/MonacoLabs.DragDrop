@@ -19,6 +19,21 @@ public class ThrowIfTests
     }
 
     [Fact]
+    public void TrueNamesTheConditionAsTrue()
+    {
+        var flag = true;
+
+        Assert.Equal("flag was true", Assert.Throws<ArgumentException>(() => ThrowIf.True(flag)).Message);
+    }
+
+    [Fact]
+    public void FalseNamesTheConditionAsFalse()
+    {
+        var flag = false;
+
+        Assert.Equal("flag was false", Assert.Throws<ArgumentException>(() => ThrowIf.False(flag)).Message);
+    }
+    [Fact]
     public void NullNamesTheNullExpression()
     {
         object? value = null;

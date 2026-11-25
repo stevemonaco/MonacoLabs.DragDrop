@@ -43,8 +43,8 @@ depends: []
 
 ### One control per operation
 
-- **DD-WIRING-006** — When `Attach` is called on an operation that is already attached, the operation shall throw `ArgumentException`.
-  - Tests: untested
+- **DD-WIRING-006** — When `Attach` is called on an operation that is already attached, the operation shall throw `InvalidOperationException` naming the operation type and the control it is attached to, and stay attached to that control.
+  - Tests: `WiringTests.AttachingAnAttachedOperationThrowsInvalidOperation`
 - **DD-WIRING-007** — When `Detach` is called on an operation that is not attached, the operation shall do nothing.
   - Tests: `WiringTests.DetachingADetachedOperationDoesNothing`
 - **DD-WIRING-008** — After `Detach`, `AttachedControl` shall be null and the operation may be attached to another control.
@@ -91,6 +91,7 @@ depends: []
 - **Operations are attached through attached properties.** Reason: it keeps view models free of drag-and-drop code (the library is MVVM-first) and lets XAML configure operations with bindings. Rejected: behaviors (an extra package dependency) and code-behind registration.
 - **Operations are `AvaloniaObject`s, not `StyledElement`s.** Reason: they only need styled and direct properties for binding. Bindings on them resolve against the nearest parent control's `DataContext` (see ARCHITECTURE §4, "Bindings on operations use the host control's DataContext").
 - **One operation instance per control.** `Attach` throws when reused. Reason: an operation keeps per-control drag state (tracked press, hovered container, adorners), which two controls would corrupt.
+- **A double `Attach` is an `InvalidOperationException`.** Reason: the argument is fine; the operation's state is wrong. Naming the control helps find the shared instance, typically one set through a style. Both operation bases use `ThrowIf.InvalidOperation`, like the routing options, so the messages share one format. Rejected: `ArgumentException` (the previous behavior).
 - **`DragDrop` keeps its name.** Reason: the name is in every consumer's XAML, and the XML namespace prefix already separates it from `Avalonia.Input.DragDrop`. C# code that imports both namespaces needs an alias, as the library itself does. Rejected: renaming to `DragDropOps` or similar (breaks all XAML for a C#-only annoyance).
 - **Operations are not shareable through styles.** One instance per control stays the rule ("One operation instance per control"). Rejected: a template or factory property that creates an operation per styled control (useful, but a new feature; backlog candidate).
 
@@ -101,5 +102,4 @@ depends: []
 
 ## Open items
 
-- `Attach` throws `ArgumentException` for a state error; `InvalidOperationException` fits better. Addressed by [changes/correctness-fixes.md](../../changes/correctness-fixes.md).
 - `SetIsDragHandle` and `GetIsDragHandle` have no doc comments. Logged in the backlog.

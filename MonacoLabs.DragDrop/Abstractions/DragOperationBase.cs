@@ -53,7 +53,7 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
 
     public void Attach(Control control)
     {
-        ThrowIf.NotNull(AttachedControl, "DragOperation is already attached to a control");
+        ThrowIf.InvalidOperation(AttachedControl is not null, $"{GetType().Name} is already attached to {AttachedControl}; an operation can attach to only one control");
 
         AttachedControl = control;
         SubscribeDragEvents(control);

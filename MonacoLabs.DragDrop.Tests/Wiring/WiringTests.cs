@@ -92,6 +92,26 @@ public class WiringTests
     }
 
     [AvaloniaFact]
+    public void AttachingAnAttachedOperationThrowsInvalidOperation()
+    {
+        var control = new Border { Name = "Source" };
+        var drag = new ItemDragOperation();
+        var drop = new ItemDropOperation();
+        var description = $"{control}";
+        drag.Attach(control);
+        drop.Attach(control);
+
+        var dragError = Assert.Throws<InvalidOperationException>(() => drag.Attach(new Border()));
+        var dropError = Assert.Throws<InvalidOperationException>(() => drop.Attach(new Border()));
+
+        Assert.Contains(nameof(ItemDragOperation), dragError.Message);
+        Assert.Contains(description, dragError.Message);
+        Assert.Contains(nameof(ItemDropOperation), dropError.Message);
+        Assert.Contains(description, dropError.Message);
+        Assert.Same(control, drag.AttachedControl);
+        Assert.Same(control, drop.AttachedControl);
+    }
+    [AvaloniaFact]
     public void ADetachedOperationCanAttachToAnotherControl()
     {
         var first = new Border();

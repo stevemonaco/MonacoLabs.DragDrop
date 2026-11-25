@@ -55,7 +55,7 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
 
     public virtual void Attach(Control control)
     {
-        ThrowIf.NotNull(AttachedControl);
+        ThrowIf.InvalidOperation(AttachedControl is not null, $"{GetType().Name} is already attached to {AttachedControl}; an operation can attach to only one control");
 
         AttachedControl = control;
         AvaDragDrop.SetAllowDrop(control, true);
