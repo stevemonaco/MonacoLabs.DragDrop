@@ -14,7 +14,7 @@ An MVVM-friendly drag-and-drop library for Avalonia 12, plus a sample app that e
 
 **Non-goals**
 
-- Dragging several items at once (the pressed item is the payload).
+- Dragging several items at once (the pressed item is the payload). Planned for 1.0 in [changes/multiple-selection.md](changes/multiple-selection.md).
 - Cross-process in-app payloads. Only files and text leave the process.
 - Touch-specific gestures, keyboard drags, and native OS drag images.
 - Hierarchical controls other than `TreeView` (no `TreeDataGrid`).

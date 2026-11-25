@@ -141,5 +141,5 @@ depends:
 
 ## Open items
 
-- `Routing` accepts `Tunnel`, which leaves the target deaf to every drag. Logged in the backlog.
-- Subclasses can override either the subscribed handlers (`DragEnter`, `DragOver`, `DragLeave`, `Drop`) or the hooks they call (`OnDragEnter`, `OnDragOver`, `OnDragLeave`, `OnDrop`). Collection targets replace the handlers, so which hooks run depends on the base class (see DD-COLLECTION Open items). Logged in the backlog (drop-side redesign).
+- `Routing` accepts `Tunnel`, which leaves the target deaf to every drag. Addressed by [changes/drop-side-redesign.md](../../changes/drop-side-redesign.md).
+- Subclasses can override either the subscribed handlers (`DragEnter`, `DragOver`, `DragLeave`, `Drop`) or the hooks they call (`OnDragEnter`, `OnDragOver`, `OnDragLeave`, `OnDrop`). Collection targets replace the handlers, so which hooks run depends on the base class (see DD-COLLECTION Open items). Addressed by [changes/drop-side-redesign.md](../../changes/drop-side-redesign.md).

@@ -6,7 +6,12 @@ Small fixes that need no design skip the proposal: take the item from [`docs/BAC
 
 ## Current proposals
 
-None. The test suite, the pre-1.0 API changes and the correctness fixes have landed.
+| Proposal | Depends on |
+|---|---|
+| [drop-side-redesign.md](drop-side-redesign.md): one drop flow and one set of notifications for every target | — |
+| [multiple-selection.md](multiple-selection.md): drag and drop several selected items, in flat lists and trees | drop-side-redesign.md tasks 1–4 |
+
+Both change protected API, so they land before the 1.0 API freeze. Suggested order: drop-side-redesign, then multiple-selection.
 
 ## Format
 
