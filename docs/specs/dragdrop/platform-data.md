@@ -39,13 +39,13 @@ depends:
 - **DD-PLATFORM-007** — When a drag lists a platform id but `ResolvePlatformText` or `ResolvePlatformFile` returns null, the drag shall carry no data for that id.
   - Tests: `PlatformDropTests.APlatformIdWhoseResolverReturnsNullCarriesNoData`
 - **DD-PLATFORM-008** — Dragging a file from Explorer onto the Desktop page's file list shall add it, and Explorer shall keep the original.
-  - Tests: manual — real OLE drag from Explorer onto `DragDropSample/DesktopPage`.
+  - Tests: manual — real OLE drag from Explorer onto `DragDropSample/DesktopPage`. Checked on Win32 2026-11-25.
 - **DD-PLATFORM-009** — Dragging a snippet from the Desktop page into another application's text field (Notepad, a browser) shall insert its text.
-  - Tests: manual — real OLE drag from `DragDropSample/DesktopPage` into another app.
+  - Tests: manual — real OLE drag from `DragDropSample/DesktopPage` into another app. Checked on Win32 2026-11-25.
 - **DD-PLATFORM-010** — Dragging several selected files from the Desktop page into Explorer shall copy every one of them, and the list shall keep them.
-  - Tests: manual — real OLE drag from `DragDropSample/DesktopPage` into Explorer.
+  - Tests: manual — real OLE drag from `DragDropSample/DesktopPage` into Explorer. Checked on Win32 2026-11-25.
 - **DD-PLATFORM-011** — Dragging several selected snippets from the Desktop page into another application's text field shall insert their texts, one per line.
-  - Tests: manual — real OLE drag from `DragDropSample/DesktopPage` into another app.
+  - Tests: manual — real OLE drag from `DragDropSample/DesktopPage` into another app. Checked on Win32 2026-11-25.
 
 ## Invariants
 
@@ -77,4 +77,4 @@ depends:
 
 ## Open items
 
-- DD-PLATFORM-008 to DD-PLATFORM-011 have not been recorded as checked by hand. Logged in the backlog.
+- None.

@@ -30,12 +30,6 @@ When an item is closed, its line is deleted.
 
 ## Manual and platform checks
 
-- [DD-DROP] After the drop-side redesign (one flow and notifications for every target, valid events marked handled), drag on every sample page on Win32 and confirm the drags, adorners, validation messages and removals still work.
-- [DD-PLATFORM] Drag a file from Explorer onto the Desktop page's file list and confirm Explorer keeps it (DD-PLATFORM-008).
-- [DD-PLATFORM] Drag a snippet from the Desktop page into Notepad and a browser text field (DD-PLATFORM-009).
-- [DD-COLLECTION] After multiple selection landed, on Win32: move a selection within and between lists and trees, Ctrl-copy a selection, drag several files from the Desktop page into Explorer (copied, not moved; DD-PLATFORM-010) and several snippets into Notepad (DD-PLATFORM-011). Check the preview's count badge and `:dragging` on every dragged row.
-- [DD-SESSION] On the Single-item page, drop a slot's item on the window background (clears), on the desktop and with Esc (both keep) (DD-SESSION-013).
-- [DD-ADORNERS] Check the insertion line at 100% and 150% Windows scaling (DD-ADORNERS-021).
 - [DD-EFFECTS] Check the Option-copy modifier and the Explorer-style effects on macOS. Nothing has been run on macOS, and Linux only runs the headless tests in CI.
 
 ## Candidates

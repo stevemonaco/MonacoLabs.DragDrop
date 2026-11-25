@@ -62,7 +62,7 @@ One internal `DragSession` exists per drag, created by the drag source (DD-DRAG)
 - **DD-SESSION-012** — Drops outside the window and canceled drags shall never count as outside any target.
   - Tests: `DragSessionTests.ACanceledDragOrADropOutsideTheWindowIsNeverOutsideAnyTarget`
 - **DD-SESSION-013** — Dropping an order slot's item on the window background shall clear the slot, and dropping it on the desktop or pressing Esc shall not.
-  - Tests: manual — Win32, `DragDropSample/SingleItemPage` (slots use `RemoveOnDropOutside`); repeat for the Desktop page's file list.
+  - Tests: manual — Win32, `DragDropSample/SingleItemPage` (slots use `RemoveOnDropOutside`); repeat for the Desktop page's file list. Checked 2026-11-25.
 
 ### Preview defaults
 
@@ -108,4 +108,3 @@ One internal `DragSession` exists per drag, created by the drag source (DD-DRAG)
 ## Open items
 
 - An app that sets `AllowDrop` on its window silently disables `RemoveOnDropOutside` (Edge cases). Logged in the backlog.
-- DD-SESSION-013 has not been recorded as checked by hand.

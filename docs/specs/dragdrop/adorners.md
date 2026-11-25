@@ -81,7 +81,7 @@ Drop adorners are the drop target's visual feedback, placed in the `AdornerLayer
 - **DD-ADORNERS-020** (inherited) — The insertion line shall be 2 DIPs thick with a 3.5 DIP marker radius.
   - Tests: `DropAdornerTests.TheInsertionLineIsTwoDipsThickWithAThreeAndAHalfDipMarker`
 - **DD-ADORNERS-021** — Hovering a list in the sample shall draw the insertion line crisply between items at 100% and 150% Windows scaling, with no doubled or blurred line.
-  - Tests: manual — Win32 Desktop sample at both scalings.
+  - Tests: manual — Win32 Desktop sample at both scalings. Checked 2026-11-25.
 - **DD-ADORNERS-022** (inherited) — When `Kind` is not set, it shall be `Solid`.
   - Tests: `DropAdornerTests.KindDefaultsToSolid`
 - **DD-ADORNERS-023** — The highlight adorner shall apply `Kind` only through its pseudo-classes, styled by its built-in control theme, so app styles can set `Kind` and override the look of each kind.
