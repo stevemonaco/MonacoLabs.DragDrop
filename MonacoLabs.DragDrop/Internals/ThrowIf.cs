@@ -9,7 +9,7 @@ internal static class ThrowIf
         if (condition)
             return;
 
-        throw new ArgumentException($"{conditionExpression} was true");
+        throw new ArgumentException($"{conditionExpression} was false");
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
@@ -18,7 +18,14 @@ internal static class ThrowIf
         if (condition is false)
             return;
 
-        throw new ArgumentException($"{conditionExpression} was false");
+        throw new ArgumentException($"{conditionExpression} was true");
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    public static void InvalidOperation(bool condition, string message)
+    {
+        if (condition)
+            throw new InvalidOperationException(message);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]

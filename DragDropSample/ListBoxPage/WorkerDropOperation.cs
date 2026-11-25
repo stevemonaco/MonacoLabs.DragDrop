@@ -37,29 +37,24 @@ public class WorkerDropOperation : CollectionDropOperation
     {
         if (proficiency is null)
         {
-            DropAdorner!.ErrorMessage = "Worker is not proficient in this area";
-            return false;
+            return Reject("Worker is not proficient in this area");
         }
 
         if (budgetRemaining - person.Salary < 0)
         {
-            DropAdorner!.ErrorMessage = "Team budget does not allow";
-            return false;
+            return Reject("Team budget does not allow");
         }
 
         if (person.DislikedWorkers.Any(team.Contains))
         {
-            DropAdorner!.ErrorMessage = $"{person.Name} doesn't like someone in the team";
-            return false;
+            return Reject($"{person.Name} doesn't like someone in the team");
         }
 
         if (team.SelectMany(x => x.DislikedWorkers).Contains(person))
         {
-            DropAdorner!.ErrorMessage = $"Someone in the team doesn't like {person.Name}";
-            return false;
+            return Reject($"Someone in the team doesn't like {person.Name}");
         }
 
-        DropAdorner!.ErrorMessage = null;
         return true;
     }
 }

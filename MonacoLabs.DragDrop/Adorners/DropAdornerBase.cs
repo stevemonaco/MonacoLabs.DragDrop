@@ -8,10 +8,10 @@ using Avalonia.Styling;
 using AvaDragDrop = Avalonia.Input.DragDrop;
 
 namespace MonacoLabs.DragDrop;
-public abstract class DropAdornerBase : Border, IDropAdorner
+public abstract class DropAdornerBase : Border
 {
     public static readonly StyledProperty<Control?> TargetControlProperty =
-        AvaloniaProperty.Register<DropAdornerBase, Control?>(nameof(TargetControl), defaultBindingMode: BindingMode.OneWayToSource);
+        AvaloniaProperty.Register<DropAdornerBase, Control?>(nameof(TargetControl));
 
     /// <summary>
     /// Control which the adorner should be positioned above

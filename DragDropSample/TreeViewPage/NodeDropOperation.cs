@@ -19,15 +19,13 @@ public class NodeDropOperation : TreeDropOperation
             if (node is ProjectNodeViewModel)
                 return true;
 
-            DropAdorner!.ErrorMessage = "Only projects can be at the top level";
-            return false;
+            return Reject("Only projects can be at the top level");
         }
 
         if (DropLocation.Parent is IParentNode parent && parent.CanAddNode(node))
             return true;
 
-        DropAdorner!.ErrorMessage = $"{(DropLocation.Parent as NodeViewModel)?.Name} can't contain {Describe(node)}";
-        return false;
+        return Reject($"{(DropLocation.Parent as NodeViewModel)?.Name} can't contain {Describe(node)}");
     }
 
     private static string Describe(NodeViewModel node) => node switch

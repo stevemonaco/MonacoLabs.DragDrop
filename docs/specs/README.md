@@ -21,7 +21,7 @@ The sample app (`DragDropSample`) has no specs. Its decisions are in [ARCHITECTU
 
 ## Format
 
-Copy [`_template.md`](_template.md). Once the test suite exists ([changes/test-suite.md](../changes/test-suite.md)), `SpecTests` enforces the format.
+Copy [`_template.md`](_template.md).
 
 **Front matter** (between `---` lines; a scalar is `key: value`, a list is `key:` followed by `  - item` lines, or `key: []` when empty):
 
@@ -67,4 +67,4 @@ An inherited requirement records behavior the code has that was not necessarily 
 
 ## Where the specs came from
 
-The specs were extracted from the code as of commit `0a4f44b`, before any tests existed, so every requirement starts `untested`. Specs describe; they do not fix. A behavior that looks wrong is specified as it is and logged in Open items, with the change proposal or backlog line that addresses it.
+The specs were extracted from the code as of commit `0a4f44b`, before any tests existed, so every requirement started `untested`; the test suite was then written against them. Specs describe; they do not fix. A behavior that looks wrong is specified as it is and logged in Open items, with the change proposal or backlog line that addresses it.

@@ -1,4 +1,6 @@
-﻿namespace MonacoLabs.DragDrop;
+﻿using Avalonia.Input;
+
+namespace MonacoLabs.DragDrop;
 
 /// <summary>
 /// Arguments passed to <c>PayloadCommand</c> when a drop is applied.
@@ -9,10 +11,12 @@
 /// <param name="Offset">Position of the drop relative to the hovered item.</param>
 /// <param name="Location">Insertion point for drops into collections.</param>
 /// <param name="IsPlatformDrop">True when <paramref name="Items"/> came from platform data rather than an in-process payload.</param>
+/// <param name="Effect">Effect of the drop, so a command can tell whether the source keeps its item (Copy) or loses it (Move).</param>
 public record class DropEventArgs(
     object? Target,
     object? TargetContext,
     IReadOnlyList<object> Items,
     DropTargetOffset Offset,
     CollectionDropLocation? Location = null,
-    bool IsPlatformDrop = false);
+    bool IsPlatformDrop = false,
+    DragDropEffects Effect = DragDropEffects.None);

@@ -6,16 +6,33 @@ using Avalonia.Controls;
 namespace MonacoLabs.DragDrop.Abstractions;
 public abstract partial class DropOperationBase
 {
-    public static readonly StyledProperty<Control?> AttachedControlProperty =
-        AvaloniaProperty.Register<DropOperationBase, Control?>(nameof(AttachedControl));
+    private Control? _attachedControl;
+
+    public static readonly DirectProperty<DropOperationBase, Control?> AttachedControlProperty =
+        AvaloniaProperty.RegisterDirect<DropOperationBase, Control?>(nameof(AttachedControl), o => o.AttachedControl);
 
     /// <summary>
-    /// Control that the DropOperation is attached to
+    /// Control that the DropOperation is attached to. Changes only through <see cref="Attach"/> and <see cref="Detach"/>.
     /// </summary>
     public Control? AttachedControl
     {
-        get => GetValue(AttachedControlProperty);
-        set => SetValue(AttachedControlProperty, value);
+        get => _attachedControl;
+        private set => SetAndRaise(AttachedControlProperty, ref _attachedControl, value);
+    }
+
+    private string? _errorMessage;
+
+    public static readonly DirectProperty<DropOperationBase, string?> ErrorMessageProperty =
+        AvaloniaProperty.RegisterDirect<DropOperationBase, string?>(nameof(ErrorMessage), o => o.ErrorMessage);
+
+    /// <summary>
+    /// Why the drag over the attached control is rejected, as passed to <see cref="Reject"/>. Mirrored to the drop adorner,
+    /// and cleared before each validation and when the drag leaves or drops.
+    /// </summary>
+    public string? ErrorMessage
+    {
+        get => _errorMessage;
+        private set => SetAndRaise(ErrorMessageProperty, ref _errorMessage, value);
     }
 
     public static readonly StyledProperty<object?> PayloadTargetProperty =

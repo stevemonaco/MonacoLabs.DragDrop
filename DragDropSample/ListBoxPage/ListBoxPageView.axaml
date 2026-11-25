@@ -71,7 +71,7 @@
     <Grid ColumnDefinitions="*,20,*">
         <!--  Available Workers  -->
         <Border Classes="card">
-            <Grid RowDefinitions="Auto,*" RowSpacing="12">
+            <Grid RowDefinitions="Auto,*,Auto" RowSpacing="12">
                 <StackPanel Orientation="Horizontal" Spacing="8">
                     <TextBlock Classes="card-title" Text="Available workers" />
                     <Border Classes="pill">
@@ -86,6 +86,23 @@
                         <dd:CollectionDragOperation InteractionIds="app:mining, app:crafting, app:combat" PayloadCollection="{Binding AvailableWorkers}" />
                     </dd:DragDrop.DragOperation>
                 </ListBox>
+
+                <!--  Each team's DropOperation.ErrorMessage, bound without touching the adorner  -->
+                <Border
+                    Grid.Row="2"
+                    HorizontalAlignment="Left"
+                    Classes="tag"
+                    IsVisible="{Binding #rejection.Text, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                    <TextBlock x:Name="rejection" TextWrapping="Wrap">
+                        <TextBlock.Text>
+                            <MultiBinding Converter="{x:Static con:AppConverters.FirstNonEmpty}">
+                                <Binding Path="#miningTeam.((cdd:WorkerDropOperation)(dd:DragDrop.DropOperation)).ErrorMessage" />
+                                <Binding Path="#craftingTeam.((cdd:WorkerDropOperation)(dd:DragDrop.DropOperation)).ErrorMessage" />
+                                <Binding Path="#combatTeam.((cdd:WorkerDropOperation)(dd:DragDrop.DropOperation)).ErrorMessage" />
+                            </MultiBinding>
+                        </TextBlock.Text>
+                    </TextBlock>
+                </Border>
             </Grid>
         </Border>
 
@@ -105,7 +122,10 @@
                             <TextBlock Text="{Binding MiningTeamProficiency, StringFormat=Proficiency {0}}" />
                         </Border>
                     </StackPanel>
-                    <ListBox Grid.Row="1" ItemsSource="{Binding MiningTeam}">
+                    <ListBox
+                        x:Name="miningTeam"
+                        Grid.Row="1"
+                        ItemsSource="{Binding MiningTeam}">
                         <dd:DragDrop.DropOperation>
                             <cdd:WorkerDropOperation InteractionIds="app:mining" PayloadTarget="{Binding MiningTeam}" />
                         </dd:DragDrop.DropOperation>
@@ -126,7 +146,10 @@
                             <TextBlock Text="{Binding CraftingTeamProficiency, StringFormat=Proficiency {0}}" />
                         </Border>
                     </StackPanel>
-                    <ListBox Grid.Row="1" ItemsSource="{Binding CraftingTeam}">
+                    <ListBox
+                        x:Name="craftingTeam"
+                        Grid.Row="1"
+                        ItemsSource="{Binding CraftingTeam}">
                         <dd:DragDrop.DropOperation>
                             <cdd:WorkerDropOperation InteractionIds="app:crafting" PayloadTarget="{Binding CraftingTeam}" />
                         </dd:DragDrop.DropOperation>
@@ -147,7 +170,10 @@
                             <TextBlock Text="{Binding CombatTeamProficiency, StringFormat=Proficiency {0}}" />
                         </Border>
                     </StackPanel>
-                    <ListBox Grid.Row="1" ItemsSource="{Binding CombatTeam}">
+                    <ListBox
+                        x:Name="combatTeam"
+                        Grid.Row="1"
+                        ItemsSource="{Binding CombatTeam}">
                         <dd:DragDrop.DropOperation>
                             <cdd:WorkerDropOperation InteractionIds="app:combat" PayloadTarget="{Binding CombatTeam}" />
                         </dd:DragDrop.DropOperation>

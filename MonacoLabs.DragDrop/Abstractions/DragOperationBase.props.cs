@@ -5,16 +5,18 @@ using Avalonia.Input;
 namespace MonacoLabs.DragDrop.Abstractions;
 public abstract partial class DragOperationBase
 {
-    public static readonly StyledProperty<Control?> AttachedControlProperty =
-        AvaloniaProperty.Register<DragOperationBase, Control?>(nameof(AttachedControl));
+    private Control? _attachedControl;
+
+    public static readonly DirectProperty<DragOperationBase, Control?> AttachedControlProperty =
+        AvaloniaProperty.RegisterDirect<DragOperationBase, Control?>(nameof(AttachedControl), o => o.AttachedControl);
 
     /// <summary>
-    /// Control that the DragOperation is attached to
+    /// Control that the DragOperation is attached to. Changes only through <see cref="Attach"/> and <see cref="Detach"/>.
     /// </summary>
     public Control? AttachedControl
     {
-        get => GetValue(AttachedControlProperty);
-        set => SetValue(AttachedControlProperty, value);
+        get => _attachedControl;
+        private set => SetAndRaise(AttachedControlProperty, ref _attachedControl, value);
     }
 
     public static readonly StyledProperty<object?> PayloadProperty =
@@ -30,13 +32,13 @@ public abstract partial class DragOperationBase
         set => SetValue(PayloadProperty, value);
     }
 
-    public static readonly StyledProperty<int> DragThresholdProperty =
-        AvaloniaProperty.Register<DragOperationBase, int>(nameof(DragThreshold), defaultValue: 6);
+    public static readonly StyledProperty<double> DragThresholdProperty =
+        AvaloniaProperty.Register<DragOperationBase, double>(nameof(DragThreshold), defaultValue: 6);
 
     /// <summary>
-    /// Threshold in pixels that the user must move a pressed pointer to initiate a drag operation
+    /// Distance in DIPs that a pressed pointer must move, relative to the attached control, to start a drag.
     /// </summary>
-    public int DragThreshold
+    public double DragThreshold
     {
         get => GetValue(DragThresholdProperty);
         set => SetValue(DragThresholdProperty, value);

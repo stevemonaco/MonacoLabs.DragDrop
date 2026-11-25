@@ -1,37 +1,14 @@
-﻿using Avalonia.Data;
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using MonacoLabs.DragDrop.Abstractions;
 
 namespace MonacoLabs.DragDrop;
-public partial class DragDrop
+public static partial class DragDrop
 {
     static DragDrop()
     {
         DragOperationProperty.Changed.AddClassHandler<Control>(HandleDragOperationChanged);
         DropOperationProperty.Changed.AddClassHandler<Control>(HandleDropOperationChanged);
-    }
-
-    /// <summary>
-    /// Identifies the DragOperation attached property, which makes a control a drag source via an <see cref="IDragOperation"/>.
-    /// </summary>
-    public static readonly AttachedProperty<IDragOperation?> DragOperationProperty = AvaloniaProperty.RegisterAttached<DragDrop, Control, IDragOperation?>(
-        "DragOperation", null, false, BindingMode.OneTime);
-
-    /// <summary>
-    /// Sets the <see cref="DragOperationProperty"/> attached property on <paramref name="element"/>.
-    /// </summary>
-    public static void SetDragOperation(AvaloniaObject element, IDragOperation value)
-    {
-        element.SetValue(DragOperationProperty, value);
-    }
-
-    /// <summary>
-    /// Gets the <see cref="DragOperationProperty"/> attached property from <paramref name="element"/>.
-    /// </summary>
-    public static IDragOperation? GetDragOperation(AvaloniaObject element)
-    {
-        return element.GetValue(DragOperationProperty);
     }
 
     private static void HandleDragOperationChanged(Control control, AvaloniaPropertyChangedEventArgs change)
@@ -45,44 +22,6 @@ public partial class DragDrop
         {
             newDrag.Attach(control);
         }
-    }
-
-    /// <summary>
-    /// Identifies the DropOperation attached property, which makes a control a drop target via an <see cref="IDropOperation"/>.
-    /// </summary>
-    public static readonly AttachedProperty<IDropOperation?> DropOperationProperty = AvaloniaProperty.RegisterAttached<DragDrop, Control, IDropOperation?>(
-        "DropOperation", null, false, BindingMode.OneTime);
-
-    /// <summary>
-    /// Sets the <see cref="DropOperationProperty"/> attached property on <paramref name="element"/>.
-    /// </summary>
-    public static void SetDropOperation(AvaloniaObject element, IDropOperation value)
-    {
-        element.SetValue(DropOperationProperty, value);
-    }
-
-    /// <summary>
-    /// Gets the <see cref="DropOperationProperty"/> attached property from <paramref name="element"/>.
-    /// </summary>
-    public static IDropOperation? GetDropOperation(AvaloniaObject element)
-    {
-        return element.GetValue(DropOperationProperty);
-    }
-
-    /// <summary>
-    /// Identifies the IsDragHandle attached property, which marks an element inside a drag source as a place where drags can start.
-    /// Only drag operations with <see cref="DragOperationBase.RequiresDragHandle"/> set restrict drags to handles.
-    /// </summary>
-    public static readonly AttachedProperty<bool> IsDragHandleProperty = AvaloniaProperty.RegisterAttached<DragDrop, Control, bool>("IsDragHandle");
-
-    public static void SetIsDragHandle(AvaloniaObject element, bool value)
-    {
-        element.SetValue(IsDragHandleProperty, value);
-    }
-
-    public static bool GetIsDragHandle(AvaloniaObject element)
-    {
-        return element.GetValue(IsDragHandleProperty);
     }
 
     private static void HandleDropOperationChanged(Control control, AvaloniaPropertyChangedEventArgs change)

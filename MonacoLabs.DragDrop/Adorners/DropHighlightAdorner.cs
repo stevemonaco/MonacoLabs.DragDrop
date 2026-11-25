@@ -1,11 +1,10 @@
-﻿using Avalonia;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Path = Avalonia.Controls.Shapes.Path;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Styling;
-using MonacoLabs.DragDrop.Adorners;
 
 namespace MonacoLabs.DragDrop;
 
@@ -15,6 +14,19 @@ namespace MonacoLabs.DragDrop;
 /// </summary>
 public class DropHighlightAdorner : DropAdornerBase
 {
+    public static readonly StyledProperty<DropAdornerKind> KindProperty =
+        AvaloniaProperty.Register<DropHighlightAdorner, DropAdornerKind>(nameof(Kind), DropAdornerKind.Solid);
+
+    /// <summary>
+    /// How the drop target is marked. <see cref="DropAdornerKind.Border"/> sets the <c>:outline</c> pseudo-class and
+    /// <see cref="DropAdornerKind.None"/> sets <c>:hidden</c>; the built-in theme styles both, so app styles can override them.
+    /// </summary>
+    public DropAdornerKind Kind
+    {
+        get => GetValue(KindProperty);
+        set => SetValue(KindProperty, value);
+    }
+
     public static readonly StyledProperty<IBrush?> ErrorBadgeBackgroundProperty =
         AvaloniaProperty.Register<DropHighlightAdorner, IBrush?>(nameof(ErrorBadgeBackground), AdornerBrushes.Error);
 
@@ -49,6 +61,10 @@ public class DropHighlightAdorner : DropAdornerBase
             {
                 Setters = { new Setter(BackgroundProperty, Brushes.Transparent) }
             },
+            new Style(x => x.Nesting().Class(":hidden"))
+            {
+                Setters = { new Setter(IsVisibleProperty, false) }
+            },
         }
     };
 
@@ -61,14 +77,9 @@ public class DropHighlightAdorner : DropAdornerBase
         ThemeProperty.OverrideDefaultValue<DropHighlightAdorner>(DefaultTheme);
     }
 
-    public DropHighlightAdorner() : this(DropAdornerKind.Solid)
+    public DropHighlightAdorner()
     {
-    }
-
-    public DropHighlightAdorner(DropAdornerKind dropAdornerType)
-    {
-        PseudoClasses.Set(":outline", dropAdornerType == DropAdornerKind.Border);
-        IsVisible = dropAdornerType != DropAdornerKind.None;
+        UpdateKindPseudoClasses(Kind);
 
         _errorText = new TextBlock
         {
@@ -132,6 +143,16 @@ public class DropHighlightAdorner : DropAdornerBase
             _errorText.Text = ErrorMessage;
             _errorBadge.IsVisible = !IsDropValid && !string.IsNullOrEmpty(ErrorMessage);
         }
+        else if (change.Property == KindProperty)
+        {
+            UpdateKindPseudoClasses(change.GetNewValue<DropAdornerKind>());
+        }
+    }
+
+    private void UpdateKindPseudoClasses(DropAdornerKind kind)
+    {
+        PseudoClasses.Set(":outline", kind == DropAdornerKind.Border);
+        PseudoClasses.Set(":hidden", kind == DropAdornerKind.None);
     }
 
     private static Control CreateErrorIcon() => new Path

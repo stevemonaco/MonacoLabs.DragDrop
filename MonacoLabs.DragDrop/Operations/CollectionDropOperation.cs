@@ -15,8 +15,6 @@ namespace MonacoLabs.DragDrop;
 /// </summary>
 public partial class CollectionDropOperation : DropOperationBase
 {
-    private const double MaxAutoScrollStep = 14;
-
     private DispatcherTimer? _autoScrollTimer;
     private ScrollViewer? _autoScrollViewer;
     private Vector _autoScrollStep;
@@ -77,7 +75,7 @@ public partial class CollectionDropOperation : DropOperationBase
         UpdateHover(e);
         DropLocation = ResolveDropLocation();
 
-        var canDrop = CanDropAtLocation(e) && EvaluateCanDrop(e);
+        var canDrop = EvaluateCanDrop(e);
 
         if (DropAdorner is not null)
         {
@@ -161,6 +159,7 @@ public partial class CollectionDropOperation : DropOperationBase
             ((IPseudoClasses)AttachedControl.Classes).Set(":dropover", false);
 
         DropAdorner?.Detach();
+        ClearErrorMessage();
     }
 
     protected override void Drop(object? sender, DragEventArgs e)
@@ -177,7 +176,7 @@ public partial class CollectionDropOperation : DropOperationBase
         DropLocation = ResolveDropLocation();
         var location = DropLocation;
 
-        if (!CanDropAtLocation(e) || !EvaluateCanDrop(e))
+        if (!EvaluateCanDrop(e))
         {
             e.DragEffects = DragDropEffects.None;
             EndDrag();
@@ -188,30 +187,29 @@ public partial class CollectionDropOperation : DropOperationBase
 
         if (TryGetDragInfo<DragInfo>(e, out var dragInfo) && TryGetPayload<object>(e, out var payload))
         {
+            var value = ResolveDroppedValue(e.DragEffects, payload);
+
             if (TransfersPayload && location is not null)
             {
                 var payloadCollection = (dragInfo as CollectionDragInfo)?.PayloadCollection;
                 var payloadIndex = (dragInfo as CollectionDragInfo)?.PayloadContainerIndex;
 
                 var actualIndex = location.Index is int index
-                    ? TransferPayloadIndexed(payload, location.Collection, index, payloadCollection, payloadIndex)
-                    : TransferPayload(payload, location.Collection, payloadCollection, payloadIndex);
+                    ? TransferPayloadIndexed(value, location.Collection, index, payloadCollection, payloadIndex)
+                    : TransferPayload(value, location.Collection, payloadCollection, payloadIndex);
 
-                var dropInfo = new CollectionDropInfo()
-                {
-                    DragEventArgs = e,
-                    HoveredControl = HoveredContainer ?? AttachedControl!,
-                    HoverLocation = e.GetPosition(AttachedControl!),
-                    TargetCollection = location.Collection,
-                    TargetIndex = actualIndex,
-                    TargetContainer = HoveredContainer,
-                    TargetParent = location.Parent
-                };
-
-                dragInfo.DragOperation.DropCompleted(e.DragEffects, dragInfo, dropInfo);
+                dragInfo.DragOperation.DropCompleted(e.DragEffects, dragInfo, CreateDropInfo(e, location, actualIndex));
+                InvokePayloadCommand(e, [value], HoveredOffset, location);
             }
-
-            InvokePayloadCommand(e, [payload], HoveredOffset, location);
+            else if (InvokePayloadCommand(e, [value], HoveredOffset, location))
+            {
+                dragInfo.DragOperation.DropCompleted(e.DragEffects, dragInfo, CreateDropInfo(e, location, location?.Index));
+            }
+            else
+            {
+                // Reporting Move for a drop that went nowhere would let the source remove the item
+                e.DragEffects = DragDropEffects.None;
+            }
         }
         else if (TryGetPlatformItems(e, out var items))
         {
@@ -222,6 +220,17 @@ public partial class CollectionDropOperation : DropOperationBase
         e.Handled = true;
         EndDrag();
     }
+
+    private CollectionDropInfo CreateDropInfo(DragEventArgs e, CollectionDropLocation? location, int? targetIndex) => new()
+    {
+        DragEventArgs = e,
+        HoveredControl = HoveredContainer ?? AttachedControl!,
+        HoverLocation = e.GetPosition(AttachedControl!),
+        TargetCollection = location?.Collection,
+        TargetIndex = targetIndex,
+        TargetContainer = HoveredContainer,
+        TargetParent = location?.Parent
+    };
 
     /// <summary>
     /// Appends the payload to the target collection
@@ -243,16 +252,11 @@ public partial class CollectionDropOperation : DropOperationBase
         return targetIndex;
     }
 
-    protected override bool CanDrop(DragEventArgs e)
-    {
-        if (e.Source is Control sourceItem && !AttachedControl.IsLogicalAncestorOf(sourceItem))
-            return false;
-
-        return CanGetPayload(e);
-    }
+    private protected override bool CanDropStructurally(DragEventArgs e) => CanDropAtLocation(e);
 
     /// <summary>
     /// Structural check of <see cref="DropLocation"/> that runs before <see cref="DropOperationBase.CanDrop"/>, so overrides of CanDrop can't skip it.
+    /// Return <see cref="DropOperationBase.Reject"/> with a message to explain a rejection.
     /// </summary>
     protected virtual bool CanDropAtLocation(DragEventArgs e) => true;
 
@@ -317,8 +321,8 @@ public partial class CollectionDropOperation : DropOperationBase
         var position = e.GetPosition(_autoScrollViewer);
         var size = _autoScrollViewer.Bounds.Size;
         _autoScrollStep = new Vector(
-            GetAutoScrollStep(position.X, size.Width),
-            GetAutoScrollStep(position.Y, size.Height));
+            AutoScroll.Step(position.X, size.Width, AutoScrollMargin),
+            AutoScroll.Step(position.Y, size.Height, AutoScrollMargin));
 
         if (_autoScrollStep == default)
         {
@@ -328,18 +332,6 @@ public partial class CollectionDropOperation : DropOperationBase
 
         _autoScrollTimer ??= new DispatcherTimer(TimeSpan.FromMilliseconds(16), DispatcherPriority.Input, (_, _) => AutoScrollTick());
         _autoScrollTimer.Start();
-    }
-
-    private double GetAutoScrollStep(double position, double extent)
-    {
-        var margin = Math.Min(AutoScrollMargin, extent / 3);
-        if (position < margin)
-            return -MaxAutoScrollStep * Math.Clamp((margin - position) / margin, 0, 1);
-
-        if (position > extent - margin)
-            return MaxAutoScrollStep * Math.Clamp((position - (extent - margin)) / margin, 0, 1);
-
-        return 0;
     }
 
     private void AutoScrollTick()

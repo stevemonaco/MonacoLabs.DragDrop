@@ -13,7 +13,11 @@ types:
   - DragInfo
   - DropInfo
   - DropEventArgs
-tests: []
+tests:
+  - InteractionIdTests
+  - DropTargetTests
+  - CollectionDropTests
+  - EndToEndTests
 depends:
   - DD-WIRING
 ---
@@ -29,45 +33,47 @@ Defines what a drag carries and how a drop target recognizes it. Interaction ids
 ### Interaction ids
 
 - **DD-TRANSFER-001** (inherited) — When `InteractionIds` is not set on a drag or drop operation, it shall be the single id `app:default`.
-  - Tests: untested
+  - Tests: `InteractionIdTests.DragOperationsDefaultToTheAppDefaultId`, `InteractionIdTests.DropOperationsDefaultToTheAppDefaultId`
 - **DD-TRANSFER-002** — A drop target shall accept a drag when any one of its `InteractionIds` is present in the drag's data, regardless of the other ids the drag carries.
-  - Tests: untested
+  - Tests: `EndToEndTests.AnyOneSharedIdIsEnough`, `DropTargetTests.ADragCarryingOneOfTheTargetsIdsIsMeantForIt`
 - **DD-TRANSFER-003** — When `InteractionIds` is set from XAML as a comma-separated string, each id shall be one entry.
-  - Tests: untested
+  - Tests: `EndToEndTests.CommaSeparatedIdsFromXamlAreSeparateEntries`
 
 ### Data transfer layout
 
 - **DD-TRANSFER-004** — For each non-platform id in the drag's `InteractionIds`, the data transfer shall hold the payload under an in-process format named by that id.
-  - Tests: untested
+  - Tests: `EndToEndTests.TheDragsDataHoldsThePayloadUnderEachIdAndTheDragInfoInOneItem`
 - **DD-TRANSFER-005** — The data transfer shall hold the drag's `DragInfo` under the in-process format `app:dragmetadata`.
-  - Tests: untested
+  - Tests: `EndToEndTests.TheDragsDataHoldsThePayloadUnderEachIdAndTheDragInfoInOneItem`
 - **DD-TRANSFER-006** — The data transfer shall hold exactly one item, carrying every format of the drag.
-  - Tests: untested
+  - Tests: `EndToEndTests.TheDragsDataHoldsThePayloadUnderEachIdAndTheDragInfoInOneItem`
 - **DD-TRANSFER-007** — When a drop target reads the payload, it shall take the first non-null in-process value across its own non-platform ids, in the order of its `InteractionIds`.
-  - Tests: untested
+  - Tests: `EndToEndTests.TheTargetReadsThePayloadOfItsFirstIdThatHasOne`
 
 ### DragInfo
 
 - **DD-TRANSFER-008** — `DragInfo` shall carry the drag operation that created it, the press position relative to the drag source's attached control, a copy of the drag's interaction ids, the id of the pointer that pressed, and the payload resolved when the drag started.
-  - Tests: untested
+  - Tests: `EndToEndTests.TheDragInfoDescribesTheDragWithACopyOfItsIds`
 - **DD-TRANSFER-009** — `DragInfo.DragIds` shall be a copy, so later changes to the operation's `InteractionIds` do not change it.
-  - Tests: untested
+  - Tests: `EndToEndTests.TheDragInfoDescribesTheDragWithACopyOfItsIds`
 
 ### DropInfo
 
 - **DD-TRANSFER-010** — `DropInfo` shall carry the drop's `DragEventArgs`, the hovered control, the pointer position relative to the drop target's attached control and, for single-value targets, the value the target held before the drop (`ReplacedPayload`).
-  - Tests: untested
+  - Tests: `EndToEndTests.TheDropInfoDescribesTheDrop`
 
 ### DropEventArgs
 
 - **DD-TRANSFER-011** — `DropEventArgs.Target` shall be the drop event's source element, and `TargetContext` shall be that element's `DataContext`, or null when the source is not a `StyledElement`.
-  - Tests: untested
-- **DD-TRANSFER-012** — `DropEventArgs.Items` shall hold the single in-process payload for an in-process drop, or the dropped files or text for a platform drop (DD-PLATFORM).
-  - Tests: untested
+  - Tests: `EndToEndTests.TheCommandSeesTheElementDroppedOnAndItsContext`
+- **DD-TRANSFER-012** — `DropEventArgs.Items` shall hold the single in-process payload (or its copy on a Copy drop, DD-DROP-026) for an in-process drop, or the dropped files or text for a platform drop (DD-PLATFORM).
+  - Tests: `DropTargetTests.ACopyDropAssignsTheCreatedCopy`, `CollectionDropTests.ACopyDropInsertsTheCreatedCopy`, `CollectionDropTests.AMoveDropIgnoresCreateCopy`
 - **DD-TRANSFER-013** — `DropEventArgs.Offset` shall be `OnTarget` for single-value targets, and the hovered offset for collection and tree targets (DD-COLLECTION).
-  - Tests: untested
+  - Tests: `EndToEndTests.ASingleValueTargetDropsOnTargetWithNoLocation`, `CollectionDropTests.ATransferringDropAlsoRunsTheCommandWithThePayloadOffsetAndLocation`
 - **DD-TRANSFER-014** — `DropEventArgs.Location` shall be the insertion point for collection and tree targets, and null for single-value targets.
-  - Tests: untested
+  - Tests: `EndToEndTests.ASingleValueTargetDropsOnTargetWithNoLocation`, `CollectionDropTests.ATransferringDropAlsoRunsTheCommandWithThePayloadOffsetAndLocation`
+- **DD-TRANSFER-015** — `DropEventArgs.Effect` shall be the effect computed on Drop (DD-EFFECTS-009), which for a platform drop is Copy or Link (DD-PLATFORM).
+  - Tests: `DropTargetTests.DropEventArgsCarriesTheDropEffect`
 
 ## Invariants
 
@@ -91,6 +97,7 @@ Defines what a drag carries and how a drop target recognizes it. Interaction ids
 ## Decisions
 
 - **Interaction ids are typed channels.** One drag can advertise several ids, and each target accepts a subset. Reason: a source shared by several targets (the ListBox page's worker pool feeding three teams) needs to be told apart by the targets without a type check on the payload. Rejected: matching on payload type, which cannot distinguish two targets that both take `WorkerViewModel`.
+- **`DropEventArgs` carries the effect.** Reason: a command that inserts the payload itself must know whether the source keeps its item (Copy) or loses it (Move), for example to clone on Copy. Rejected: leaving commands to recompute it from the modifier keys, which duplicates DD-EFFECTS and cannot see the source's allowed effects.
 - **The payload is stored once per id.** Reason: `DataTransfer` looks up by format, and a target only knows its own ids. Rejected: one shared format plus an id list, which would make every target parse the list.
 
 ## Non-goals

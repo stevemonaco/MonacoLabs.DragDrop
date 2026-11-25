@@ -6,8 +6,11 @@ namespaces:
   - MonacoLabs.DragDrop.Abstractions
 sources:
   - MonacoLabs.DragDrop/Abstractions/DropOperationBase.cs
+  - MonacoLabs.DragDrop/Internals/DropEffectResolver.cs
 types: []
-tests: []
+tests:
+  - DropEffectResolverTests
+  - EndToEndTests
 depends:
   - DD-TRANSFER
   - DD-PLATFORM
@@ -24,29 +27,29 @@ How a drop target turns the effects a drag source allows and the modifier keys h
 ### In-process payloads
 
 - **DD-EFFECTS-001** — When the drag carries an in-process payload for one of the target's ids and the copy modifier and Shift are both held, the target shall report Link if the source allows it.
-  - Tests: untested
+  - Tests: `DropEffectResolverTests.CopyModifierWithShiftLinks`
 - **DD-EFFECTS-002** — When only the copy modifier is held, the target shall report Copy if the source allows it.
-  - Tests: untested
+  - Tests: `DropEffectResolverTests.CopyModifierCopies`
 - **DD-EFFECTS-003** — When only Shift is held, the target shall report Move if the source allows it.
-  - Tests: untested
+  - Tests: `DropEffectResolverTests.ShiftMoves`
 - **DD-EFFECTS-004** — When no modifier is held, or the requested effect is not allowed, the target shall report Move if allowed, else Copy if allowed, else Link if allowed, else None.
-  - Tests: untested
+  - Tests: `DropEffectResolverTests.WithoutModifiersMoveIsPreferredThenCopyThenLink`, `DropEffectResolverTests.AnUnavailableRequestFallsBackToTheDefaultOrder`
 - **DD-EFFECTS-005** — The copy modifier shall be Option (Alt) on macOS and Ctrl on every other platform.
-  - Tests: untested
+  - Tests: `DropEffectResolverTests.CopyModifierCopies`, `DropEffectResolverTests.CopyModifierWithShiftLinks`, `DropEffectResolverTests.TheOtherPlatformsCopyModifierDoesNotCopy`
 - **DD-EFFECTS-006** — Modifier keys other than the copy modifier and Shift shall not change the effect.
-  - Tests: untested
+  - Tests: `DropEffectResolverTests.OtherModifiersDoNotChangeTheEffect`
 
 ### Platform data
 
 - **DD-EFFECTS-007** — When the drag carries no in-process payload for the target's ids, the target shall report Copy if the source allows it, else Link if allowed, else None, whatever modifiers are held.
-  - Tests: untested
+  - Tests: `DropEffectResolverTests.PlatformDataIsCopiedElseLinkedWhateverTheModifiers`, `DropEffectResolverTests.TheEffectIsAlwaysOneAllowedEffectOrNone`
 
 ### When the effect is computed
 
 - **DD-EFFECTS-008** — The target shall compute the effect afresh on every DragEnter, DragOver and Drop, from that event's allowed effects and modifiers.
-  - Tests: untested
+  - Tests: `EndToEndTests.TheEffectFollowsTheModifiersOfEachEvent`
 - **DD-EFFECTS-009** — The effect passed to `DropCompleted` shall be the effect computed on Drop.
-  - Tests: untested
+  - Tests: `EndToEndTests.DropCompletedGetsTheEffectComputedOnDrop`, `EndToEndTests.TheEffectFollowsTheModifiersOfEachEvent`
 
 ## Invariants
 
@@ -80,4 +83,4 @@ How a drop target turns the effects a drag source allows and the modifier keys h
 
 ## Open items
 
-- The effect logic depends on `OperatingSystem.IsMacOS()` and a live `DragEventArgs`, so it cannot be tested without a headless platform. The test proposal extracts it into a pure function ([changes/test-suite.md](../../changes/test-suite.md)).
+None.

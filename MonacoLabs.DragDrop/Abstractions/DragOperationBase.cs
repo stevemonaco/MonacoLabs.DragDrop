@@ -3,25 +3,57 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Logging;
 using Avalonia.Platform.Storage;
 using Avalonia.VisualTree;
+using System.Runtime.CompilerServices;
 using AvaDragDrop = Avalonia.Input.DragDrop;
 
 namespace MonacoLabs.DragDrop.Abstractions;
 public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
 {
-    public IList<string> InteractionIds { get; set; } = [DragDropIds.DefaultOperation];
-    public RoutingStrategies Routing { get; set; } = RoutingStrategies.Bubble;
+    private const string LogArea = "DragDrop";
 
-    protected Control? _trackedControl; // Control that has been clicked and may be initiating a drag
-    protected Point? _dragOrigin;
-    protected PointerPressedEventArgs? _pressedEventArgs; // DoDragDropAsync requires the press event, not the move event that crossed the threshold
-    protected bool _isDragPending; // True if Control has been clicked, mouse is being held, but drag operation has not started yet
-    protected bool _handledEventsToo = false;
+    private RoutingStrategies _routing = RoutingStrategies.Bubble;
+    private bool _handledEventsToo;
+    private Control? _trackedControl;
+    private Point? _dragOrigin;
+    private PointerPressedEventArgs? _pressedEventArgs; // DoDragDropAsync requires the press event, not the move event that crossed the threshold
+
+    public IList<string> InteractionIds { get; set; } = [DragDropIds.DefaultOperation];
+
+    /// <summary>
+    /// Routing strategy of the pointer handlers. Can only be set while the operation is detached.
+    /// </summary>
+    public RoutingStrategies Routing
+    {
+        get => _routing;
+        set
+        {
+            ThrowIfAttached();
+            _routing = value;
+        }
+    }
+
+    /// <summary>
+    /// Whether the pointer handlers also receive events that are already handled. Can only be set while the operation is detached.
+    /// </summary>
+    public bool HandledEventsToo
+    {
+        get => _handledEventsToo;
+        set
+        {
+            ThrowIfAttached();
+            _handledEventsToo = value;
+        }
+    }
+
+    private void ThrowIfAttached([CallerMemberName] string property = "") =>
+        ThrowIf.InvalidOperation(AttachedControl is not null, $"{property} can only be set while {GetType().Name} is detached");
 
     public void Attach(Control control)
     {
-        ThrowIf.NotNull(AttachedControl, "DragOperation is already attached to a control");
+        ThrowIf.InvalidOperation(AttachedControl is not null, $"{GetType().Name} is already attached to {AttachedControl}; an operation can attach to only one control");
 
         AttachedControl = control;
         SubscribeDragEvents(control);
@@ -38,21 +70,47 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
 
     protected virtual void SubscribeDragEvents(Control control)
     {
-        control.AddHandler(InputElement.PointerPressedEvent, Control_PointerPressed, Routing, _handledEventsToo);
-        control.AddHandler(InputElement.PointerMovedEvent, Control_PointerMoved, Routing, _handledEventsToo);
-        control.AddHandler(InputElement.PointerReleasedEvent, Control_PointerReleased, Routing, _handledEventsToo);
+        control.AddHandler(InputElement.PointerPressedEvent, HandlePointerPressed, Routing, HandledEventsToo);
+        control.AddHandler(InputElement.PointerMovedEvent, HandlePointerMoved, Routing, HandledEventsToo);
+        control.AddHandler(InputElement.PointerReleasedEvent, HandlePointerReleased, Routing, HandledEventsToo);
+        // Direct, but raised on every element the capture leaves, so this fires when capture leaves the attached control's subtree
+        control.AddHandler(InputElement.PointerCaptureLostEvent, HandlePointerCaptureLost, RoutingStrategies.Direct);
     }
 
     protected virtual void UnsubscribeDragEvents(Control control)
     {
-        control.RemoveHandler(InputElement.PointerPressedEvent, Control_PointerPressed);
-        control.RemoveHandler(InputElement.PointerMovedEvent, Control_PointerMoved);
-        control.RemoveHandler(InputElement.PointerReleasedEvent, Control_PointerReleased);
+        control.RemoveHandler(InputElement.PointerPressedEvent, HandlePointerPressed);
+        control.RemoveHandler(InputElement.PointerMovedEvent, HandlePointerMoved);
+        control.RemoveHandler(InputElement.PointerReleasedEvent, HandlePointerReleased);
+        control.RemoveHandler(InputElement.PointerCaptureLostEvent, HandlePointerCaptureLost);
     }
 
-    protected virtual void Control_PointerPressed(object? sender, PointerPressedEventArgs e)
+    private void HandlePointerPressed(object? sender, PointerPressedEventArgs e) => OnPointerPressed(e);
+
+    private void HandlePointerReleased(object? sender, PointerReleasedEventArgs e) => OnPointerReleased(e);
+
+    private void HandlePointerCaptureLost(object? sender, PointerCaptureLostEventArgs e) => OnPointerCaptureLost(e);
+
+    // An exception escaping this async void would terminate the app, and on Win32 the platform has already reduced it to E_FAIL
+    private async void HandlePointerMoved(object? sender, PointerEventArgs e)
     {
-        if (sender is not Control c || _isDragPending || !CanDrag)
+        try
+        {
+            await OnPointerMoved(e);
+        }
+        catch (Exception ex)
+        {
+            StopTrackingPress();
+            Logger.TryGet(LogEventLevel.Error, LogArea)?.Log(this, "Drag failed: {Exception}", ex);
+        }
+    }
+
+    /// <summary>
+    /// Called when a pointer is pressed on the attached control. Tracks the press as a possible drag unless it is filtered out.
+    /// </summary>
+    protected virtual void OnPointerPressed(PointerPressedEventArgs e)
+    {
+        if (!CanDrag)
             return;
 
         if (e.Source is not Control control || IsInsideIgnoredControl(control))
@@ -74,9 +132,27 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
             e.Handled = true;
     }
 
-    // Scrollbars and buttons (e.g. a tree item's expander) must keep receiving their presses
-    private bool IsInsideIgnoredControl(Control source) =>
-        SelfAndAncestorsWithinAttachedControl(source).Any(x => x is ScrollBar or Button);
+    /// <summary>
+    /// Whether a press on <paramref name="element"/>, or inside it, is left to the element by default instead of being tracked as a drag.
+    /// True for scroll bars, buttons (including a tree item's expander), text boxes and thumbs.
+    /// </summary>
+    /// <remarks>Called for the pressed element and each ancestor up to the attached control that has no <see cref="DragDrop.IgnoresPressProperty"/>
+    /// value. Prefer that property for per-element or styled choices; override for rules that need code.</remarks>
+    protected virtual bool IsIgnoredPressSource(Visual element) => element is ScrollBar or Button or TextBox or Thumb;
+
+    private bool IsInsideIgnoredControl(Control source)
+    {
+        foreach (var element in SelfAndAncestorsWithinAttachedControl(source))
+        {
+            if (DragDrop.GetIgnoresPress(element) is { } ignores)
+                return ignores;
+
+            if (IsIgnoredPressSource(element))
+                return true;
+        }
+
+        return false;
+    }
 
     private bool IsInsideDragHandle(Control source) =>
         SelfAndAncestorsWithinAttachedControl(source).Any(DragDrop.GetIsDragHandle);
@@ -95,48 +171,60 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
         }
     }
 
-    protected virtual void Control_PointerReleased(object? sender, PointerReleasedEventArgs e)
+    /// <summary>
+    /// Called when a pointer is released on the attached control. Stops tracking the press.
+    /// </summary>
+    protected virtual void OnPointerReleased(PointerReleasedEventArgs e) => StopTrackingPress();
+
+    /// <summary>
+    /// Called when the pointer capture leaves the attached control and its descendants. Stops tracking the press, whose release may never arrive.
+    /// </summary>
+    protected virtual void OnPointerCaptureLost(PointerCaptureLostEventArgs e) => StopTrackingPress();
+
+    private void StopTrackingPress()
     {
         _trackedControl = null;
         _dragOrigin = null;
         _pressedEventArgs = null;
-        _isDragPending = false;
     }
 
-    protected virtual async void Control_PointerMoved(object? sender, PointerEventArgs e)
+    /// <summary>
+    /// Called when a pointer moves over the attached control. Starts a drag once a tracked press has moved past <see cref="DragThreshold"/>,
+    /// and completes when that drag ends. A move without the left button pressed stops tracking the press.
+    /// </summary>
+    protected virtual Task OnPointerMoved(PointerEventArgs e)
     {
-        if (AttachedControl is null)
-            return;
-
-        if (_trackedControl is null || _dragOrigin is null)
-            return;
+        if (AttachedControl is null || _trackedControl is null || _dragOrigin is null)
+            return Task.CompletedTask;
 
         var local = e.GetCurrentPoint(AttachedControl);
+        if (!local.Properties.IsLeftButtonPressed)
+        {
+            StopTrackingPress();
+            return Task.CompletedTask;
+        }
+
         var delta = local.Position - _dragOrigin.Value;
         if (delta.X * delta.X + delta.Y * delta.Y < DragThreshold * DragThreshold)
-            return;
+            return Task.CompletedTask;
 
-        if (!_isDragPending)
-            await StartDrag(e);
+        return StartDrag(e);
     }
 
     protected virtual async Task StartDrag(PointerEventArgs e)
     {
         var pressedEventArgs = _pressedEventArgs;
-        if (_dragOrigin is null || pressedEventArgs is null)
+        if (_dragOrigin is not { } origin || pressedEventArgs is null)
             return;
 
         var payload = ResolvePayload(pressedEventArgs);
         if (payload is null)
             return;
 
-        var metadata = CreateMetadata(pressedEventArgs);
+        var metadata = CreateMetadata(pressedEventArgs, origin);
         metadata.Payload = payload;
 
-        _trackedControl = null;
-        _dragOrigin = null;
-        _pressedEventArgs = null;
-        _isDragPending = false;
+        StopTrackingPress();
 
         await DoDragDrop(pressedEventArgs, metadata, payload);
     }
@@ -164,9 +252,7 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
 
     protected virtual async Task DoDragDrop(PointerPressedEventArgs triggerEvent, DragInfo metadata, object payload)
     {
-        var data = new DataTransfer();
-        data.Add(CreateDataTransferItem(metadata, payload));
-
+        var data = CreateDataTransfer(metadata, payload);
         var dragVisual = ResolveDragVisual(triggerEvent);
         var grabOffset = dragVisual is null ? default : triggerEvent.GetPosition(dragVisual);
         using var session = new DragSession(TopLevel.GetTopLevel(AttachedControl), dragVisual, grabOffset, ShowDragPreview, RemoveOnDropOutside);
@@ -175,6 +261,13 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
 
         if (RemoveOnDropOutside && session.DroppedOutsideTarget)
             OnDroppedOutside(metadata, payload);
+    }
+
+    internal DataTransfer CreateDataTransfer(DragInfo metadata, object payload)
+    {
+        var data = new DataTransfer();
+        data.Add(CreateDataTransferItem(metadata, payload));
+        return data;
     }
 
     protected virtual DataTransferItem CreateDataTransferItem(DragInfo metadata, object payload)
@@ -202,12 +295,15 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
         return item;
     }
 
-    protected virtual DragInfo CreateMetadata(PointerEventArgs e)
+    /// <summary>
+    /// Creates the metadata for a drag started by the press <paramref name="e"/> at <paramref name="origin"/>, relative to the attached control.
+    /// </summary>
+    protected virtual DragInfo CreateMetadata(PointerEventArgs e, Point origin)
     {
         return new DragInfo()
         {
             DragOperation = this,
-            DragOrigin = _dragOrigin!.Value,
+            DragOrigin = origin,
             DragIds = InteractionIds.ToList(),
             PointerId = e.Pointer.Id
         };

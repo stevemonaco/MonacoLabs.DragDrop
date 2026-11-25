@@ -11,7 +11,9 @@ sources:
 types:
   - ItemDragOperation
   - ItemDropOperation
-tests: []
+tests:
+  - ItemDropTests
+  - EndToEndTests
 depends:
   - DD-DRAG
   - DD-DROP
@@ -29,29 +31,29 @@ depends:
 ### Drag side
 
 - **DD-ITEM-001** — `ItemDragOperation.Payload` shall bind TwoWay by default.
-  - Tests: untested
+  - Tests: `EndToEndTests.ItemPayloadBindsTwoWayByDefault`
 - **DD-ITEM-002** — When a drop completes with effect Move and `Payload` is set or bound, the drag operation shall set `Payload` to null.
-  - Tests: untested
+  - Tests: `EndToEndTests.AMoveClearsASetPayload`
 - **DD-ITEM-003** — When a drop completes with effect Move, `Payload` is set or bound and `SwapOnDrop` is true, the drag operation shall set `Payload` to the drop's `ReplacedPayload` instead of null.
-  - Tests: untested
+  - Tests: `EndToEndTests.WithSwapOnDropAMoveTakesTheTargetsPreviousValue`
 - **DD-ITEM-004** — When a drop completes with any effect other than Move, the drag operation shall leave `Payload` unchanged.
-  - Tests: untested
+  - Tests: `EndToEndTests.AnyEffectOtherThanMoveLeavesThePayload`
 - **DD-ITEM-005** — When `Payload` is neither set nor bound (the payload came from `DataContext`), the drag operation shall change nothing on completion.
-  - Tests: untested
+  - Tests: `EndToEndTests.ADataContextPayloadIsLeftAlone`
 - **DD-ITEM-006** — When `RemoveOnDropOutside` is true, `Payload` is set or bound and the drag is dropped outside any target (DD-SESSION), the drag operation shall set `Payload` to null.
-  - Tests: untested
+  - Tests: `EndToEndTests.ADropOutsideAnyTargetClearsASetPayload`
 - **DD-ITEM-007** — The drag operation shall write `Payload` with `SetCurrentValue`, so a TwoWay binding pushes the new value to the view model and stays in place.
-  - Tests: untested
+  - Tests: `EndToEndTests.AMoveKeepsTheBindingOnPayload`
 
 ### Drop side
 
 - **DD-ITEM-008** — `ItemDropOperation` shall behave exactly as DD-DROP specifies, including refusing drags that started from its own attached control.
-  - Tests: untested
+  - Tests: `ItemDropTests.ItemDropOperationAddsNothingToTheDropTarget`, `ItemDropTests.ASlotDroppedOnItselfKeepsItsValue`
 
 ### Defaults
 
 - **DD-ITEM-009** (inherited) — When `SwapOnDrop` is not set, it shall be false.
-  - Tests: untested
+  - Tests: `EndToEndTests.SwapOnDropDefaultsToFalse`
 
 ## Invariants
 
@@ -83,4 +85,4 @@ depends:
 
 ## Open items
 
-- A collection drag dropped on an `ItemDropOperation` with Move leaves the item in the source list; that is a DD-COLLECTION issue, addressed by [changes/correctness-fixes.md](../../changes/correctness-fixes.md).
+- None.

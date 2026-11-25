@@ -84,14 +84,18 @@
                 <StackPanel Spacing="12">
                     <StackPanel Spacing="2">
                         <TextBlock Classes="card-title" Text="Image" />
-                        <TextBlock Classes="subtle" Text="An ItemDropOperation that accepts platform:files and validates the file type in CanDrop." />
+                        <TextBlock Classes="subtle" Text="An ItemDropOperation that accepts platform:files, validates the file type in CanDrop, and uses a border-only highlight (Kind=&quot;Border&quot;)." />
                     </StackPanel>
                     <Border
                         Height="170"
                         Classes="slot"
                         Classes.filled="{Binding Image, Converter={x:Static ObjectConverters.IsNotNull}}">
                         <dd:DragDrop.DropOperation>
-                            <cdd:ImageDropOperation InteractionIds="platform:files" PayloadCommand="{Binding SetImageCommand}" />
+                            <cdd:ImageDropOperation InteractionIds="platform:files" PayloadCommand="{Binding SetImageCommand}">
+                                <cdd:ImageDropOperation.DropAdorner>
+                                    <dd:DropHighlightAdorner Kind="Border" />
+                                </cdd:ImageDropOperation.DropAdorner>
+                            </cdd:ImageDropOperation>
                         </dd:DragDrop.DropOperation>
                         <Panel>
                             <Rectangle Classes="slot-outline" />
