@@ -24,7 +24,7 @@ public partial class ItemDragOperation : DragOperationBase
         SetCurrentValue(PayloadProperty, SwapOnDrop ? dropInfo.ReplacedPayload : null);
     }
 
-    protected override void OnDroppedOutside(DragInfo dragInfo, object payload)
+    protected override void OnDroppedOutside(DragInfo dragInfo)
     {
         if (IsSet(PayloadProperty))
             SetCurrentValue(PayloadProperty, null);

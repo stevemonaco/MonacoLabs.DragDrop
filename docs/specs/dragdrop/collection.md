@@ -9,6 +9,8 @@ sources:
   - MonacoLabs.DragDrop/Operations/CollectionDropOperation.cs
   - MonacoLabs.DragDrop/Operations/CollectionDropOperation.props.cs
   - MonacoLabs.DragDrop/Info/CollectionDragInfo.cs
+  - MonacoLabs.DragDrop/Info/CollectionDragItem.cs
+  - MonacoLabs.DragDrop/Operations/DraggedItems.cs
   - MonacoLabs.DragDrop/Info/CollectionDropInfo.cs
   - MonacoLabs.DragDrop/Info/CollectionDropLocation.cs
   - MonacoLabs.DragDrop/Info/DropTargetOffset.cs
@@ -18,6 +20,8 @@ types:
   - CollectionDragOperation
   - CollectionDropOperation
   - CollectionDragInfo
+  - CollectionDragItem
+  - DraggedItems
   - CollectionDropInfo
   - CollectionDropLocation
   - DropTargetOffset
@@ -40,7 +44,7 @@ depends:
 
 ## Purpose
 
-`CollectionDragOperation` and `CollectionDropOperation` move items between and within flat item controls (`ListBox`, `ItemsControl`). The drag side drags the pressed item container's item and remembers its collection and index. The drop side tracks the hovered container, computes where the item would land (`CollectionDropLocation`), draws an insertion line (DD-ADORNERS), auto-scrolls, inserts on drop, and tells the drag side, which removes the original. Tree operations (DD-TREE) derive from both and replace the hover zones and locations.
+`CollectionDragOperation` and `CollectionDropOperation` move items between and within flat item controls (`ListBox`, `ItemsControl`). The drag side drags the pressed item container's item, or the whole selection when the pressed item is part of it, and remembers each item's collection and index. The drop side runs the DD-DROP flow and overrides its hover, feedback, location and transfer steps: it tracks the hovered container, computes where the items would land (`CollectionDropLocation`), draws an insertion line (DD-ADORNERS), auto-scrolls, and inserts on drop. The base then tells the drag side, which removes the originals. Tree operations (DD-TREE) derive from both and replace the hover zones and locations.
 
 ## Requirements
 
@@ -50,27 +54,35 @@ depends:
   - Tests: `CollectionDragTests.PressesOnAListBoxItemReachTheOperation`
 - **DD-COLLECTION-002** — When attached to an `ItemsControl`, the drag operation shall track only presses inside an item container of that control.
   - Tests: `CollectionDragTests.PressesOutsideAnItemContainerAreNotTracked`
-- **DD-COLLECTION-003** — When a press is inside an item container, the dragged payload shall be that container's item, whatever `Payload` and the selection say.
+- **DD-COLLECTION-003** — When a press is inside an item container, the dragged payloads shall be items of the attached control (DD-COLLECTION-041, DD-COLLECTION-042), whatever `Payload` says.
   - Tests: `CollectionDragTests.ThePayloadIsThePressedItemWhateverPayloadAndSelectionSay`
+- **DD-COLLECTION-041** — When the pressed item is selected, `DraggedItems` is `SelectedItems` and the attached control is a `ListBox` with more than one selected item, the drag shall carry every selected item, in index order.
+  - Tests: `CollectionDragTests.DraggingASelectedItemCarriesTheWholeSelectionInIndexOrder`, `EndToEndTests.MovingASelectionWithinOneListKeepsItsOrder`
+- **DD-COLLECTION-042** — Otherwise the drag shall carry only the pressed container's item.
+  - Tests: `CollectionDragTests.DraggingAnUnselectedItemCarriesOnlyIt`, `CollectionDragTests.DraggedItemsPressedItemCarriesOnlyThePressedItem`, `CollectionDragTests.ThePayloadIsThePressedItemWhateverPayloadAndSelectionSay`
+- **DD-COLLECTION-043** — Selected items without a realized container shall be carried, with their index from the selection and no container.
+  - Tests: `CollectionDragTests.SelectedItemsScrolledOutOfViewAreCarried`
 - **DD-COLLECTION-004** — When a press is not inside an item container (the operation is attached to a non-items control), the drag operation shall resolve the payload as DD-DRAG-016 does.
   - Tests: `CollectionDragTests.OnAControlThatIsNotAnItemsControlThePayloadResolvesAsUsual`
-- **DD-COLLECTION-005** — The drag visual (DD-SESSION) shall be the pressed item container when there is one, and the attached control otherwise.
-  - Tests: `CollectionDragTests.TheDragVisualIsThePressedContainer`, `CollectionDragTests.OnAControlThatIsNotAnItemsControlTheDragVisualIsTheControl`
-- **DD-COLLECTION-006** — The drag's `CollectionDragInfo` shall carry `PayloadCollection`, the pressed container, and the container's index in the attached control.
-  - Tests: `CollectionDragTests.TheDragInfoCarriesTheCollectionTheContainerAndItsIndex`
+- **DD-COLLECTION-005** — The drag visual (DD-SESSION) shall be the pressed item container when there is one, and the attached control otherwise. The realized container of every other dragged item shall also have `:dragging` while the drag runs.
+  - Tests: `CollectionDragTests.TheDragVisualIsThePressedContainer`, `CollectionDragTests.OnAControlThatIsNotAnItemsControlTheDragVisualIsTheControl`, `CollectionDragTests.EveryRealizedDraggedContainerIsDragging`
+- **DD-COLLECTION-006** — The drag's `CollectionDragInfo` shall carry the pressed container and, per payload and in payload order, a `CollectionDragItem` with the item, its collection (`PayloadCollection`), its index in the attached control and its container when realized.
+  - Tests: `CollectionDragTests.TheDragInfoCarriesTheItemItsCollectionIndexAndContainer`, `CollectionDragTests.DraggingASelectedItemCarriesTheWholeSelectionInIndexOrder`
 
 ### Drag-side completion
 
-- **DD-COLLECTION-007** — When a drop completes with effect Move and `PayloadCollection` is set, the drag operation shall remove the original from `PayloadCollection`, whatever kind of target received the drop.
-  - Tests: `CollectionRemovalTests.AMoveToAnotherListRemovesThePressedIndex`, `CollectionRemovalTests.AMoveOntoATargetWithoutACollectionRemovesThePressedIndex`, `EndToEndTests.MovingAListItemOntoASingleValueTargetRemovesItFromTheList`
-- **DD-COLLECTION-008** — The drag operation shall remove at the pressed index, shifted by one when the drop inserted into the same collection at or before it, when that index holds an item equal to the payload.
-  - Tests: `CollectionRemovalTests.AMoveWithinOneListRemovesTheOriginalAfterTheInsertionShiftsIt`, `CollectionRemovalTests.AnAppendWithinOneListRemovesThePressedIndex`, `CollectionRemovalTests.MovingOneOfTwoEqualItemsRemovesThatOne`, `CollectionDropTests.ItemsCanBeReorderedWithinOneList`
-- **DD-COLLECTION-009** — When the pressed index is unknown or no longer holds an equal item, the drag operation shall remove the first item equal to the payload that is not the item the drop inserted (the one at the target index, or the last one when the drop appended).
-  - Tests: `CollectionRemovalTests.WithoutAPressedIndexTheMoveRemovesThePayloadByEquality`, `CollectionRemovalTests.AStalePressedIndexFallsBackToTheFirstEqualItem`, `CollectionRemovalTests.TheEqualitySearchSkipsTheItemTheDropInserted`, `CollectionRemovalTests.WithoutAPressedIndexAnAppendRemovesTheOriginalNotTheAppendedItem`
-- **DD-COLLECTION-010** — When the effect is not Move or `PayloadCollection` is null, the drag operation shall remove nothing.
+- **DD-COLLECTION-007** — When a drop completes with effect Move, the drag operation shall remove every original that has a collection from that collection, whatever kind of target received the drop.
+  - Tests: `CollectionRemovalTests.AMoveToAnotherListRemovesThePressedIndex`, `CollectionRemovalTests.AMoveOntoATargetWithoutACollectionRemovesThePressedIndex`, `CollectionRemovalTests.SeveralOriginalsMovedToAnotherListAreAllRemoved`, `CollectionRemovalTests.OriginalsFromSeveralCollectionsAreEachRemovedFromTheirOwn`, `EndToEndTests.MovingAListItemOntoASingleValueTargetRemovesItFromTheList`, `EndToEndTests.MovingASelectionToAnotherListRemovesEveryOriginal`
+- **DD-COLLECTION-008** — The drag operation shall remove each original at its recorded index, shifted by the number of items the drop inserted when it inserted them into the same collection at or before that index, when the index holds an item equal to the original that no other original has claimed.
+  - Tests: `CollectionRemovalTests.AMoveWithinOneListRemovesTheOriginalAfterTheInsertionShiftsIt`, `CollectionRemovalTests.AnAppendWithinOneListRemovesThePressedIndex`, `CollectionRemovalTests.MovingOneOfTwoEqualItemsRemovesThatOne`, `CollectionRemovalTests.SeveralOriginalsMovedWithinOneListAreRemovedAfterTheInsertionShiftsThem`, `CollectionDropTests.ItemsCanBeReorderedWithinOneList`, `EndToEndTests.MovingASelectionWithinOneListKeepsItsOrder`
+- **DD-COLLECTION-009** — When an original's index is unknown or no longer holds an equal unclaimed item, the drag operation shall remove the first unclaimed item equal to it outside the range the drop inserted (the inserted count from the target index, or the last items when the drop appended).
+  - Tests: `CollectionRemovalTests.WithoutAPressedIndexTheMoveRemovesThePayloadByEquality`, `CollectionRemovalTests.AStalePressedIndexFallsBackToTheFirstEqualItem`, `CollectionRemovalTests.TheEqualitySearchSkipsTheItemTheDropInserted`, `CollectionRemovalTests.WithoutAPressedIndexAnAppendRemovesTheOriginalNotTheAppendedItem`, `CollectionRemovalTests.StaleIndexesOfSeveralOriginalsFallBackToTheirFirstEqualItems`, `CollectionRemovalTests.EqualOriginalsRemoveOneItemEach`, `CollectionRemovalTests.WithoutIndexesTheEqualitySearchSkipsEveryInsertedItem`
+- **DD-COLLECTION-044** — The drag operation shall choose the item to remove for every original before removing any, and remove them from the highest index down within each collection.
+  - Tests: `CollectionRemovalTests.SeveralOriginalsMovedWithinOneListAreRemovedAfterTheInsertionShiftsThem`, `CollectionRemovalTests.EqualOriginalsRemoveOneItemEach`
+- **DD-COLLECTION-010** — When the effect is not Move, the drag operation shall remove nothing, and it shall never remove an original without a collection.
   - Tests: `CollectionDragTests.OnlyAMoveWithAPayloadCollectionRemovesTheOriginal`
-- **DD-COLLECTION-011** — When the drag is dropped outside any target with `RemoveOnDropOutside` (DD-SESSION), the drag operation shall remove the item at the pressed index if that index still holds an equal item, and otherwise remove the payload by equality.
-  - Tests: `CollectionRemovalTests.ADropOutsideRemovesThePressedIndexWhenItHoldsThePayload`, `CollectionRemovalTests.ADropOutsideRemovesByEqualityWhenThePressedIndexDoesNotHoldThePayload`, `EndToEndTests.DroppingAListItemWhereNothingAcceptsItRemovesItWithRemoveOnDropOutside`
+- **DD-COLLECTION-011** — When the drag is dropped outside any target with `RemoveOnDropOutside` (DD-SESSION), the drag operation shall remove every original: at its recorded index if that index still holds an equal unclaimed item, and otherwise the first equal unclaimed item.
+  - Tests: `CollectionRemovalTests.ADropOutsideRemovesThePressedIndexWhenItHoldsThePayload`, `CollectionRemovalTests.ADropOutsideRemovesByEqualityWhenThePressedIndexDoesNotHoldThePayload`, `CollectionRemovalTests.ADropOutsideRemovesEveryOriginal`, `EndToEndTests.DroppingAListItemWhereNothingAcceptsItRemovesItWithRemoveOnDropOutside`
 
 ### Drop side: hover
 
@@ -90,7 +102,7 @@ depends:
   - Tests: `CollectionDropTests.TheInsertionAdornerFollowsTheHoveredContainer`
 - **DD-COLLECTION-019** — When attached with no `ItemDropAdorner`, the drop operation shall create a `DropInsertionAdorner`.
   - Tests: `CollectionDropTests.AttachingWithoutAnItemAdornerCreatesAnInsertionAdorner`
-- **DD-COLLECTION-020** — The drop operation shall run hover, location, validation, adorners, pseudo-classes and auto-scroll on both DragEnter and DragOver, and mark those events handled when the drop is valid.
+- **DD-COLLECTION-020** — The drop operation shall resolve its hover, location and auto-scroll on both DragEnter and DragOver, as steps of the DD-DROP flow.
   - Tests: `CollectionDropTests.EnterAndOverBothRunTheHoverAndAreHandledOnlyWhenValid`, `AutoScrollTests.HoveringNearAnEdgeScrollsTheListTowardsIt`
 
 ### Drop side: location and validation
@@ -107,20 +119,20 @@ depends:
 
 ### Drop side: dropping
 
-- **DD-COLLECTION-025** — When an in-process payload is dropped and accepted, `TransfersPayload` is true and there is a location, the drop operation shall insert the payload at the location's index, or append it when the index is null, and then call `DropCompleted` with a `CollectionDropInfo` carrying the target collection, the index actually used, the hovered container and the location's parent.
-  - Tests: `CollectionDropTests.AnAcceptedDropInsertsThenCompletesWithWhereItLanded`
+- **DD-COLLECTION-025** — When an in-process drag is dropped and accepted, `TransfersPayload` is true and there is a location, the drop operation's transfer step shall insert every payload, consecutively and in order, at the location's index, or append them when the index is null, and report (DD-DROP-015) a `CollectionDropInfo` carrying the target collection, the index the first payload actually landed at, the number of payloads (`TargetCount`), the hovered container and the location's parent.
+  - Tests: `CollectionDropTests.AnAcceptedDropInsertsThenCompletesWithWhereItLanded`, `CollectionDropTests.SeveralPayloadsAreInsertedTogetherInOrder`
 - **DD-COLLECTION-026** — `TransfersPayload` shall be true exactly when `PayloadTarget` is an `IList`, unless a subclass overrides it.
   - Tests: `CollectionDropTests.AnAcceptedDropInsertsThenCompletesWithWhereItLanded`, `CollectionDropTests.ANonListPayloadTargetDoesNotTransfer`, `CollectionDropTests.ASubclassCanTransferWithoutAPayloadTarget`
-- **DD-COLLECTION-027** — When an in-process payload is dropped and accepted and nothing is transferred but `PayloadCommand` ran, the drop operation shall call `DropCompleted` after the command with a `CollectionDropInfo` whose target collection and index are the location's.
+- ~~**DD-COLLECTION-027**~~ — Removed by drop-side-redesign: completing after a command-only drop is DD-DROP-029, for every target.
+- **DD-COLLECTION-040** — When an accepted in-process drop transfers nothing but `PayloadCommand` ran, the `DropInfo` passed to `DropCompleted` (DD-DROP-029) shall be a `CollectionDropInfo` whose target collection and index are the location's, and whose count is the number of payloads.
   - Tests: `CollectionDropTests.ACommandOnlyTargetCompletesAMove`, `EndToEndTests.ReorderingThroughACommandRemovesTheOriginal`
-- **DD-COLLECTION-038** — When an in-process drop neither transfers nor runs `PayloadCommand` (there is no command, or `CanExecute` is false), the drop operation shall report effect None and not call `DropCompleted`.
-  - Tests: `CollectionDropTests.ADropThatNeitherTransfersNorRunsACommandReportsNone`, `CollectionDropTests.ACommandWhoseCanExecuteIsFalseReportsNone`
-- **DD-COLLECTION-028** — After an accepted in-process drop, the drop operation shall run `PayloadCommand` with the payload, the hovered offset and the location, whether or not it transferred.
+- ~~**DD-COLLECTION-038**~~ — Removed by drop-side-redesign: reporting None for a drop that does nothing is DD-DROP-029, for every target.
+- **DD-COLLECTION-028** — After an accepted in-process drop, the drop operation shall run `PayloadCommand` with the payloads, the hovered offset and the location, whether or not it transferred.
   - Tests: `CollectionDropTests.ATransferringDropAlsoRunsTheCommandWithThePayloadOffsetAndLocation`, `CollectionDropTests.ACommandOnlyTargetCompletesAMove`
 - **DD-COLLECTION-029** — When platform data is dropped and accepted, the drop operation shall run `PayloadCommand` with the platform items, the hovered offset and the location (from `ItemsSource` when there is no `PayloadTarget`), and shall insert nothing.
   - Tests: `CollectionDropTests.APlatformDropRunsTheCommandAtTheItemsSourceLocationAndInsertsNothing`
-- **DD-COLLECTION-030** — A Copy drop shall insert the value `CreateCopy` returns (DD-DROP-026), which by default is the reference the source holds; any other effect shall insert the payload.
-  - Tests: `CollectionDropTests.ACopyDropInsertsTheCreatedCopy`, `CollectionDropTests.AMoveDropIgnoresCreateCopy`, `EndToEndTests.CopyingWithAnOverriddenCreateCopyLeavesTheSourceUnchanged`
+- **DD-COLLECTION-030** — A Copy drop shall insert the value `CreateCopy` returns for each payload (DD-DROP-026), which by default is the reference the source holds; any other effect shall insert the payloads.
+  - Tests: `CollectionDropTests.ACopyDropInsertsTheCreatedCopy`, `CollectionDropTests.ACopyDropCopiesEachPayload`, `CollectionDropTests.AMoveDropIgnoresCreateCopy`, `EndToEndTests.CopyingWithAnOverriddenCreateCopyLeavesTheSourceUnchanged`
 - **DD-COLLECTION-031** — After a drop, or when a drag leaves or stops being meant for the target, the drop operation shall clear the hovered container, its pseudo-classes, the location, auto-scrolling, `:dropover` and both adorners.
   - Tests: `CollectionDropTests.ADropClearsTheHoverAndTheAdorners`, `CollectionDropTests.ALeaveClearsTheHoverAndTheAdorners`, `CollectionDropTests.ADragThatStopsBeingMeantForTheTargetClearsTheHover`, `AutoScrollTests.LeavingStopsTheScrolling`
 - **DD-COLLECTION-039** — When detached, the collection drop operation shall clear its hovered container's pseudo-classes and hide its insertion adorner.
@@ -141,18 +153,23 @@ depends:
 
 - **DD-COLLECTION-036** (inherited) — When `AutoScrollMargin` is not set, the margin shall be 28 DIPs.
   - Tests: `AutoScrollTests.TheMarginDefaultsTo28Dips`
+- **DD-COLLECTION-045** (inherited) — When `DraggedItems` is not set, it shall be `SelectedItems`.
+  - Tests: `CollectionDragTests.DraggedItemsDefaultsToSelectedItems`
 
 ## Invariants
 
 - At most one item container carries the drop pseudo-classes from a given drop operation at a time.
 - The auto-scroll timer runs only while a drag meant for the target is over it.
-- `DropCompleted` is called only after the payload has been inserted.
+- `DropCompleted` is called only after the payloads have been inserted.
+- The payloads of a collection drag and its `CollectionDragInfo.Items` are in the same order, one entry each.
 
 ## Edge cases
 
-- Dropping an item before or after itself inserts a duplicate next to it and removes the original: the list is unchanged (DD-COLLECTION-008).
+- Dropping an item before or after itself inserts a duplicate next to it and removes the original: the list is unchanged (DD-COLLECTION-008). Dropping a selection inside itself gathers it at the location, in index order.
 - Indexes come from the item control's containers. When `PayloadTarget` is not the collection shown (for example a filtered or sorted view over it), insertion and removal indexes refer to different orders.
-- With multiple selection, only the pressed item is dragged and moved; the rest of the selection stays.
+- Only a `ListBox` exposes its selection model, so other selecting controls drag the pressed item even with several items selected.
+- The selection is read when the drag starts, after the press has updated it: a plain press on an unselected item makes it the only selection (DD-DRAG-009), so it drags alone, and a Ctrl-press adds it to the selection, which then drags as a whole.
+- The library does not change selection on drop: the target does not select the dropped items, and the source keeps whatever selection survives the removal.
 - The scroll viewer is looked up on the first drag and cached for the operation's lifetime, so a re-templated control keeps scrolling the old viewer.
 
 ## Threading and lifetime
@@ -167,9 +184,13 @@ depends:
 
 - **The drag side removes the payload.** The drop side inserts and then calls `DropCompleted`, and the drag operation removes its original. Reason: only the source knows where the payload lives and whether it should go (a Copy source keeps it). Rejected: the drop side removing from `PayloadCollection`, which would couple every target to every source type.
 - **Removal checks the index before trusting it.** When a drop completes with Move, the drag side removes the item at the pressed index, shifted by one when the drop inserted into the same collection at or before it, if that index still holds an equal item. Otherwise it removes the first equal item that is not the one the drop just inserted: the one at the drop's target index, or the last item when the drop appended. Reason: the source no longer needs to know what kind of target received the drop, so single-value and command-only targets work, and a wrong index (a command that inserted somewhere else, a collection changed during the drag) degrades to an equality search instead of removing the wrong item. Equality is `Equals`, so boxed value payloads (the sample's Guids) match. Rejected: special-casing each drop-info type in `DropCompleted`, which repeats the bug for the next target kind; reference equality, which can never match a boxed value.
-- **Every accepted in-process drop that did something reports back.** A collection or tree target calls `DropCompleted` after it transferred the payload or ran `PayloadCommand`. With no transfer, the `CollectionDropInfo` carries the requested location (collection and index) as the target. Reason: the drag side owns removal, and a target that silently skips the report turns every Move into a Copy. Rejected: leaving the move to the command, which cannot reach the source collection through `DropEventArgs`.
-- **A drop that does nothing reports None.** When a collection target neither transfers nor runs its command (DD-COLLECTION-038), it reports effect None and does not call `DropCompleted`. Reason: reporting Move for a drop that went nowhere would let the source remove the item into nothing. Rejected: consulting `CanExecute` during DragOver to show None early, which is a separate behavior change (backlog).
-- **The pressed container's item is the payload.** Reason: with multiple selection, `Payload` or `SelectedItem` can differ from the item under the pointer, and the payload must match `PayloadContainerIndex` or the wrong item is removed.
+- **A command-only drop reports its location.** Every accepted in-process drop that did something reports back (DD-DROP, "Every accepted in-process drop that did something reports back"). With no transfer, the `CollectionDropInfo` carries the requested location (collection and index) as the target. Reason: the drag side's removal shifts the original's index by the insertion when both are in the same collection, and a command that inserts at the location needs that shift too.
+- **Payloads come from the containers and the selection, not `Payload`.** Reason: `Payload` or `SelectedItem` can differ from the items being dragged, and each payload must match its `CollectionDragItem` index or the wrong item is removed.
+- **Drag the selection only when the pressed item is in it.** Reason: pressing an unselected item already makes it the selection (DD-DRAG-009), and dragging a selection the pointer is not on would surprise. Matches Explorer.
+- **What a drag carries is named by an enum.** `DraggedItems` is `SelectedItems` or `PressedItem`. Reason: the setting reads as the choice it makes, in code and XAML. Rejected: a `DragsSelection` bool, whose false value does not say that only the pressed item is dragged.
+- **Keep the control's order.** Reason: a moved block should look the same in its new place; selection order depends on click history. Rejected: selection order; the pressed item first.
+- **Flat lists drag unrealized selected items.** Reason: the selection model gives every selected index and item, so items scrolled out of view are part of the gesture the user made. Trees cannot do the same (DD-TREE, "Trees drag only shown nodes").
+- **The library does not select the dropped items.** Reason: what the target's selection should be after a drop (the dropped items, unchanged, or cleared) is an app decision, and apps can do it from `PayloadCommand` or `DropCompleted`. Rejected: selecting the dropped items in the target.
 - **One insertion adorner is retargeted.** Reason: styles set on a custom `ItemDropAdorner` instance survive hover changes, and no adorner is created per container.
 - **Locations fall back to `ItemsSource`.** Reason: platform drops and command-only targets still need an insertion index to hand to `PayloadCommand`.
 - **Structural checks run before `CanDrop`.** See DD-COLLECTION-023. Reason: consumers override `CanDrop` for domain validation and should not have to remember to call the base for structural correctness.
@@ -177,11 +198,9 @@ depends:
 
 ## Non-goals
 
-- Dragging several selected items at once.
 - Cloning payloads automatically on Copy. `CreateCopy` is the hook (DD-COLLECTION-030).
 - Horizontal insertion zones for wrap or horizontal panels. `GetDropOffset` is virtual for that.
 
 ## Open items
 
-- `CollectionDragInfo.PayloadContainerIndex` and `CollectionDropInfo.TargetIndex` have copy-paste doc comments that describe the wrong collection. Logged in the backlog.
-- The collection drop operation replaces the base DragEnter, DragOver and Drop handlers, so `OnDragEnter` and `OnDragOver` (DD-DROP) are never called on collection and tree targets, while `OnDrop` is and `OnDragLeave` ends the drag. Logged in the backlog (drop-side redesign).
+- None.

@@ -40,7 +40,7 @@
                         Classes="subtle"
                         IsVisible="{Binding !Files.Count}"
                         Text="Drop files here" />
-                    <ListBox ItemsSource="{Binding Files}">
+                    <ListBox ItemsSource="{Binding Files}" SelectionMode="Multiple">
                         <dd:DragDrop.DragOperation>
                             <cdd:FileDragOperation
                                 AllowedEffects="Copy"
@@ -136,7 +136,10 @@
                         <TextBlock Classes="card-title" Text="Snippets" />
                         <TextBlock Classes="subtle" Text="Drop text from a browser or editor. Drag a snippet into another app to copy its text, or within the list to reorder it. Drop it on empty space to remove it." />
                     </StackPanel>
-                    <ListBox Grid.Row="1" ItemsSource="{Binding Snippets}">
+                    <ListBox
+                        Grid.Row="1"
+                        ItemsSource="{Binding Snippets}"
+                        SelectionMode="Multiple">
                         <dd:DragDrop.DragOperation>
                             <dd:CollectionDragOperation
                                 AllowedEffects="Move,Copy"

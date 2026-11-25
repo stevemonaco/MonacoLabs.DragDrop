@@ -81,7 +81,8 @@
                 <ListBox
                     x:Name="workers"
                     Grid.Row="1"
-                    ItemsSource="{Binding AvailableWorkers}">
+                    ItemsSource="{Binding AvailableWorkers}"
+                    SelectionMode="Multiple">
                     <dd:DragDrop.DragOperation>
                         <dd:CollectionDragOperation InteractionIds="app:mining, app:crafting, app:combat" PayloadCollection="{Binding AvailableWorkers}" />
                     </dd:DragDrop.DragOperation>

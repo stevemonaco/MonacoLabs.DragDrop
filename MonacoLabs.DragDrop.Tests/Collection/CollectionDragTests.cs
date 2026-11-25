@@ -34,7 +34,7 @@ public class CollectionDragTests
     }
 
     [AvaloniaFact]
-    public void TheDragInfoCarriesTheCollectionTheContainerAndItsIndex()
+    public void TheDragInfoCarriesTheItemItsCollectionIndexAndContainer()
     {
         var items = new List<string> { "a", "b", "c" };
         var (window, list, target, drop) = Show(items);
@@ -43,9 +43,9 @@ public class CollectionDragTests
         window.MouseDrag(window.PointIn(container), window.PointIn(target));
 
         var info = Assert.IsType<CollectionDragInfo>(drop.LastDragInfo);
-        Assert.Same(items, info.PayloadCollection);
-        Assert.Same(container, info.PayloadContainer);
-        Assert.Equal(2, info.PayloadContainerIndex);
+        Assert.Equal(new CollectionDragItem("c", items, 2, container), Assert.Single(info.Items));
+        Assert.Same(container, info.PressedContainer);
+        Assert.Equal(["c"], info.Payloads);
     }
 
     [AvaloniaFact]
@@ -64,7 +64,7 @@ public class CollectionDragTests
         Assert.Equal(["a"], items);
 
         CollectionDragInfo Info(List<string>? collection) =>
-            new() { DragOperation = operation, DragIds = ["app:default"], PayloadCollection = collection, PayloadContainerIndex = 1, Payload = "b" };
+            new() { DragOperation = operation, DragIds = ["app:default"], Items = [new CollectionDragItem("b", collection, 1, null)] };
     }
 
     [AvaloniaFact]
@@ -136,6 +136,7 @@ public class CollectionDragTests
     public void PressingASelectedItemKeepsTheMultipleSelection()
     {
         var (window, list, target, drop) = Show(["a", "b", "c"], SelectionMode.Multiple);
+        ((CollectionDragOperation)DragDrop.GetDragOperation(list)!).DraggedItems = DraggedItems.PressedItem;
         list.Selection.Select(0);
         list.Selection.Select(2);
 
@@ -143,6 +144,86 @@ public class CollectionDragTests
 
         Assert.Equal(["a", "c"], list.SelectedItems!.Cast<string>().Order());
         Assert.Equal("c", drop.PayloadTarget);
+    }
+
+    [AvaloniaFact]
+    public void DraggingASelectedItemCarriesTheWholeSelectionInIndexOrder()
+    {
+        var items = new List<string> { "a", "b", "c", "d" };
+        var (window, list, target, drop) = ShowSelection(items, 3, 1);
+
+        window.MouseDrag(window.PointIn(list.ContainerFromIndex(3)!), window.PointIn(target));
+
+        var info = Assert.IsType<CollectionDragInfo>(drop.LastDragInfo);
+        Assert.Equal(["b", "d"], info.Payloads);
+        Assert.Equal(["b", "d"], drop.LastPayloads);
+        Assert.Equal([new CollectionDragItem("b", items, 1, list.ContainerFromIndex(1)), new CollectionDragItem("d", items, 3, list.ContainerFromIndex(3))], info.Items);
+        Assert.Same(list.ContainerFromIndex(3), info.PressedContainer);
+    }
+
+    [AvaloniaFact]
+    public void DraggingAnUnselectedItemCarriesOnlyIt()
+    {
+        var (window, list, target, drop) = ShowSelection(["a", "b", "c"], 0, 2);
+
+        window.MouseDrag(window.PointIn(list.ContainerFromIndex(1)!), window.PointIn(target));
+
+        Assert.Equal(["b"], drop.LastPayloads);
+    }
+
+    [AvaloniaFact]
+    public void DraggedItemsPressedItemCarriesOnlyThePressedItem()
+    {
+        var (window, list, target, drop) = ShowSelection(["a", "b", "c"], 0, 2);
+        ((CollectionDragOperation)DragDrop.GetDragOperation(list)!).DraggedItems = DraggedItems.PressedItem;
+
+        window.MouseDrag(window.PointIn(list.ContainerFromIndex(2)!), window.PointIn(target));
+
+        Assert.Equal(["c"], drop.LastPayloads);
+    }
+
+    [AvaloniaFact]
+    public void SelectedItemsScrolledOutOfViewAreCarried()
+    {
+        var items = Enumerable.Range(0, 40).Select(x => $"item {x}").ToList();
+        var (window, list, target, drop) = ShowSelection(items);
+        list.AutoScrollToSelectedItem = false;
+        list.Selection.Select(0);
+        list.Selection.Select(30);
+        Assert.Null(list.ContainerFromIndex(30));
+
+        window.MouseDrag(window.PointIn(list.ContainerFromIndex(0)!), window.PointIn(target));
+
+        var info = Assert.IsType<CollectionDragInfo>(drop.LastDragInfo);
+        Assert.Equal(["item 0", "item 30"], info.Payloads);
+        Assert.Equal(new CollectionDragItem("item 30", items, 30, null), info.Items[1]);
+    }
+
+    [AvaloniaFact]
+    public void EveryRealizedDraggedContainerIsDragging()
+    {
+        var (window, list, target, drop) = ShowSelection(["a", "b", "c"], 0, 2);
+        string[]? dragging = null;
+        drop.Probe = _ => dragging ??= [.. list.GetRealizedContainers().Where(x => x.Classes.Contains(":dragging")).Select(x => (string)x.DataContext!)];
+
+        window.MouseDrag(window.PointIn(list.ContainerFromIndex(0)!), window.PointIn(target));
+
+        Assert.Equal(["a", "c"], dragging);
+        Assert.DoesNotContain(list.GetRealizedContainers(), x => x.Classes.Contains(":dragging"));
+    }
+
+    [AvaloniaFact]
+    public void DraggedItemsDefaultsToSelectedItems() => Assert.Equal(DraggedItems.SelectedItems, new CollectionDragOperation().DraggedItems);
+
+    private static (Window, ListBox, Border, PayloadsRecordingDropOperation) ShowSelection(List<string> items, params int[] selected)
+    {
+        var (window, list, target, _) = Show(items, SelectionMode.Multiple);
+        var drop = new PayloadsRecordingDropOperation();
+        DragDrop.SetDropOperation(target, drop);
+        foreach (var index in selected)
+            list.Selection.Select(index);
+
+        return (window, list, target, drop);
     }
 
     private static (Window, Border, Border, CollectionDragOperation, RecordingDropOperation) ShowBorderSource()

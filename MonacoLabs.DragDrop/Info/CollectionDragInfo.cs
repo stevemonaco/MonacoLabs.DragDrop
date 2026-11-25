@@ -1,5 +1,4 @@
 ﻿using Avalonia.Controls;
-using System.Collections;
 
 namespace MonacoLabs.DragDrop;
 
@@ -9,20 +8,12 @@ namespace MonacoLabs.DragDrop;
 public class CollectionDragInfo : DragInfo
 {
     /// <summary>
-    /// Collection source containing the to-be-dropped Payload where items will be removed from
-    /// after the Payload has been transferred
+    /// One entry per payload, in the order of <see cref="DragInfo.Payloads"/>.
     /// </summary>
-    public IList? PayloadCollection { get; init; }
+    public IReadOnlyList<CollectionDragItem> Items { get; init; } = [];
 
     /// <summary>
-    /// UI container in the collection control associated with the drag
-    /// ie. ListBoxItem, TreeViewItem, or topmost for ItemsControl
+    /// Item container the drag started from, or null when the press wasn't on one.
     /// </summary>
-    public Control? PayloadContainer { get; init; }
-
-    /// <summary>
-    /// Index of the PayloadCollection where the payload was dropped
-    /// Should match the index in the PayloadCollection
-    /// </summary>
-    public int? PayloadContainerIndex { get; init; }
+    public Control? PressedContainer { get; init; }
 }

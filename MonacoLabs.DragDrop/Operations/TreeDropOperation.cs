@@ -21,15 +21,15 @@ public partial class TreeDropOperation : CollectionDropOperation
 
     protected override bool TransfersPayload => true;
 
-    protected override void UpdateDrag(DragEventArgs e)
+    private protected override void UpdateFeedback(DragEventArgs e)
     {
-        base.UpdateDrag(e);
+        base.UpdateFeedback(e);
         UpdateHoverExpand();
     }
 
-    protected override void EndDrag()
+    private protected override void ClearFeedback()
     {
-        base.EndDrag();
+        base.ClearFeedback();
         CancelHoverExpand();
     }
 
@@ -92,14 +92,14 @@ public partial class TreeDropOperation : CollectionDropOperation
     }
 
     /// <summary>
-    /// Rejects drops into the dragged node itself or any of its descendants.
+    /// Rejects drops into any dragged node itself or any of its descendants.
     /// </summary>
     protected override bool CanDropAtLocation(DragEventArgs e)
     {
         if (DropLocation is null)
             return false;
 
-        if (!TryGetPayload<object>(e, out var payload) || !IsWithinSubtreeOf(DropLocation.ParentContainer, payload))
+        if (!TryGetPayloads<object>(e, out var payloads) || !payloads.Any(x => IsWithinSubtreeOf(DropLocation.ParentContainer, x)))
             return true;
 
         return Reject(SelfDropMessage);

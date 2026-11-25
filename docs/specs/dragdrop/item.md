@@ -13,6 +13,7 @@ types:
   - ItemDropOperation
 tests:
   - ItemDropTests
+  - DropTargetTests
   - EndToEndTests
 depends:
   - DD-DRAG
@@ -24,7 +25,7 @@ depends:
 
 ## Purpose
 
-`ItemDragOperation` and `ItemDropOperation` move one value between slots, such as a meal between guest orders on the single-item page. The drop side replaces its `PayloadTarget` with the payload (DD-DROP-015). The drag side then clears its bound `Payload` on a Move, or swaps in the target's previous value. `ItemDropOperation` adds nothing to DD-DROP. It exists so XAML has a concrete single-value target to instantiate and subclass.
+`ItemDragOperation` and `ItemDropOperation` move one value between slots, such as a meal between guest orders on the single-item page. The drop side runs the DD-DROP flow, and its transfer step replaces `PayloadTarget` with the payload; a drag carrying several payloads is not meant for it. The drag side then clears its bound `Payload` on a Move, or swaps in the target's previous value.
 
 ## Requirements
 
@@ -47,8 +48,10 @@ depends:
 
 ### Drop side
 
-- **DD-ITEM-008** — `ItemDropOperation` shall behave exactly as DD-DROP specifies, including refusing drags that started from its own attached control.
-  - Tests: `ItemDropTests.ItemDropOperationAddsNothingToTheDropTarget`, `ItemDropTests.ASlotDroppedOnItselfKeepsItsValue`
+- **DD-ITEM-008** — `ItemDropOperation` shall follow the DD-DROP flow, refuse drags that started from its own attached control, and transfer by setting `PayloadTarget` to the payload, or its copy on a Copy drop, reporting the previous value as `ReplacedPayload`.
+  - Tests: `DropTargetTests.AnAcceptedDropAssignsThePayloadCompletesTheDragThenRunsTheCommand`, `DropTargetTests.ACopyDropAssignsTheCreatedCopy`, `DropTargetTests.ADropWritesPayloadTargetBackThroughADefaultBinding`, `ItemDropTests.ASlotDroppedOnItselfKeepsItsValue`
+- **DD-ITEM-010** — Unless `AcceptsMultiplePayloads` is set to true, `ItemDropOperation` shall not be meant for a drag with more than one payload (DD-DROP-035): it shows no adorner and reports effect None. When it is true, the first payload shall be assigned to `PayloadTarget`.
+  - Tests: `ItemDropTests.ASingleValueTargetRefusesSeveralPayloads`, `ItemDropTests.AnItemTargetThatAcceptsSeveralPayloadsTakesTheFirst`, `DropTargetTests.AcceptsMultiplePayloadsDefaultsToTrueExceptOnItemTargets`
 
 ### Defaults
 
@@ -64,6 +67,7 @@ depends:
 - `SwapOnDrop` assigns the replaced value without validating it against the source. A source restricted to meals can receive a drink by swap.
 - A slot dropped on itself would replace the value with itself and then clear it. DD-DROP-006 blocks this.
 - With a source allowing only Copy (the menu), the source slot never changes.
+- `PayloadTarget` is set on Copy and Link drops too; the effect only changes what the drag side does.
 
 ## Threading and lifetime
 
@@ -76,6 +80,8 @@ depends:
 ## Decisions
 
 - **The drag side clears or swaps; the drop side only assigns.** Reason: the source knows whether its value is a bound slot (clear it) or a template's `DataContext` (leave it alone). See DD-COLLECTION, "The drag side removes the payload".
+- **`ItemDropOperation` assigns `PayloadTarget`.** Assignment is its transfer step (DD-DROP, "Transfer is a step, not a handler"), not part of `DropOperationBase`, whose direct subclasses are command-only targets.
+- **Single-value targets refuse several payloads.** Reason: assigning one of them would lose the rest, and on a Move the source would remove them all. The refusal is targeting, not validation: a slot is not a place for several values at all. Rejected: assigning the first; a validation message.
 - **Swapping is opt-in.** Reason: in most slot-to-slot UIs the target's previous value is discarded, and swapping silently moves a value the user did not drag.
 
 ## Non-goals

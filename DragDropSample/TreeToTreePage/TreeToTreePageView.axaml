@@ -43,7 +43,10 @@
         <Border Classes="card">
             <Grid RowDefinitions="Auto,*" RowSpacing="12">
                 <TextBlock Classes="card-title" Text="Workspace" />
-                <TreeView Grid.Row="1" ItemsSource="{Binding Workspace}">
+                <TreeView
+                    Grid.Row="1"
+                    ItemsSource="{Binding Workspace}"
+                    SelectionMode="Multiple">
                     <dd:DragDrop.DragOperation>
                         <dd:TreeDragOperation InteractionIds="app:node" />
                     </dd:DragDrop.DragOperation>
@@ -57,7 +60,10 @@
         <Border Grid.Column="2" Classes="card">
             <Grid RowDefinitions="Auto,*" RowSpacing="12">
                 <TextBlock Classes="card-title" Text="Archive" />
-                <TreeView Grid.Row="1" ItemsSource="{Binding Archive}">
+                <TreeView
+                    Grid.Row="1"
+                    ItemsSource="{Binding Archive}"
+                    SelectionMode="Multiple">
                     <dd:DragDrop.DragOperation>
                         <dd:TreeDragOperation InteractionIds="app:node" />
                     </dd:DragDrop.DragOperation>

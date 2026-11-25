@@ -1,6 +1,6 @@
-using System.Reflection;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Xunit;
@@ -9,16 +9,6 @@ namespace MonacoLabs.DragDrop.Tests;
 
 public class ItemDropTests
 {
-    [Fact]
-    public void ItemDropOperationAddsNothingToTheDropTarget()
-    {
-        const BindingFlags declared = BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
-
-        var members = typeof(ItemDropOperation).GetMembers(declared);
-
-        Assert.All(members, member => Assert.IsAssignableFrom<ConstructorInfo>(member));
-    }
-
     [AvaloniaFact]
     public void ASlotDroppedOnItselfKeepsItsValue()
     {
@@ -33,5 +23,42 @@ public class ItemDropTests
 
         Assert.Equal("A", drag.Payload);
         Assert.Equal("A", drop.PayloadTarget);
+    }
+
+    [AvaloniaFact]
+    public void ASingleValueTargetRefusesSeveralPayloads()
+    {
+        var source = new RecordingDragOperation();
+        var drop = new ItemDropOperation { PayloadTarget = "old" };
+        var (window, target) = Show(drop);
+        using var drag = window.SimulateDrag(DragData.For(source, ["A", "B"]));
+
+        Assert.Equal(DragDropEffects.None, drag.Enter(window.PointIn(target)));
+        Assert.DoesNotContain(":dropover", target.Classes);
+        Assert.False(drop.DropAdorner!.IsAttached);
+        Assert.Equal(DragDropEffects.None, drag.Drop(window.PointIn(target)));
+
+        Assert.Equal("old", drop.PayloadTarget);
+        Assert.Empty(source.Completions);
+    }
+
+    [AvaloniaFact]
+    public void AnItemTargetThatAcceptsSeveralPayloadsTakesTheFirst()
+    {
+        var drop = new ItemDropOperation { AcceptsMultiplePayloads = true };
+        var (window, target) = Show(drop);
+        using var drag = window.SimulateDrag(DragData.For(new RecordingDragOperation(), ["A", "B"]));
+
+        Assert.Equal(DragDropEffects.Move, drag.Enter(window.PointIn(target)));
+        drag.Drop(window.PointIn(target));
+
+        Assert.Equal("A", drop.PayloadTarget);
+    }
+
+    private static (Window, Border) Show(ItemDropOperation operation)
+    {
+        var target = new Border { Background = Brushes.Blue, Width = 100, Height = 100 };
+        DragDrop.SetDropOperation(target, operation);
+        return (TestWindow.Show(target), target);
     }
 }

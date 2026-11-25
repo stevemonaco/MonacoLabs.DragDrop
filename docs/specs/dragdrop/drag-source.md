@@ -14,6 +14,7 @@ tests:
   - CollectionDragTests
   - EndToEndTests
   - DragSessionTests
+  - PlatformDropTests
 depends:
   - DD-WIRING
   - DD-TRANSFER
@@ -24,7 +25,7 @@ depends:
 
 ## Purpose
 
-`DragOperationBase` turns pointer input on its attached control into an Avalonia drag-and-drop operation: it decides which presses may start a drag, waits for the pointer to pass a threshold, resolves the payload and builds the data transfer (DD-TRANSFER), runs the drag inside a drag session (DD-SESSION) and, when the drop side reports back, removes the payload from its source through `DropCompleted`. The single-value, collection and tree drag operations (DD-ITEM, DD-COLLECTION, DD-TREE) specialize it. Also specifies how `DragDrop.IsDragHandle` and `DragDrop.IgnoresPress` (DD-WIRING) restrict presses.
+`DragOperationBase` turns pointer input on its attached control into an Avalonia drag-and-drop operation: it decides which presses may start a drag, waits for the pointer to pass a threshold, resolves the payloads and builds the data transfer (DD-TRANSFER), runs the drag inside a drag session (DD-SESSION) and, when the drop side reports back, removes the payloads from their source through `DropCompleted`. The base drags one payload; the collection and tree drag operations drag a selection. The single-value, collection and tree drag operations (DD-ITEM, DD-COLLECTION, DD-TREE) specialize it. Also specifies how `DragDrop.IsDragHandle` and `DragDrop.IgnoresPress` (DD-WIRING) restrict presses.
 
 ## Requirements
 
@@ -79,21 +80,21 @@ depends:
 
 ### Payload
 
-- **DD-DRAG-016** — When `Payload` is set or bound, the drag source shall drag its value, even when that value is null; otherwise it shall drag the attached control's `DataContext`.
+- **DD-DRAG-016** — The drag source shall resolve its payloads through `ResolvePayloads`. By default, when `Payload` is set or bound, it shall drag its value as the one payload, even when that value is null; otherwise it shall drag the attached control's `DataContext`.
   - Tests: `DragGestureTests.WithoutAPayloadTheDataContextIsDragged`, `DragGestureTests.ASetPayloadIsDraggedInsteadOfTheDataContext`, `DragGestureTests.ANullPayloadStartsNoDrag`
-- **DD-DRAG-017** — When the resolved payload is null, the drag source shall not start a drag.
+- **DD-DRAG-017** — When `ResolvePayloads` returns no payloads (by default, when the payload is null), the drag source shall not start a drag.
   - Tests: `DragGestureTests.ANullPayloadStartsNoDrag`
-- **DD-DRAG-018** — When `PlatformInteractionIds.Text` is among `InteractionIds`, the drag source shall add the text `ResolvePlatformText` returns, which by default is the payload itself when it is a string and otherwise its `ToString()`.
-  - Tests: `DragGestureTests.PlatformTextIsAStringPayloadOrThePayloadsText`
-- **DD-DRAG-019** — When `PlatformInteractionIds.Files` is among `InteractionIds`, the drag source shall add the storage item `ResolvePlatformFile` returns, which by default is the payload when it is an `IStorageItem` and nothing otherwise.
-  - Tests: `DragGestureTests.APlatformFileIsAStorageItemPayload`
+- **DD-DRAG-018** — When `PlatformInteractionIds.Text` is among `InteractionIds`, the drag source shall add, once and to the first item, the text `ResolvePlatformText` returns for the payload list. By default that is each payload's text (the payload itself when it is a string, otherwise its `ToString()`), joined by newlines.
+  - Tests: `DragGestureTests.PlatformTextIsAStringPayloadOrThePayloadsText`, `DragGestureTests.SeveralPayloadsOfferTheirTextsJoinedByNewlinesOnce`
+- **DD-DRAG-019** — When `PlatformInteractionIds.Files` is among `InteractionIds`, the drag source shall add to each payload's item the storage item `ResolvePlatformFile` returns for that payload, which by default is the payload when it is an `IStorageItem` and nothing otherwise.
+  - Tests: `DragGestureTests.APlatformFileIsAStorageItemPayload`, `DragGestureTests.SeveralFilePayloadsAreSeveralFiles`, `PlatformDropTests.ADragOfSeveralFilesFromThisAppPassesEveryFile`
 
 ### Completion
 
 - **DD-DRAG-020** — When the drop side calls `DropCompleted`, the base drag source shall do nothing; removing the payload from its source is each subclass's job (DD-ITEM, DD-COLLECTION).
   - Tests: `EndToEndTests.TheBaseDragSourceKeepsItsPayloadAfterAMove`
-- **DD-DRAG-021** — When `RemoveOnDropOutside` is true and the drag session reports a drop outside any target (DD-SESSION), the drag source shall call `OnDroppedOutside` after the platform drag returns.
-  - Tests: `EndToEndTests.ADropOutsideAnyTargetPassesTheDragAndItsPayloadToOnDroppedOutside`, `DragSessionTests.ADropWhereNothingAllowsDropsIsOutsideAnyTargetWithRemoveOnDropOutside`
+- **DD-DRAG-021** — When `RemoveOnDropOutside` is true and the drag session reports a drop outside any target (DD-SESSION), the drag source shall call `OnDroppedOutside` with the drag's `DragInfo` after the platform drag returns.
+  - Tests: `EndToEndTests.ADropOutsideAnyTargetPassesTheDragToOnDroppedOutside`, `DragSessionTests.ADropWhereNothingAllowsDropsIsOutsideAnyTargetWithRemoveOnDropOutside`
 
 ### Defaults
 
@@ -113,7 +114,7 @@ depends:
 
 ## Edge cases
 
-- A press with a null payload stays tracked: every later move past the threshold resolves the payload again and returns, until the pointer is released.
+- A press whose payloads resolve to none stays tracked: every later move past the threshold resolves them again and returns, until the pointer is released.
 - The press position and the threshold are measured relative to the attached control, so a control that moves under the pointer (for example during scrolling) changes the measured distance.
 - An explicit `DragDrop.IgnoresPress` of false does not reach past a nearer element that decides: a `Button` inside an element set to false still keeps its presses.
 - The ignore check runs before the drag-handle check, so a drag handle inside an ignored control (a handle placed in a `Button`) never starts a drag.
@@ -136,6 +137,8 @@ depends:
 - **The press filter is a per-element predicate.** The base owns the walk up to the attached control; `DragDrop.IgnoresPress`, then `IsIgnoredPressSource`, answers for one element. Reason: overrides and styles add a type in one expression and cannot get the walk's stopping point wrong. Rejected: a virtual that receives the pressed element and walks itself, which every override would have to repeat.
 - **The threshold stays 6 DIPs, as a `double`.** Reason: Avalonia measures in DIPs as doubles. The platform's tap size depends on the pointer type and the OS, which would make the default untestable. Rejected: deriving the default from `IPlatformSettings`.
 - **Ignored presses are configured by a non-inherited attached property.** `DragDrop.IgnoresPress` is a `bool?` read during the walk, like `DragDrop.IsDragHandle`, and the nearest element with a value decides. Reason: apps add control types with a style and opt single elements out in XAML, without subclassing an operation, and the walk keeps the boundary at the attached control. Rejected: an inherited property, checked only on the pressed element. Avalonia does not inherit per-type default values, so the defaults would need app-wide styles that every consumer adds, or the library setting values on unrelated controls. Values inherited from above the attached control (a drag source inside a `Button` or an `Expander` header) would also ignore every press, unless the operation overwrote a local value on its control.
+- **`ResolvePlatformText` receives the payload list.** It joins their texts with newlines by default. Reason: the separator, and whether to offer text for several payloads at all, depends on what the receiving application expects. Rejected: a fixed newline separator.
+- **Hooks read the payloads from the `DragInfo`.** `DoDragDrop`, `CreateDataTransferItem` (called once per payload, with its index) and `OnDroppedOutside` take the `DragInfo` and read `Payloads` from it. Reason: one source of truth for what the drag carries, and signatures that do not change when it grows. Rejected: passing the payload list next to the `DragInfo`, which can disagree with it.
 - **An explicit null `Payload` means nothing to drag.** Reason: a bound slot that is empty (an empty order slot on the single-item page) must not fall back to its `DataContext` and drag the whole view model.
 - **Subclasses get hooks, not fields.** Every protected member is a virtual method or a read-only property with a documented meaning. Reason: protected fields freeze the implementation, and the former ones let a subclass leave the press-tracking state inconsistent. The press origin, their only subclass reader, is a parameter of `CreateMetadata`.
 - **Pointer hooks, not event handlers.** The subscribed handlers are private, and subclasses override `OnPointerPressed`, `OnPointerReleased`, `OnPointerCaptureLost` and a `Task`-returning `OnPointerMoved`. Reason: `Control_*` was designer-handler naming for a public extension point, `sender` is always the attached control, and a virtual `async void` forces overrides to be `async void` too, whose exceptions bypass the library's handling and crash the app. Rejected: keeping the handlers virtual and only renaming them (an override still decides whether the exception handling runs).

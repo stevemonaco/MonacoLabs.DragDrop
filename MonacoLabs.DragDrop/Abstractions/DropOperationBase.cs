@@ -10,26 +10,19 @@ using AvaDragDrop = Avalonia.Input.DragDrop;
 
 namespace MonacoLabs.DragDrop.Abstractions;
 
+/// <summary>
+/// Makes its attached control accept drags. Every target runs one flow: targeting (<see cref="IsDropTargetFor"/>), validation
+/// (<see cref="CanDrop"/>), feedback, the effect (<see cref="GetDropEffect"/>) and, on drop, <see cref="Transfer"/>, the report back to the
+/// drag source and <see cref="PayloadCommand"/>. Subclasses override those steps and observe the drag through
+/// <see cref="OnDragEnter"/>, <see cref="OnDragOver"/>, <see cref="OnDragLeave"/> and <see cref="OnDrop"/>.
+/// </summary>
 public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
 {
-    private RoutingStrategies _routing = RoutingStrategies.Bubble;
     private bool _handledEventsToo;
     private bool _isDragLeavePending;
+    private DragEventArgs? _hoverEventArgs; // The latest event of the drag hovering this target; null when none is
 
     public IList<string> InteractionIds { get; set; } = [DragDropIds.DefaultOperation];
-
-    /// <summary>
-    /// Routing strategy of the drag event handlers. Can only be set while the operation is detached.
-    /// </summary>
-    public RoutingStrategies Routing
-    {
-        get => _routing;
-        set
-        {
-            ThrowIfAttached();
-            _routing = value;
-        }
-    }
 
     /// <summary>
     /// Whether the drag event handlers also receive events that are already handled. Can only be set while the operation is detached.
@@ -53,64 +46,57 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
     /// </summary>
     protected virtual bool AllowsSelfDrop => false;
 
-    public virtual void Attach(Control control)
+    /// <summary>
+    /// Whether the drag over the attached control passed validation in its latest event. False when no drag is over it.
+    /// </summary>
+    protected bool IsDropValid { get; private set; }
+
+    public void Attach(Control control)
     {
         ThrowIf.InvalidOperation(AttachedControl is not null, $"{GetType().Name} is already attached to {AttachedControl}; an operation can attach to only one control");
 
         AttachedControl = control;
         AvaDragDrop.SetAllowDrop(control, true);
-        SubscribeDropEvents(control);
+        control.AddHandler(AvaDragDrop.DragEnterEvent, HandleDragEnter, RoutingStrategies.Bubble, HandledEventsToo);
+        control.AddHandler(AvaDragDrop.DragLeaveEvent, HandleDragLeave, RoutingStrategies.Bubble, HandledEventsToo);
+        control.AddHandler(AvaDragDrop.DragOverEvent, HandleDragOver, RoutingStrategies.Bubble, HandledEventsToo);
+        control.AddHandler(AvaDragDrop.DropEvent, HandleDrop, RoutingStrategies.Bubble, HandledEventsToo);
 
         DropAdorner ??= new DropHighlightAdorner();
-        DropAdorner.TargetControl = AttachedControl;
+        DropAdorner.TargetControl = control;
+        OnAttached();
     }
 
-    public virtual void Detach(Control control)
+    public void Detach(Control control)
     {
         if (AttachedControl is null)
             return;
 
-        CancelPendingDragLeave();
-        ((IPseudoClasses)AttachedControl.Classes).Set(":dropover", false);
-        DropAdorner?.Detach();
-        ClearErrorMessage();
+        _isDragLeavePending = false;
+        EndHover(_hoverEventArgs);
 
         AvaDragDrop.SetAllowDrop(control, false);
-        UnsubscribeDropEvents(control);
+        control.RemoveHandler(AvaDragDrop.DragEnterEvent, HandleDragEnter);
+        control.RemoveHandler(AvaDragDrop.DragLeaveEvent, HandleDragLeave);
+        control.RemoveHandler(AvaDragDrop.DragOverEvent, HandleDragOver);
+        control.RemoveHandler(AvaDragDrop.DropEvent, HandleDrop);
         AttachedControl = null;
     }
 
-    protected virtual void SubscribeDropEvents(Control control)
+    private protected virtual void OnAttached()
     {
-        control.AddHandler(AvaDragDrop.DragEnterEvent, DragEnter, Routing, HandledEventsToo);
-        control.AddHandler(AvaDragDrop.DragLeaveEvent, DragLeave, Routing, HandledEventsToo);
-        control.AddHandler(AvaDragDrop.DragOverEvent, DragOver, Routing, HandledEventsToo);
-        control.AddHandler(AvaDragDrop.DropEvent, Drop, Routing, HandledEventsToo);
     }
 
-    protected virtual void UnsubscribeDropEvents(Control control)
+    private void HandleDragEnter(object? sender, DragEventArgs e)
     {
-        control.RemoveHandler(AvaDragDrop.DragEnterEvent, DragEnter);
-        control.RemoveHandler(AvaDragDrop.DragLeaveEvent, DragLeave);
-        control.RemoveHandler(AvaDragDrop.DragOverEvent, DragOver);
-        control.RemoveHandler(AvaDragDrop.DropEvent, Drop);
+        _isDragLeavePending = false;
+        Hover(e);
     }
 
-    protected virtual void DragEnter(object? sender, DragEventArgs e)
-    {
-        CancelPendingDragLeave();
-
-        if (!IsDropTargetFor(e))
-        {
-            e.DragEffects = DragDropEffects.None;
-            return;
-        }
-
-        e.DragEffects = OnDragEnter(e, EvaluateCanDrop(e));
-    }
+    private void HandleDragOver(object? sender, DragEventArgs e) => Hover(e);
 
     // Moving between children raises DragLeave then DragEnter in one pass, so leave only if no DragEnter follows
-    protected virtual void DragLeave(object? sender, DragEventArgs e)
+    private void HandleDragLeave(object? sender, DragEventArgs e)
     {
         _isDragLeavePending = true;
         Dispatcher.UIThread.Post(() =>
@@ -119,39 +105,227 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
                 return;
 
             _isDragLeavePending = false;
-            OnDragLeave(e);
+            EndHover(e);
         });
     }
 
-    protected void CancelPendingDragLeave() => _isDragLeavePending = false;
+    private void HandleDrop(object? sender, DragEventArgs e)
+    {
+        _isDragLeavePending = false;
+
+        if (!IsDropTargetFor(e))
+        {
+            e.DragEffects = DragDropEffects.None;
+            if (_hoverEventArgs is not null)
+                EndHover(e);
+            return;
+        }
+
+        if (!Evaluate(e))
+        {
+            e.DragEffects = DragDropEffects.None;
+            EndHover(e);
+            return;
+        }
+
+        e.DragEffects = GetDropEffect(e);
+        e.Handled = true;
+        CompleteDrop(e);
+
+        OnDrop(e);
+        EndHover(null);
+    }
+
+    private void Hover(DragEventArgs e)
+    {
+        if (!IsDropTargetFor(e))
+        {
+            e.DragEffects = DragDropEffects.None;
+            if (_hoverEventArgs is not null)
+                EndHover(e);
+            return;
+        }
+
+        var isEntering = _hoverEventArgs is null;
+        _hoverEventArgs = e;
+
+        Evaluate(e);
+        UpdateFeedback(e);
+
+        e.DragEffects = IsDropValid ? GetDropEffect(e) : DragDropEffects.None;
+        if (IsDropValid)
+            e.Handled = true;
+
+        if (isEntering)
+            OnDragEnter(e);
+        else
+            OnDragOver(e);
+    }
+
+    // A null leaveArgs ends the hover without raising OnDragLeave
+    private void EndHover(DragEventArgs? leaveArgs)
+    {
+        var wasHovering = _hoverEventArgs is not null;
+        _hoverEventArgs = null;
+        IsDropValid = false;
+        ClearFeedback();
+
+        if (wasHovering && leaveArgs is not null)
+            OnDragLeave(leaveArgs);
+    }
+
+    private bool Evaluate(DragEventArgs e)
+    {
+        ResolveHover(e);
+
+        ErrorMessage = null;
+        IsDropValid = CanDropStructurally(e) && CanDrop(e);
+        MirrorErrorMessage();
+        return IsDropValid;
+    }
+
+    private protected virtual void ResolveHover(DragEventArgs e)
+    {
+    }
+
+    // Collection targets run their location check here, before CanDrop, so overrides of CanDrop can't skip it
+    private protected virtual bool CanDropStructurally(DragEventArgs e) => true;
+
+    private protected virtual void UpdateFeedback(DragEventArgs e)
+    {
+        if (DropAdorner is not null)
+        {
+            DropAdorner.IsDropValid = IsDropValid;
+            DropAdorner.Attach();
+        }
+
+        ((IPseudoClasses)AttachedControl!.Classes).Set(":dropover", IsDropValid);
+    }
+
+    private protected virtual void ClearFeedback()
+    {
+        if (AttachedControl is not null)
+            ((IPseudoClasses)AttachedControl.Classes).Set(":dropover", false);
+
+        if (DropAdorner is not null)
+        {
+            DropAdorner.IsDropValid = false;
+            DropAdorner.Detach();
+        }
+
+        ErrorMessage = null;
+        MirrorErrorMessage();
+    }
+
+    private void CompleteDrop(DragEventArgs e)
+    {
+        if (TryGetDragInfo<DragInfo>(e, out var dragInfo) && TryGetPayloads<object>(e, out var payloads))
+        {
+            IReadOnlyList<object> values = e.DragEffects == DragDropEffects.Copy ? [.. payloads.Select(CreateCopy)] : payloads;
+
+            if (Transfer(e, dragInfo, values) is { } dropInfo)
+            {
+                dragInfo.DragOperation.DropCompleted(e.DragEffects, dragInfo, dropInfo);
+                InvokePayloadCommand(e, values, isPlatformDrop: false);
+            }
+            else if (InvokePayloadCommand(e, values, isPlatformDrop: false))
+            {
+                dragInfo.DragOperation.DropCompleted(e.DragEffects, dragInfo, CreateUntransferredDropInfo(e, values));
+            }
+            else
+            {
+                // Reporting Move for a drop that went nowhere would let the source remove the item
+                e.DragEffects = DragDropEffects.None;
+            }
+        }
+        else if (TryGetPlatformItems(e, out var items))
+        {
+            InvokePayloadCommand(e, items, isPlatformDrop: true);
+        }
+    }
 
     /// <summary>
-    /// Checks whether the drag is meant for this target at all: it carries one of <see cref="InteractionIds"/> and,
-    /// unless <see cref="AllowsSelfDrop"/>, didn't start from <see cref="AttachedControl"/>. Drags that fail this get no adorner.
+    /// Does what this target does with the accepted in-process payloads, and returns the <see cref="DropInfo"/> to report to the drag source,
+    /// or null when it transferred nothing. Does nothing by default, so a target that doesn't override it only runs <see cref="PayloadCommand"/>.
+    /// </summary>
+    /// <param name="e">The drop event.</param>
+    /// <param name="dragInfo">The drag's metadata.</param>
+    /// <param name="values">The payloads in order, or their <see cref="CreateCopy"/> on a Copy drop.</param>
+    protected virtual DropInfo? Transfer(DragEventArgs e, DragInfo dragInfo, IReadOnlyList<object> values) => null;
+
+    private protected virtual DropInfo CreateUntransferredDropInfo(DragEventArgs e, IReadOnlyList<object> values) => new()
+    {
+        DragEventArgs = e,
+        HoveredControl = AttachedControl!,
+        HoverLocation = e.GetPosition(AttachedControl!)
+    };
+
+    private protected virtual DropTargetOffset CommandOffset => DropTargetOffset.OnTarget;
+
+    private protected virtual CollectionDropLocation? CommandLocation => null;
+
+    // Returns false when there is no command or it cannot execute
+    private bool InvokePayloadCommand(DragEventArgs e, IReadOnlyList<object> items, bool isPlatformDrop)
+    {
+        if (PayloadCommand is null)
+            return false;
+
+        var targetContext = (e.Source as StyledElement)?.DataContext;
+        DropEventArgs args = new(e.Source, targetContext, items, CommandOffset, CommandLocation, isPlatformDrop, e.DragEffects);
+
+        if (!PayloadCommand.CanExecute(args))
+            return false;
+
+        PayloadCommand.Execute(args);
+        return true;
+    }
+
+    /// <summary>
+    /// Called when a drag meant for this target first arrives, after its feedback and effect are updated.
+    /// </summary>
+    protected virtual void OnDragEnter(DragEventArgs e)
+    {
+    }
+
+    /// <summary>
+    /// Called on each DragOver after the first event of a drag meant for this target, after its feedback and effect are updated.
+    /// </summary>
+    protected virtual void OnDragOver(DragEventArgs e)
+    {
+    }
+
+    /// <summary>
+    /// Called when the hover ends without an accepted drop, after the feedback is cleared: the drag left, stopped being meant for this target,
+    /// was dropped and rejected, or the operation was detached mid-drag, in which case <paramref name="e"/> is the drag's latest event.
+    /// </summary>
+    protected virtual void OnDragLeave(DragEventArgs e)
+    {
+    }
+
+    /// <summary>
+    /// Called after an accepted drop has transferred, reported and run <see cref="PayloadCommand"/>, before the feedback is cleared.
+    /// </summary>
+    protected virtual void OnDrop(DragEventArgs e)
+    {
+    }
+
+    /// <summary>
+    /// Checks whether the drag is meant for this target at all: it carries one of <see cref="InteractionIds"/>, carries one payload unless
+    /// <see cref="AcceptsMultiplePayloads"/>, and, unless <see cref="AllowsSelfDrop"/>, didn't start from <see cref="AttachedControl"/>.
+    /// Drags that fail this get no adorner.
     /// </summary>
     protected virtual bool IsDropTargetFor(DragEventArgs e)
     {
         if (!CanGetPayload(e))
             return false;
 
+        if (!AcceptsMultiplePayloads && TryGetPayloads<object>(e, out var payloads) && payloads.Count > 1)
+            return false;
+
         return AllowsSelfDrop
             || !TryGetDragInfo<DragInfo>(e, out var dragInfo)
             || !ReferenceEquals(dragInfo.DragOperation.AttachedControl, AttachedControl);
     }
-
-    /// <summary>
-    /// Clears <see cref="ErrorMessage"/>, runs the target's validation including <see cref="CanDrop"/>, and mirrors the resulting message to the drop adorner.
-    /// </summary>
-    protected bool EvaluateCanDrop(DragEventArgs e)
-    {
-        ErrorMessage = null;
-        var canDrop = CanDropStructurally(e) && CanDrop(e);
-        MirrorErrorMessage();
-        return canDrop;
-    }
-
-    // Collection targets run their location check here, before CanDrop, so overrides of CanDrop can't skip it
-    private protected virtual bool CanDropStructurally(DragEventArgs e) => true;
 
     /// <summary>
     /// Rejects the drag being validated, with <paramref name="message"/> as <see cref="ErrorMessage"/>. Returns false, so validation can
@@ -161,12 +335,6 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
     {
         ErrorMessage = message;
         return false;
-    }
-
-    private protected void ClearErrorMessage()
-    {
-        ErrorMessage = null;
-        MirrorErrorMessage();
     }
 
     private void MirrorErrorMessage()
@@ -184,150 +352,10 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
         DropEffectResolver.Resolve(e.DragEffects, e.KeyModifiers, HasInProcessPayload(e), OperatingSystem.IsMacOS());
 
     /// <summary>
-    /// Runs <see cref="PayloadCommand"/> with the drop's <see cref="DropEventArgs"/>. Returns false when there is no command or it cannot execute.
-    /// </summary>
-    protected bool InvokePayloadCommand(DragEventArgs e, IReadOnlyList<object> items, DropTargetOffset offset, CollectionDropLocation? location = null, bool isPlatformDrop = false)
-    {
-        if (PayloadCommand is null)
-            return false;
-
-        var targetContext = (e.Source as StyledElement)?.DataContext;
-        DropEventArgs args = new(e.Source, targetContext, items, offset, location, isPlatformDrop, e.DragEffects);
-
-        if (!PayloadCommand.CanExecute(args))
-            return false;
-
-        PayloadCommand.Execute(args);
-        return true;
-    }
-
-    /// <summary>
-    /// Invoked when a drag meant for this target enters the AttachedControl
-    /// </summary>
-    protected virtual DragDropEffects OnDragEnter(DragEventArgs dragEventArgs, bool canDrop)
-    {
-        if (DropAdorner is not null)
-        {
-            DropAdorner.IsDropValid = canDrop;
-            DropAdorner.Attach();
-        }
-
-        if (!canDrop)
-            return DragDropEffects.None;
-
-        ((IPseudoClasses)AttachedControl!.Classes).Set(":dropover", true);
-        return GetDropEffect(dragEventArgs);
-    }
-
-    /// <summary>
-    /// Invoked repeatedly while a valid drag is over the AttachedControl. Returns the effect to apply.
-    /// </summary>
-    protected virtual DragDropEffects OnDragOver(DragEventArgs dragEventArgs) => GetDropEffect(dragEventArgs);
-
-    /// <summary>
-    /// Invoked when a drag leaves the AttachedControl
-    /// </summary>
-    protected virtual void OnDragLeave(DragEventArgs dragEventArgs)
-    {
-        ((IPseudoClasses)AttachedControl!.Classes).Set(":dropover", false);
-        DropAdorner?.Detach();
-        ClearErrorMessage();
-    }
-
-    /// <summary>
-    /// Invoked when a drag is over the AttachedControl
-    /// This event fires repeatedly while the drag is over the control, so it should
-    /// be reasonably efficient with validation
-    /// </summary>
-    protected virtual void DragOver(object? sender, DragEventArgs e)
-    {
-        if (!IsDropTargetFor(e))
-        {
-            e.DragEffects = DragDropEffects.None;
-            return;
-        }
-
-        bool canDrop = EvaluateCanDrop(e);
-
-        if (DropAdorner is not null)
-        {
-            DropAdorner.IsDropValid = canDrop;
-            DropAdorner.InvalidateVisual();
-        }
-
-        ((IPseudoClasses)AttachedControl!.Classes).Set(":dropover", canDrop);
-        e.DragEffects = canDrop ? OnDragOver(e) : DragDropEffects.None;
-    }
-
-    /// <summary>
-    /// Completes the DragDrop operation by assigning payload and cleaning up visuals
-    /// </summary>
-    protected virtual void Drop(object? sender, DragEventArgs e)
-    {
-        CancelPendingDragLeave();
-
-        if (!IsDropTargetFor(e))
-        {
-            e.DragEffects = DragDropEffects.None;
-            return;
-        }
-
-        if (!EvaluateCanDrop(e))
-        {
-            e.DragEffects = DragDropEffects.None;
-            OnDragLeave(e);
-            return;
-        }
-
-        e.DragEffects = GetDropEffect(e);
-
-        if (TryGetDragInfo<DragInfo>(e, out var dragInfo) && TryGetPayload<object>(e, out var payload))
-        {
-            var replaced = PayloadTarget;
-            var value = ResolveDroppedValue(e.DragEffects, payload);
-            SetCurrentValue(PayloadTargetProperty, value);
-
-            var dropMetadata = new DropInfo()
-            {
-                DragEventArgs = e,
-                HoveredControl = AttachedControl!,
-                HoverLocation = e.GetPosition(AttachedControl!),
-                ReplacedPayload = replaced
-            };
-
-            dragInfo.DragOperation.DropCompleted(e.DragEffects, dragInfo, dropMetadata);
-            InvokePayloadCommand(e, [value], DropTargetOffset.OnTarget);
-        }
-        else if (TryGetPlatformItems(e, out var items))
-        {
-            InvokePayloadCommand(e, items, DropTargetOffset.OnTarget, isPlatformDrop: true);
-        }
-
-        OnDrop(e);
-
-        ((IPseudoClasses)AttachedControl!.Classes).Set(":dropover", false);
-
-        if (DropAdorner is not null)
-        {
-            DropAdorner.IsDropValid = false;
-            DropAdorner.Detach();
-        }
-
-        ClearErrorMessage();
-    }
-
-    protected virtual void OnDrop(DragEventArgs dragEventArgs)
-    {
-    }
-
-    /// <summary>
-    /// Creates the value a Copy drop assigns or inserts in place of <paramref name="payload"/>, and passes to <see cref="PayloadCommand"/>.
+    /// Creates the value a Copy drop transfers in place of <paramref name="payload"/>, and passes to <see cref="PayloadCommand"/>.
     /// Returns the payload itself by default, so a copy shares the source's reference. Not called for Move or Link drops.
     /// </summary>
     protected virtual object CreateCopy(object payload) => payload;
-
-    private protected object ResolveDroppedValue(DragDropEffects effect, object payload) =>
-        effect == DragDropEffects.Copy ? CreateCopy(payload) : payload;
 
     /// <summary>
     /// Checks if the drop is expected to be valid. Override for custom validation, and return <see cref="Reject"/> with a message to explain a rejection.
@@ -346,28 +374,40 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
         InteractionIds.Any(x => !DragDropIds.IsPlatform(x) && e.DataTransfer.Contains(DragDropIds.PayloadFormat(x)));
 
     /// <summary>
-    /// Tries to get the in-process Payload to be assigned to the DropTarget
-    /// Overriding this allows a data transform from the Payload set by the Drag operation into
-    /// what the DropTarget expects, if it's not 1:1 compatible
+    /// Tries to get the first in-process payload of the drag (see <see cref="TryGetPayloads"/>). Succeeds when it is a <typeparamref name="TPayload"/>.
     /// </summary>
-    /// <typeparam name="TPayload">Compatible type of payload expected</typeparam>
-    /// <param name="e">Drag event that started the operation</param>
-    /// <param name="payload">Payload to be transferred by the operation</param>
-    protected virtual bool TryGetPayload<TPayload>(DragEventArgs e, [MaybeNullWhen(false)] out TPayload payload)
+    protected bool TryGetPayload<TPayload>(DragEventArgs e, [MaybeNullWhen(false)] out TPayload payload)
         where TPayload : class
     {
-        var value = InteractionIds
-            .Where(x => !DragDropIds.IsPlatform(x))
-            .Select(x => e.DataTransfer.TryGetValue(DragDropIds.PayloadFormat(x)))
-            .FirstOrDefault(x => x is not null);
-
-        if (value is TPayload p)
+        if (TryGetPayloads<object>(e, out var payloads) && payloads[0] is TPayload first)
         {
-            payload = p;
+            payload = first;
             return true;
         }
 
         payload = null;
+        return false;
+    }
+
+    /// <summary>
+    /// Tries to get every in-process payload of the drag, in order, from the first of <see cref="InteractionIds"/> that carries any.
+    /// Succeeds only when each is a <typeparamref name="TPayload"/>. Overriding this transforms the payloads a drop transfers.
+    /// </summary>
+    protected virtual bool TryGetPayloads<TPayload>(DragEventArgs e, [MaybeNullWhen(false)] out IReadOnlyList<TPayload> payloads)
+        where TPayload : class
+    {
+        var values = InteractionIds
+            .Where(x => !DragDropIds.IsPlatform(x))
+            .Select(x => e.DataTransfer.TryGetValues(DragDropIds.PayloadFormat(x)))
+            .FirstOrDefault(x => x is not null && x.Any(v => v is not null));
+
+        if (values is not null && values.All(x => x is TPayload))
+        {
+            payloads = [.. values.Cast<TPayload>()];
+            return true;
+        }
+
+        payloads = null;
         return false;
     }
 

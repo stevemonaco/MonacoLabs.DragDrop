@@ -6,7 +6,7 @@ Small fixes that need no design skip the proposal: take the item from [`docs/BAC
 
 ## Current proposals
 
-None. The test suite, the pre-1.0 API changes and the correctness fixes have landed.
+None.
 
 ## Format
 

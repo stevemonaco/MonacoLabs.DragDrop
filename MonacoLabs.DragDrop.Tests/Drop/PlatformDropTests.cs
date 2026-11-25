@@ -67,6 +67,23 @@ public class PlatformDropTests
     }
 
     [AvaloniaFact]
+    public async Task ADragOfSeveralFilesFromThisAppPassesEveryFile()
+    {
+        DropEventArgs? args = null;
+        var operation = new ItemDropOperation { InteractionIds = [PlatformInteractionIds.Files], PayloadCommand = Record(a => args = a) };
+        var (window, target) = Show(operation);
+        var first = await TestFiles.CreateAsync(window, "a.txt");
+        var second = await TestFiles.CreateAsync(window, "b.txt");
+        using var drag = window.SimulateDrag(DragData.For(new CollectionDragOperation { InteractionIds = ["files", PlatformInteractionIds.Files] }, [first, second]));
+
+        Assert.Equal(DragDropEffects.Copy, drag.Enter(window.PointIn(target)));
+        drag.Drop(window.PointIn(target));
+
+        Assert.True(args?.IsPlatformDrop);
+        Assert.Equal([first, second], args?.Items);
+    }
+
+    [AvaloniaFact]
     public void APlatformDropOfTextPassesTheTextAsTheOnlyItem()
     {
         DropEventArgs? args = null;
@@ -157,6 +174,6 @@ public class PlatformDropTests
 
     private sealed class NoTextDragOperation : ItemDragOperation
     {
-        protected override string? ResolvePlatformText(object payload) => null;
+        protected override string? ResolvePlatformText(IReadOnlyList<object> payloads) => null;
     }
 }

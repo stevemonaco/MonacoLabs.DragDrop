@@ -182,6 +182,21 @@ public class TreeDropTests
     }
 
     [AvaloniaFact]
+    public void ALocationInsideAnyDraggedNodeIsRefused()
+    {
+        var operation = new TreeDropOperation();
+        var tree = new TestTree(operation);
+        tree.Expand(tree.B);
+        using var drag = tree.Window.SimulateDrag(DragData.For(new TreeDragOperation(), [tree.A, tree.B]));
+
+        Assert.Equal(DragDropEffects.None, drag.Enter(tree.At(tree.A, 0.5)));
+        Assert.Equal(operation.SelfDropMessage, operation.ErrorMessage);
+        Assert.Equal(DragDropEffects.None, drag.Over(tree.At(tree.B1, 0.1)));
+        Assert.Equal(operation.SelfDropMessage, operation.ErrorMessage);
+        Assert.Equal(DragDropEffects.Move, drag.Over(tree.At(tree.L, 0.75)));
+    }
+
+    [AvaloniaFact]
     public void ACanDropOverrideCannotAllowANodeIntoItself()
     {
         var operation = new AcceptingTreeDropOperation();

@@ -25,9 +25,9 @@ public class TreeDragTests
 
         window.MouseDrag(window.PointIn(TreeDragOperation.FindHeader(Item(tree, child))), window.PointIn(target));
 
-        var info = Assert.IsType<CollectionDragInfo>(drop.LastDragInfo);
-        Assert.Same(parent.Children, info.PayloadCollection);
-        Assert.Equal(1, info.PayloadContainerIndex);
+        var item = Assert.Single(Assert.IsType<CollectionDragInfo>(drop.LastDragInfo).Items);
+        Assert.Same(parent.Children, item.Collection);
+        Assert.Equal(1, item.Index);
         Assert.Same(child, drop.PayloadTarget);
     }
 
@@ -45,7 +45,8 @@ public class TreeDragTests
         window.MouseDrag(window.PointIn(TreeDragOperation.FindHeader(item)), window.PointIn(target));
 
         var info = Assert.IsType<CollectionDragInfo>(drop.LastDragInfo);
-        Assert.Same(item, info.PayloadContainer);
+        Assert.Same(item, info.PressedContainer);
+        Assert.Same(item, Assert.Single(info.Items).Container);
         Assert.Same(grandchild, drop.PayloadTarget);
     }
 
@@ -82,6 +83,65 @@ public class TreeDragTests
 
         Assert.Same(item, TreeDragOperation.FindHeader(item));
         Assert.True(dragging);
+    }
+
+    [AvaloniaFact]
+    public void DraggingSelectedNodesCarriesThemTopToBottomWithTheirOwnCollections()
+    {
+        var c2 = new Node("c2");
+        var d1 = new Node("d1");
+        var p = new Node("p", new Node("c1"), c2);
+        var q = new Node("q", d1);
+        var (window, tree, target, drop) = ShowSelection([p, q], [p, q], d1, c2);
+
+        window.MouseDrag(window.PointIn(TreeDragOperation.FindHeader(Item(tree, d1))), window.PointIn(target));
+
+        var info = Assert.IsType<CollectionDragInfo>(drop.LastDragInfo);
+        Assert.Equal([c2, d1], info.Payloads);
+        Assert.Equal([new CollectionDragItem(c2, p.Children, 1, Item(tree, c2)), new CollectionDragItem(d1, q.Children, 0, Item(tree, d1))], info.Items);
+    }
+
+    [AvaloniaFact]
+    public void ASelectedNodeUnderASelectedAncestorIsNotCarried()
+    {
+        var c1 = new Node("c1");
+        var p = new Node("p", c1);
+        var q = new Node("q");
+        var (window, tree, target, drop) = ShowSelection([p, q], [p], c1, p, q);
+
+        window.MouseDrag(window.PointIn(TreeDragOperation.FindHeader(Item(tree, c1))), window.PointIn(target));
+
+        Assert.Equal([p, q], drop.LastPayloads);
+    }
+
+    [AvaloniaFact]
+    public void ASelectedNodeUnderACollapsedNodeIsNotCarried()
+    {
+        var c1 = new Node("c1");
+        var p = new Node("p", c1);
+        var q = new Node("q");
+        var r = new Node("r");
+        var (window, tree, target, drop) = ShowSelection([p, q, r], [p], c1, q, r);
+        Item(tree, p).IsExpanded = false;
+        Dispatcher.UIThread.RunJobs();
+
+        window.MouseDrag(window.PointIn(TreeDragOperation.FindHeader(Item(tree, q))), window.PointIn(target));
+
+        Assert.Equal([q, r], drop.LastPayloads);
+    }
+
+    private static (Window, TreeView, Border, PayloadsRecordingDropOperation) ShowSelection(Node[] roots, Node[] expanded, params Node[] selected)
+    {
+        var (window, tree, target, _) = Show(roots);
+        tree.SelectionMode = SelectionMode.Multiple;
+        var drop = new PayloadsRecordingDropOperation();
+        DragDrop.SetDropOperation(target, drop);
+        foreach (var node in expanded)
+            Expand(tree, node);
+        foreach (var node in selected)
+            tree.SelectedItems.Add(node);
+
+        return (window, tree, target, drop);
     }
 
     private static (Window, TreeView, Border, RecordingDropOperation) Show(Node[] roots)

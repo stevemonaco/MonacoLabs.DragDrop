@@ -11,6 +11,7 @@ types:
   - DragPreviewAdorner
 tests:
   - DragSessionTests
+  - CollectionDragTests
 depends:
   - DD-DRAG
 ---
@@ -19,14 +20,14 @@ depends:
 
 ## Purpose
 
-One internal `DragSession` exists per drag, created by the drag source (DD-DRAG) just before the platform drag starts and disposed after it returns. It owns the source-side visuals: the `:dragging` pseudo-class on the drag visual and the `DragPreviewAdorner` snapshot that follows the pointer within the source's window. It also listens to the window's own drag events so that, with `RemoveOnDropOutside`, a drop on part of the window that is not a drop target can remove the payload.
+One internal `DragSession` exists per drag, created by the drag source (DD-DRAG) just before the platform drag starts and disposed after it returns. It owns the source-side visuals: the `:dragging` pseudo-class on the drag visual and the other dragged containers, and the `DragPreviewAdorner` snapshot that follows the pointer within the source's window. It also listens to the window's own drag events so that, with `RemoveOnDropOutside`, a drop on part of the window that is not a drop target can remove the payload.
 
 ## Requirements
 
 ### Dragging pseudo-class
 
-- **DD-SESSION-001** — While a drag runs, the drag visual shall have the `:dragging` pseudo-class, and it shall be removed when the drag ends, whatever its outcome.
-  - Tests: `DragSessionTests.TheDragVisualIsDraggingUntilTheDragEndsWhateverTheOutcome`
+- **DD-SESSION-001** — While a drag runs, the drag visual and every other control the drag source names (DD-COLLECTION-005) shall have the `:dragging` pseudo-class, and it shall be removed when the drag ends, whatever its outcome.
+  - Tests: `DragSessionTests.TheDragVisualIsDraggingUntilTheDragEndsWhateverTheOutcome`, `CollectionDragTests.EveryRealizedDraggedContainerIsDragging`
 
 ### Preview
 
@@ -47,6 +48,9 @@ One internal `DragSession` exists per drag, created by the drag source (DD-DRAG)
 - **DD-SESSION-008** — While the pointer is over the window, the preview shall have `:nodrop` when the current effect is None, `:copy` when it is Copy and the drop would not remove the payload, and `:remove` when dropping there would remove the payload.
   - Tests: `DragSessionTests.ThePreviewShowsWhetherTheDropWouldCopyOrRemove`, `DragSessionTests.ThePreviewShowsNoDropWhereNothingAcceptsTheDrag`
 
+- **DD-SESSION-016** — When a drag carries more than one payload, the preview shall have the `:multiple` pseudo-class, report the count in `PayloadCount`, and show it in a badge over its top-right corner.
+  - Tests: `DragSessionTests.APreviewOfSeveralPayloadsShowsTheirCount`
+
 ### Watching the window
 
 - **DD-SESSION-009** — When a preview is shown or `RemoveOnDropOutside` is true, and the window does not already set `AllowDrop`, the session shall set it for the drag's duration and clear it afterwards.
@@ -58,12 +62,14 @@ One internal `DragSession` exists per drag, created by the drag source (DD-DRAG)
 - **DD-SESSION-012** — Drops outside the window and canceled drags shall never count as outside any target.
   - Tests: `DragSessionTests.ACanceledDragOrADropOutsideTheWindowIsNeverOutsideAnyTarget`
 - **DD-SESSION-013** — Dropping an order slot's item on the window background shall clear the slot, and dropping it on the desktop or pressing Esc shall not.
-  - Tests: manual — Win32, `DragDropSample/SingleItemPage` (slots use `RemoveOnDropOutside`); repeat for the Desktop page's file list.
+  - Tests: manual — Win32, `DragDropSample/SingleItemPage` (slots use `RemoveOnDropOutside`); repeat for the Desktop page's file list. Checked 2026-11-25.
 
 ### Preview defaults
 
 - **DD-SESSION-014** (inherited) — The preview shall not be hit-testable, shall have opacity 0.9, a `0 8 20 0 #40000000` box shadow and the highest z-index in its layer.
   - Tests: `DragSessionTests.ThePreviewIsPassiveTranslucentShadowedAndOnTop`
+- **DD-SESSION-017** (inherited) — The count badge shall be 20 DIPs tall with fully rounded ends, the accent color (DD-ADORNERS-019) as its fill and white 12 DIP semibold text, and overhang the preview's corner by 8 DIPs.
+  - Tests: `DragSessionTests.APreviewOfSeveralPayloadsShowsTheirCount`
 
 ## Invariants
 
@@ -75,6 +81,7 @@ One internal `DragSession` exists per drag, created by the drag source (DD-DRAG)
 - A drag visual with no adorner layer (not in a visual tree with one) gets no preview, but still gets `:dragging`.
 - The preview lives only in the source window. Over other windows and other applications, only the platform cursor shows.
 - The preview's snapshot is static: changes to the drag visual during the drag do not appear.
+- A drag of several payloads previews only the pressed container, with the count badge; the other dragged containers show only `:dragging`.
 
 ## Threading and lifetime
 
@@ -101,4 +108,3 @@ One internal `DragSession` exists per drag, created by the drag source (DD-DRAG)
 ## Open items
 
 - An app that sets `AllowDrop` on its window silently disables `RemoveOnDropOutside` (Edge cases). Logged in the backlog.
-- DD-SESSION-013 has not been recorded as checked by hand.

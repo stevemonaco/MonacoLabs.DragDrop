@@ -14,7 +14,7 @@ namespace MonacoLabs.DragDrop;
 /// </summary>
 internal sealed class DragSession : IDisposable
 {
-    private readonly Control? _source;
+    private readonly IReadOnlyList<Control> _draggingControls;
     private readonly TopLevel? _topLevel;
     private readonly AdornerLayer? _layer;
     private readonly DragPreviewAdorner? _preview;
@@ -23,9 +23,10 @@ internal sealed class DragSession : IDisposable
 
     public bool DroppedOutsideTarget { get; private set; }
 
-    public DragSession(TopLevel? topLevel, Control? source, Point grabOffset, bool showPreview, bool trackDrops)
+    public DragSession(TopLevel? topLevel, Control? source, IReadOnlyList<Control> draggingControls, Point grabOffset, int payloadCount,
+        bool showPreview, bool trackDrops)
     {
-        _source = source;
+        _draggingControls = draggingControls;
         _topLevel = topLevel;
         _trackDrops = trackDrops;
 
@@ -34,7 +35,7 @@ internal sealed class DragSession : IDisposable
         {
             _layer = AdornerLayer.GetAdornerLayer(source);
             if (_layer is not null)
-                _preview = DragPreviewAdorner.Create(source, grabOffset);
+                _preview = DragPreviewAdorner.Create(source, grabOffset, payloadCount);
         }
 
         if (_preview is not null)
@@ -58,8 +59,8 @@ internal sealed class DragSession : IDisposable
             _topLevel.AddHandler(AvaDragDrop.DropEvent, TopLevel_Drop, RoutingStrategies.Bubble, true);
         }
 
-        if (_source is not null)
-            ((IPseudoClasses)_source.Classes).Set(":dragging", true);
+        foreach (var control in _draggingControls)
+            ((IPseudoClasses)control.Classes).Set(":dragging", true);
     }
 
     private void TopLevel_DragOver(object? sender, DragEventArgs e)
@@ -124,8 +125,8 @@ internal sealed class DragSession : IDisposable
 
     public void Dispose()
     {
-        if (_source is not null)
-            ((IPseudoClasses)_source.Classes).Set(":dragging", false);
+        foreach (var control in _draggingControls)
+            ((IPseudoClasses)control.Classes).Set(":dragging", false);
 
         if (_preview is not null)
         {

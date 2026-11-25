@@ -61,6 +61,19 @@ public abstract partial class DropOperationBase
         set => SetAndRaise(PayloadCommandProperty, ref _payloadCommand, value);
     }
 
+    public static readonly StyledProperty<bool> AcceptsMultiplePayloadsProperty =
+        AvaloniaProperty.Register<DropOperationBase, bool>(nameof(AcceptsMultiplePayloads), defaultValue: true);
+
+    /// <summary>
+    /// Whether a drag carrying more than one payload can be meant for this target. When false, such a drag shows no adorner and reports None.
+    /// True by default, and false for <see cref="ItemDropOperation"/>, which holds one value.
+    /// </summary>
+    public bool AcceptsMultiplePayloads
+    {
+        get => GetValue(AcceptsMultiplePayloadsProperty);
+        set => SetValue(AcceptsMultiplePayloadsProperty, value);
+    }
+
     public static readonly StyledProperty<DropAdornerBase?> DropAdornerProperty =
         AvaloniaProperty.Register<DropOperationBase, DropAdornerBase?>(nameof(DropAdorner), defaultBindingMode: BindingMode.OneTime);
 

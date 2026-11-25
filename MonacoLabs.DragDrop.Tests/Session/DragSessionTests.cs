@@ -2,6 +2,7 @@ using System.Collections.Specialized;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Controls.Templates;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -323,6 +324,48 @@ public class DragSessionTests
         Assert.Equal(int.MaxValue, preview.ZIndex);
     }
 
+    [AvaloniaFact]
+    public void APreviewOfSeveralPayloadsShowsTheirCount()
+    {
+        var items = new List<string> { "a", "b", "c" };
+        var list = new ListBox
+        {
+            SelectionMode = SelectionMode.Multiple,
+            ItemsSource = items,
+            Width = 150,
+            Height = 200,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            ItemTemplate = new FuncDataTemplate<string>((_, _) => new TextBlock { Height = 30 })
+        };
+        DragDrop.SetDragOperation(list, new CollectionDragOperation { PayloadCollection = items });
+        var window = TestWindow.Show(list);
+        list.Selection.Select(0);
+        list.Selection.Select(2);
+        using var single = DragPreviewAdorner.Create(list, default)!;
+
+        using (var drag = HeldMouseDrag.Start(window, window.PointIn(list.ContainerFromIndex(0)!), new Point(300, 100)))
+        {
+            drag.MoveTo(new Point(310, 110));
+
+            var preview = AdornerLayer.GetAdornerLayer(list)!.Children.OfType<DragPreviewAdorner>().Single();
+            Assert.Equal(2, preview.PayloadCount);
+            Assert.Contains(":multiple", preview.Classes);
+            var count = preview.GetVisualDescendants().OfType<TextBlock>().Single();
+            Assert.Equal("2", count.Text);
+            Assert.Equal((12, FontWeight.SemiBold, Colors.White), (count.FontSize, count.FontWeight, ((ISolidColorBrush)count.Foreground!).Color));
+            var badge = (Border)count.Parent!;
+            Assert.Equal(Color.Parse("#0078D4"), ((ISolidColorBrush)badge.Background!).Color);
+            Assert.Equal((20, new CornerRadius(10)), (badge.Height, badge.CornerRadius));
+            Assert.Equal((HorizontalAlignment.Right, VerticalAlignment.Top), (badge.HorizontalAlignment, badge.VerticalAlignment));
+            Assert.Equal(new Thickness(0, -8, -8, 0), badge.Margin);
+            drag.Cancel();
+        }
+
+        Assert.Equal(1, single.PayloadCount);
+        Assert.DoesNotContain(":multiple", single.Classes);
+        Assert.Empty(single.GetVisualDescendants().OfType<TextBlock>());
+    }
+
     public enum Outcome { DropOnTarget, DropOnBackground, Cancel, DropOutsideTheWindow }
 
     private static Bitmap SnapshotOf(DragPreviewAdorner preview) => (Bitmap)preview.GetVisualDescendants().OfType<Image>().Single().Source!;
@@ -352,12 +395,12 @@ public class DragSessionTests
 
     private sealed class OutsideRecordingDragOperation : ItemDragOperation
     {
-        public List<(DragInfo DragInfo, object Payload)> Outside { get; } = [];
+        public List<DragInfo> Outside { get; } = [];
 
-        protected override void OnDroppedOutside(DragInfo dragInfo, object payload)
+        protected override void OnDroppedOutside(DragInfo dragInfo)
         {
-            Outside.Add((dragInfo, payload));
-            base.OnDroppedOutside(dragInfo, payload);
+            Outside.Add(dragInfo);
+            base.OnDroppedOutside(dragInfo);
         }
     }
 }

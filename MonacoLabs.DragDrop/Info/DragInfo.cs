@@ -29,7 +29,12 @@ public class DragInfo
     public int? PointerId { get; init; }
 
     /// <summary>
-    /// Payload resolved when the drag started
+    /// Payloads resolved when the drag started, in order. A single-item drag has one.
     /// </summary>
-    public object? Payload { get; internal set; }
+    public IReadOnlyList<object> Payloads { get; internal set; } = [];
+
+    /// <summary>
+    /// First of <see cref="Payloads"/>.
+    /// </summary>
+    public object? Payload => Payloads.Count > 0 ? Payloads[0] : null;
 }
