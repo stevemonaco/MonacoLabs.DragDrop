@@ -19,6 +19,7 @@ In progress elsewhere: the test suite in [changes/test-suite.md](changes/test-su
 - [DD-COLLECTION] The auto-scroll `ScrollViewer` is cached for the operation's lifetime and is not refreshed when the control is re-templated or detached.
 - [DD-DROP] Consider consulting `PayloadCommand.CanExecute` during DragOver, so a drop the command will refuse shows None instead of failing on release (see DD-COLLECTION, "A drop that does nothing reports None").
 - [DD-DRAG] Consider a public `DragFailed` event alongside the drag-failure logging (DD-DRAG-030).
+- [DD-ADORNERS] Add pixel tests for the insertion line's position in the gap between containers (DD-ADORNERS-013), the `OnTarget` outline (014) and device-pixel alignment at render scaling above 1 (016), and for the preview snapshot at scaling above 1 (DD-SESSION-004). They need exact pixel comparisons and a way to render headless windows at other scalings.
 - [DD-COLLECTION] Check whether `CollectionDragOperation` still needs `HandledEventsToo`. With tunneling it sees a press before `ListBoxItem` handles it, and `CollectionDragTests.PressesOnAListBoxItemReachTheOperation` passes with it off; moves and releases may still need it.
 
 ## Docs and hygiene
@@ -32,6 +33,8 @@ In progress elsewhere: the test suite in [changes/test-suite.md](changes/test-su
 - Add `Microsoft.CodeAnalysis.PublicApiAnalyzers` with `PublicAPI.Shipped.txt`/`Unshipped.txt`. The pre-1.0 API changes have landed; the drop-side redesign (Bugs and gaps) still changes the surface, so its entries start in `Unshipped.txt`.
 - Add package metadata (description, license expression, repository URL, readme, tags), SourceLink, and `ContinuousIntegrationBuild` under CI.
 - Add an `.editorconfig` with the repo's formatting rules.
+- Report code coverage from CI with `Microsoft.Testing.Extensions.CodeCoverage`.
+- [DD-EFFECTS] Add a macOS leg to CI, so the Option-copy modifier (DD-EFFECTS-005) runs through `OperatingSystem.IsMacOS()` rather than only through the resolver's macOS parameter.
 
 ## Manual and platform checks
 
@@ -39,7 +42,7 @@ In progress elsewhere: the test suite in [changes/test-suite.md](changes/test-su
 - [DD-PLATFORM] Drag a snippet from the Desktop page into Notepad and a browser text field (DD-PLATFORM-009).
 - [DD-SESSION] On the Single-item page, drop a slot's item on the window background (clears), on the desktop and with Esc (both keep) (DD-SESSION-013).
 - [DD-ADORNERS] Check the insertion line at 100% and 150% Windows scaling (DD-ADORNERS-021).
-- [DD-EFFECTS] Check the Option-copy modifier and the Explorer-style effects on macOS. Nothing has been run on macOS or Linux.
+- [DD-EFFECTS] Check the Option-copy modifier and the Explorer-style effects on macOS. Nothing has been run on macOS, and Linux only runs the headless tests in CI.
 
 ## Candidates
 
