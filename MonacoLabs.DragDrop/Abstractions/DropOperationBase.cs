@@ -17,7 +17,6 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
     private bool _isDragLeavePending;
 
     public IList<string> InteractionIds { get; set; } = [DragDropIds.DefaultOperation];
-    public object? Context { get; set; }
 
     /// <summary>
     /// Routing strategy of the drag event handlers. Can only be set while the operation is detached.

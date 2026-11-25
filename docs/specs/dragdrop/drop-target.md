@@ -136,5 +136,4 @@ depends:
 ## Open items
 
 - Detach leaves a pending deferred leave able to throw, and leaves `:dropover`, the adorner and `DropAdorner.TargetControl` in place. Addressed by [changes/correctness-fixes.md](../../changes/correctness-fixes.md).
-- `Context` is a public property that nothing reads. Addressed by [changes/api-design.md](../../changes/api-design.md).
 - Subclasses can override either the subscribed handlers (`DragEnter`, `DragOver`, `DragLeave`, `Drop`) or the hooks they call (`OnDragEnter`, `OnDragOver`, `OnDragLeave`, `OnDrop`). Collection targets replace the handlers, so which hooks run depends on the base class (see DD-COLLECTION Open items). Logged in the backlog (drop-side redesign).

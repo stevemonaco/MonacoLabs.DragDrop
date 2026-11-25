@@ -32,13 +32,13 @@ public abstract partial class DragOperationBase
         set => SetValue(PayloadProperty, value);
     }
 
-    public static readonly StyledProperty<int> DragThresholdProperty =
-        AvaloniaProperty.Register<DragOperationBase, int>(nameof(DragThreshold), defaultValue: 6);
+    public static readonly StyledProperty<double> DragThresholdProperty =
+        AvaloniaProperty.Register<DragOperationBase, double>(nameof(DragThreshold), defaultValue: 6);
 
     /// <summary>
-    /// Threshold in pixels that the user must move a pressed pointer to initiate a drag operation
+    /// Distance in DIPs that a pressed pointer must move, relative to the attached control, to start a drag.
     /// </summary>
-    public int DragThreshold
+    public double DragThreshold
     {
         get => GetValue(DragThresholdProperty);
         set => SetValue(DragThresholdProperty, value);

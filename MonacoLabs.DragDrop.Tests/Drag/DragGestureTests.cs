@@ -67,6 +67,36 @@ public class DragGestureTests
     }
 
     [AvaloniaFact]
+    public void MovingPastTheThresholdStartsADrag()
+    {
+        var (window, source, _, operation, _) = Show(new CountingDragOperation { Payload = "A", DragThreshold = 10.5 });
+        var press = window.PointIn(source);
+
+        window.MouseDrag(press, press + new Point(10.5, 0));
+
+        Assert.Equal(1, operation.Starts);
+    }
+
+    [AvaloniaFact]
+    public void MovingWithinTheThresholdDoesNotStartADrag()
+    {
+        var (window, source, _, operation, _) = Show(new CountingDragOperation { Payload = "A", DragThreshold = 10.5 });
+        var press = window.PointIn(source);
+
+        window.MouseDrag(press, press + new Point(7.4, 7.4));
+
+        Assert.Equal(0, operation.Starts);
+    }
+
+    [AvaloniaFact]
+    public void TheThresholdDefaultsToSixDips()
+    {
+        object threshold = new ItemDragOperation().DragThreshold;
+
+        Assert.Equal(6d, Assert.IsType<double>(threshold));
+    }
+
+    [AvaloniaFact]
     public void PressesInsideATextBoxDoNotStartDrags()
     {
         var textBox = new TextBox { Width = 80, Height = 32 };

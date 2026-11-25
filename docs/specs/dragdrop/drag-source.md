@@ -56,9 +56,9 @@ depends:
 ### Starting a drag
 
 - **DD-DRAG-011** — While a press is tracked, when the pointer moves at least `DragThreshold` DIPs (Euclidean distance) from the press position, the drag source shall start a drag.
-  - Tests: untested
+  - Tests: `DragGestureTests.MovingPastTheThresholdStartsADrag`
 - **DD-DRAG-012** — While the pointer is within `DragThreshold` of the press position, the drag source shall not start a drag.
-  - Tests: untested
+  - Tests: `DragGestureTests.MovingWithinTheThresholdDoesNotStartADrag`
 - **DD-DRAG-013** — When a drag starts, the drag source shall stop tracking the press before the drag runs, so moves during the drag do not start another.
   - Tests: `DragGestureTests.ADragDoesNotStartTwiceFromOnePress`
 - **DD-DRAG-014** — The drag source shall start the platform drag with the stored press event, not the move that crossed the threshold.
@@ -89,7 +89,7 @@ depends:
 ### Defaults
 
 - **DD-DRAG-022** (inherited) — When `DragThreshold` is not set, the threshold shall be 6 DIPs.
-  - Tests: untested
+  - Tests: `DragGestureTests.TheThresholdDefaultsToSixDips`
 - **DD-DRAG-023** (inherited) — When `AllowedEffects` is not set, the drag source shall allow Move only.
   - Tests: untested
 - **DD-DRAG-024** (inherited) — When `CanDrag` is not set, it shall be true; `RequiresDragHandle` and `RemoveOnDropOutside` shall be false; `ShowDragPreview` shall be true.
@@ -124,6 +124,7 @@ depends:
 - **Presses on unselected items stay unhandled.** Reason: `SelectingItemsControl.UpdateSelectionFromEvent` ignores handled events, so handling the press would make the user click twice (once to select, once to drag). Presses on selected items are handled so a multiple selection is not collapsed to one item. Rejected: always leaving presses unhandled, which loses multiple selection on every drag start.
 - **More controls keep their presses.** Scroll bars, buttons, text boxes and thumbs keep their presses by default. Reason: a drag source on an items control would otherwise swallow scroll bar drags and the tree expander's toggle; a selected row's press is handled in the tunneling phase (DD-DRAG-009), so a `TextBox` in it can't focus and a selection drag turns into an item drag; a slider's thumb starts an item drag the same way. An app that drags rows by a read-only `TextBox` sets `DragDrop.IgnoresPress` to false on it. Rejected: opt-in only, which leaves editable rows broken by default.
 - **The press filter is a per-element predicate.** The base owns the walk up to the attached control; `DragDrop.IgnoresPress`, then `IsIgnoredPressSource`, answers for one element. Reason: overrides and styles add a type in one expression and cannot get the walk's stopping point wrong. Rejected: a virtual that receives the pressed element and walks itself, which every override would have to repeat.
+- **The threshold stays 6 DIPs, as a `double`.** Reason: Avalonia measures in DIPs as doubles. The platform's tap size depends on the pointer type and the OS, which would make the default untestable. Rejected: deriving the default from `IPlatformSettings`.
 - **Ignored presses are configured by a non-inherited attached property.** `DragDrop.IgnoresPress` is a `bool?` read during the walk, like `DragDrop.IsDragHandle`, and the nearest element with a value decides. Reason: apps add control types with a style and opt single elements out in XAML, without subclassing an operation, and the walk keeps the boundary at the attached control. Rejected: an inherited property, checked only on the pressed element. Avalonia does not inherit per-type default values, so the defaults would need app-wide styles that every consumer adds, or the library setting values on unrelated controls. Values inherited from above the attached control (a drag source inside a `Button` or an `Expander` header) would also ignore every press, unless the operation overwrote a local value on its control.
 - **An explicit null `Payload` means nothing to drag.** Reason: a bound slot that is empty (an empty order slot on the single-item page) must not fall back to its `DataContext` and drag the whole view model.
 - **Subclasses get hooks, not fields.** Every protected member is a virtual method or a read-only property with a documented meaning. Reason: protected fields freeze the implementation, and the former ones let a subclass leave the press-tracking state inconsistent. The press origin, their only subclass reader, is a parameter of `CreateMetadata`.
