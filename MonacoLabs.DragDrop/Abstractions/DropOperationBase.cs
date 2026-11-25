@@ -178,16 +178,22 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
     protected virtual DragDropEffects GetDropEffect(DragEventArgs e) =>
         DropEffectResolver.Resolve(e.DragEffects, e.KeyModifiers, HasInProcessPayload(e), OperatingSystem.IsMacOS());
 
-    protected void InvokePayloadCommand(DragEventArgs e, IReadOnlyList<object> items, DropTargetOffset offset, CollectionDropLocation? location = null, bool isPlatformDrop = false)
+    /// <summary>
+    /// Runs <see cref="PayloadCommand"/> with the drop's <see cref="DropEventArgs"/>. Returns false when there is no command or it cannot execute.
+    /// </summary>
+    protected bool InvokePayloadCommand(DragEventArgs e, IReadOnlyList<object> items, DropTargetOffset offset, CollectionDropLocation? location = null, bool isPlatformDrop = false)
     {
         if (PayloadCommand is null)
-            return;
+            return false;
 
         var targetContext = (e.Source as StyledElement)?.DataContext;
-        DropEventArgs args = new(e.Source, targetContext, items, offset, location, isPlatformDrop);
+        DropEventArgs args = new(e.Source, targetContext, items, offset, location, isPlatformDrop, e.DragEffects);
 
-        if (PayloadCommand.CanExecute(args))
-            PayloadCommand.Execute(args);
+        if (!PayloadCommand.CanExecute(args))
+            return false;
+
+        PayloadCommand.Execute(args);
+        return true;
     }
 
     /// <summary>

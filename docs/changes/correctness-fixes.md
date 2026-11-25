@@ -39,7 +39,7 @@ What does not change: interaction ids, targeting and validation, effect resoluti
 - Decisions: add "Removal checks the index before trusting it", "Every accepted in-process drop that did something reports back" and "A drop that does nothing reports None". Open items: remove the two move items.
 
 **DD-TRANSFER**
-- Added: "`DropEventArgs.Effect` shall be the effect computed on Drop (DD-EFFECTS-009), or Copy for platform drops."
+- Added: "`DropEventArgs.Effect` shall be the effect computed on Drop (DD-EFFECTS-009), which for a platform drop is Copy or Link (DD-PLATFORM)."
 - Decisions: add "`DropEventArgs` carries the effect".
 
 **DD-DROP**

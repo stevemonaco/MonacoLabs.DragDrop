@@ -71,6 +71,8 @@ Defines what a drag carries and how a drop target recognizes it. Interaction ids
   - Tests: untested
 - **DD-TRANSFER-014** — `DropEventArgs.Location` shall be the insertion point for collection and tree targets, and null for single-value targets.
   - Tests: untested
+- **DD-TRANSFER-015** — `DropEventArgs.Effect` shall be the effect computed on Drop (DD-EFFECTS-009), which for a platform drop is Copy or Link (DD-PLATFORM).
+  - Tests: `DropTargetTests.DropEventArgsCarriesTheDropEffect`
 
 ## Invariants
 
@@ -94,6 +96,7 @@ Defines what a drag carries and how a drop target recognizes it. Interaction ids
 ## Decisions
 
 - **Interaction ids are typed channels.** One drag can advertise several ids, and each target accepts a subset. Reason: a source shared by several targets (the ListBox page's worker pool feeding three teams) needs to be told apart by the targets without a type check on the payload. Rejected: matching on payload type, which cannot distinguish two targets that both take `WorkerViewModel`.
+- **`DropEventArgs` carries the effect.** Reason: a command that inserts the payload itself must know whether the source keeps its item (Copy) or loses it (Move), for example to clone on Copy. Rejected: leaving commands to recompute it from the modifier keys, which duplicates DD-EFFECTS and cannot see the source's allowed effects.
 - **The payload is stored once per id.** Reason: `DataTransfer` looks up by format, and a target only knows its own ids. Rejected: one shared format plus an id list, which would make every target parse the list.
 
 ## Non-goals

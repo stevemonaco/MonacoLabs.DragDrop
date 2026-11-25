@@ -198,21 +198,18 @@ public partial class CollectionDropOperation : DropOperationBase
                     ? TransferPayloadIndexed(value, location.Collection, index, payloadCollection, payloadIndex)
                     : TransferPayload(value, location.Collection, payloadCollection, payloadIndex);
 
-                var dropInfo = new CollectionDropInfo()
-                {
-                    DragEventArgs = e,
-                    HoveredControl = HoveredContainer ?? AttachedControl!,
-                    HoverLocation = e.GetPosition(AttachedControl!),
-                    TargetCollection = location.Collection,
-                    TargetIndex = actualIndex,
-                    TargetContainer = HoveredContainer,
-                    TargetParent = location.Parent
-                };
-
-                dragInfo.DragOperation.DropCompleted(e.DragEffects, dragInfo, dropInfo);
+                dragInfo.DragOperation.DropCompleted(e.DragEffects, dragInfo, CreateDropInfo(e, location, actualIndex));
+                InvokePayloadCommand(e, [value], HoveredOffset, location);
             }
-
-            InvokePayloadCommand(e, [value], HoveredOffset, location);
+            else if (InvokePayloadCommand(e, [value], HoveredOffset, location))
+            {
+                dragInfo.DragOperation.DropCompleted(e.DragEffects, dragInfo, CreateDropInfo(e, location, location?.Index));
+            }
+            else
+            {
+                // Reporting Move for a drop that went nowhere would let the source remove the item
+                e.DragEffects = DragDropEffects.None;
+            }
         }
         else if (TryGetPlatformItems(e, out var items))
         {
@@ -223,6 +220,17 @@ public partial class CollectionDropOperation : DropOperationBase
         e.Handled = true;
         EndDrag();
     }
+
+    private CollectionDropInfo CreateDropInfo(DragEventArgs e, CollectionDropLocation? location, int? targetIndex) => new()
+    {
+        DragEventArgs = e,
+        HoveredControl = HoveredContainer ?? AttachedControl!,
+        HoverLocation = e.GetPosition(AttachedControl!),
+        TargetCollection = location?.Collection,
+        TargetIndex = targetIndex,
+        TargetContainer = HoveredContainer,
+        TargetParent = location?.Parent
+    };
 
     /// <summary>
     /// Appends the payload to the target collection

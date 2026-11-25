@@ -50,6 +50,56 @@ public class CollectionDropTests
         Assert.Equal(["A"], commandItems());
     }
 
+    [AvaloniaFact]
+    public void ACommandOnlyTargetCompletesAMove()
+    {
+        var source = new List<string> { "A", "B" };
+        DropEventArgs? args = null;
+        var (window, target) = ShowTarget(new CollectionDropOperation { PayloadCommand = new RelayCommand(a => args = (DropEventArgs?)a) });
+        using var drag = window.SimulateDrag(DragData.For(new CollectionDragOperation { PayloadCollection = source }, "A"));
+
+        drag.Enter(window.PointIn(target));
+        Assert.Equal(DragDropEffects.Move, drag.Drop(window.PointIn(target)));
+
+        Assert.Equal(["A"], args?.Items);
+        Assert.Equal(["B"], source);
+    }
+
+    [AvaloniaFact]
+    public void ADropThatNeitherTransfersNorRunsACommandReportsNone()
+    {
+        var source = new List<string> { "A", "B" };
+        var (window, target) = ShowTarget(new CollectionDropOperation());
+        using var drag = window.SimulateDrag(DragData.For(new CollectionDragOperation { PayloadCollection = source }, "A"));
+
+        Assert.Equal(DragDropEffects.Move, drag.Enter(window.PointIn(target)));
+        Assert.Equal(DragDropEffects.None, drag.Drop(window.PointIn(target)));
+
+        Assert.Equal(["A", "B"], source);
+    }
+
+    [AvaloniaFact]
+    public void ACommandWhoseCanExecuteIsFalseReportsNone()
+    {
+        var source = new List<string> { "A", "B" };
+        var executed = false;
+        var (window, target) = ShowTarget(new CollectionDropOperation { PayloadCommand = new RelayCommand(_ => executed = true, _ => false) });
+        using var drag = window.SimulateDrag(DragData.For(new CollectionDragOperation { PayloadCollection = source }, "A"));
+
+        drag.Enter(window.PointIn(target));
+        Assert.Equal(DragDropEffects.None, drag.Drop(window.PointIn(target)));
+
+        Assert.False(executed);
+        Assert.Equal(["A", "B"], source);
+    }
+
+    private static (Window, Border) ShowTarget(CollectionDropOperation operation)
+    {
+        var target = new Border { Width = 200, Height = 200, Background = Brushes.Blue };
+        DragDrop.SetDropOperation(target, operation);
+        return (TestWindow.Show(target), target);
+    }
+
     private static (Window, Border, List<string>, Func<IReadOnlyList<object>?>) ShowCopyingTarget()
     {
         var items = new List<string>();

@@ -49,6 +49,29 @@ public class EndToEndTests
         Assert.Equal(2, items.Count);
     }
 
+    [AvaloniaFact]
+    public void ReorderingThroughACommandRemovesTheOriginal()
+    {
+        var first = new Card("first");
+        var items = new ObservableCollection<Card> { first, new("second"), new("third") };
+        var list = CardList(items);
+        DragDrop.SetDragOperation(list, new CollectionDragOperation { PayloadCollection = items });
+        DragDrop.SetDropOperation(list, new CollectionDropOperation
+        {
+            PayloadCommand = new RelayCommand(a =>
+            {
+                var args = (DropEventArgs)a!;
+                args.Location!.Collection.Insert(args.Location.Index ?? args.Location.Collection.Count, args.Items[0]);
+            })
+        });
+        var window = TestWindow.Show(list);
+        var last = list.ContainerFromIndex(2)!;
+
+        window.MouseDrag(window.PointIn(list.ContainerFromIndex(0)!), window.PointIn(last, new Avalonia.Point(10, last.Bounds.Height - 3)));
+
+        Assert.Equal(["second", "third", "first"], items.Select(x => x.Name));
+    }
+
     private static ListBox CardList(ObservableCollection<Card> items) => new()
     {
         ItemsSource = items,

@@ -92,6 +92,23 @@ public class DropTargetTests
         Assert.Equal(["A copy"], args?.Items);
     }
 
+    [AvaloniaTheory]
+    [InlineData(RawInputModifiers.None, DragDropEffects.Move)]
+    [InlineData(RawInputModifiers.Control, DragDropEffects.Copy)]
+    public void DropEventArgsCarriesTheDropEffect(RawInputModifiers modifiers, DragDropEffects expected)
+    {
+        var target = new Border { Background = Brushes.Blue, Width = 100, Height = 100 };
+        DropEventArgs? args = null;
+        DragDrop.SetDropOperation(target, new ItemDropOperation { PayloadCommand = new RelayCommand(a => args = (DropEventArgs?)a) });
+        var window = TestWindow.Show(target);
+        using var drag = window.SimulateDrag(DragData.For(new ItemDragOperation(), "A"), DragDropEffects.Copy | DragDropEffects.Move);
+
+        drag.Enter(window.PointIn(target), modifiers);
+        drag.Drop(window.PointIn(target), modifiers);
+
+        Assert.Equal(expected, args?.Effect);
+    }
+
     private static (Window, Border, RejectingDropOperation) ShowRejectingTarget(string message)
     {
         var target = new Border { Background = Brushes.Blue, Width = 100, Height = 100 };
