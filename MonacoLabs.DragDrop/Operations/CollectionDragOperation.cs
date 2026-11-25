@@ -106,12 +106,12 @@ public class CollectionDragOperation : DragOperationBase
     {
         base.DropCompleted(effect, dragInfo, dropInfo);
 
-        if (effect != DragDropEffects.Move
-            || dragInfo is not CollectionDragInfo { PayloadCollection: IList payloadCollection } collectionDragInfo
-            || dropInfo is not CollectionDropInfo { TargetCollection: IList targetCollection } collectionDropInfo)
+        if (effect != DragDropEffects.Move || dragInfo is not CollectionDragInfo { PayloadCollection: IList payloadCollection } collectionDragInfo)
             return;
 
-        CollectionRemoval.RemoveAfterDrop(payloadCollection, dragInfo.Payload, collectionDragInfo.PayloadContainerIndex, targetCollection, collectionDropInfo.TargetIndex);
+        var collectionDropInfo = dropInfo as CollectionDropInfo;
+        CollectionRemoval.RemoveAfterDrop(payloadCollection, dragInfo.Payload, collectionDragInfo.PayloadContainerIndex,
+            collectionDropInfo?.TargetCollection, collectionDropInfo?.TargetIndex);
     }
 
     protected override void OnDroppedOutside(DragInfo dragInfo, object payload)

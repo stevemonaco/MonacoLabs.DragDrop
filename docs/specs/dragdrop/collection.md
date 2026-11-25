@@ -59,14 +59,14 @@ depends:
 
 ### Drag-side completion
 
-- **DD-COLLECTION-007** — When a drop completes with effect Move, `PayloadCollection` is set and the drop info is a `CollectionDropInfo` with a target collection, the drag operation shall remove the original from `PayloadCollection` at the pressed container's index.
-  - Tests: `CollectionRemovalTests.AMoveToAnotherListRemovesThePressedIndex`
-- **DD-COLLECTION-008** — When the target collection is the payload collection and the pressed index is at or after the target index, the drag operation shall remove at the pressed index plus one, because the insertion shifted the original down.
-  - Tests: `CollectionRemovalTests.AMoveWithinOneListRemovesTheOriginalAfterTheInsertionShiftsIt`, `CollectionRemovalTests.AnAppendWithinOneListRemovesThePressedIndex`
-- **DD-COLLECTION-009** — When the drag has no pressed index, the drag operation shall remove the payload from `PayloadCollection` by equality.
-  - Tests: `CollectionRemovalTests.WithoutAPressedIndexTheMoveRemovesThePayloadByEquality`
-- **DD-COLLECTION-010** — When the effect is not Move, `PayloadCollection` is null, or the drop info is not a `CollectionDropInfo`, the drag operation shall remove nothing.
-  - Tests: untested
+- **DD-COLLECTION-007** — When a drop completes with effect Move and `PayloadCollection` is set, the drag operation shall remove the original from `PayloadCollection`, whatever kind of target received the drop.
+  - Tests: `CollectionRemovalTests.AMoveToAnotherListRemovesThePressedIndex`, `CollectionRemovalTests.AMoveOntoATargetWithoutACollectionRemovesThePressedIndex`, `EndToEndTests.MovingAListItemOntoASingleValueTargetRemovesItFromTheList`
+- **DD-COLLECTION-008** — The drag operation shall remove at the pressed index, shifted by one when the drop inserted into the same collection at or before it, when that index holds an item equal to the payload.
+  - Tests: `CollectionRemovalTests.AMoveWithinOneListRemovesTheOriginalAfterTheInsertionShiftsIt`, `CollectionRemovalTests.AnAppendWithinOneListRemovesThePressedIndex`, `CollectionRemovalTests.MovingOneOfTwoEqualItemsRemovesThatOne`
+- **DD-COLLECTION-009** — When the pressed index is unknown or no longer holds an equal item, the drag operation shall remove the first item equal to the payload that is not the item the drop inserted (the one at the target index, or the last one when the drop appended).
+  - Tests: `CollectionRemovalTests.WithoutAPressedIndexTheMoveRemovesThePayloadByEquality`, `CollectionRemovalTests.AStalePressedIndexFallsBackToTheFirstEqualItem`, `CollectionRemovalTests.TheEqualitySearchSkipsTheItemTheDropInserted`, `CollectionRemovalTests.WithoutAPressedIndexAnAppendRemovesTheOriginalNotTheAppendedItem`
+- **DD-COLLECTION-010** — When the effect is not Move or `PayloadCollection` is null, the drag operation shall remove nothing.
+  - Tests: `CollectionDragTests.OnlyAMoveWithAPayloadCollectionRemovesTheOriginal`
 - **DD-COLLECTION-011** — When the drag is dropped outside any target with `RemoveOnDropOutside` (DD-SESSION), the drag operation shall remove the item at the pressed index if that index still holds an equal item, and otherwise remove the payload by equality.
   - Tests: `CollectionRemovalTests.ADropOutsideRemovesThePressedIndexWhenItHoldsThePayload`, `CollectionRemovalTests.ADropOutsideRemovesByEqualityWhenThePressedIndexDoesNotHoldThePayload`
 
@@ -160,6 +160,7 @@ depends:
 ## Decisions
 
 - **The drag side removes the payload.** The drop side inserts and then calls `DropCompleted`, and the drag operation removes its original. Reason: only the source knows where the payload lives and whether it should go (a Copy source keeps it). Rejected: the drop side removing from `PayloadCollection`, which would couple every target to every source type.
+- **Removal checks the index before trusting it.** When a drop completes with Move, the drag side removes the item at the pressed index, shifted by one when the drop inserted into the same collection at or before it, if that index still holds an equal item. Otherwise it removes the first equal item that is not the one the drop just inserted: the one at the drop's target index, or the last item when the drop appended. Reason: the source no longer needs to know what kind of target received the drop, so single-value and command-only targets work, and a wrong index (a command that inserted somewhere else, a collection changed during the drag) degrades to an equality search instead of removing the wrong item. Equality is `Equals`, so boxed value payloads (the sample's Guids) match. Rejected: special-casing each drop-info type in `DropCompleted`, which repeats the bug for the next target kind; reference equality, which can never match a boxed value.
 - **The pressed container's item is the payload.** Reason: with multiple selection, `Payload` or `SelectedItem` can differ from the item under the pointer, and the payload must match `PayloadContainerIndex` or the wrong item is removed.
 - **One insertion adorner is retargeted.** Reason: styles set on a custom `ItemDropAdorner` instance survive hover changes, and no adorner is created per container.
 - **Locations fall back to `ItemsSource`.** Reason: platform drops and command-only targets still need an insertion index to hand to `PayloadCommand`.
@@ -174,7 +175,6 @@ depends:
 
 ## Open items
 
-- A Move onto a single-value target (`ItemDropOperation`) removes nothing from the source list (DD-COLLECTION-010). Addressed by [changes/correctness-fixes.md](../../changes/correctness-fixes.md).
 - A Move onto a collection target that does not transfer (no `PayloadTarget`, only `PayloadCommand`) never calls `DropCompleted` (DD-COLLECTION-027), so the source keeps the item. Addressed by [changes/correctness-fixes.md](../../changes/correctness-fixes.md).
 - `CollectionDragInfo.PayloadContainerIndex` and `CollectionDropInfo.TargetIndex` have copy-paste doc comments that describe the wrong collection. Logged in the backlog.
 - The collection drop operation replaces the base DragEnter, DragOver and Drop handlers, so `OnDragEnter` and `OnDragOver` (DD-DROP) are never called on collection and tree targets, while `OnDrop` is and `OnDragLeave` ends the drag. Logged in the backlog (drop-side redesign).

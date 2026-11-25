@@ -4,17 +4,36 @@ namespace MonacoLabs.DragDrop;
 
 internal static class CollectionRemoval
 {
-    public static void RemoveAfterDrop(IList source, object? payload, int? pressedIndex, IList target, int? targetIndex)
+    /// <summary>
+    /// Removes a moved item from <paramref name="source"/>: at the pressed index if it still holds an equal item, otherwise the first equal item
+    /// that is not the one the drop inserted. <paramref name="target"/> and <paramref name="targetIndex"/> describe the insertion, when known.
+    /// </summary>
+    public static void RemoveAfterDrop(IList source, object? payload, int? pressedIndex, IList? target, int? targetIndex)
     {
+        var sameCollection = ReferenceEquals(source, target);
+
         if (pressedIndex is int index)
         {
             // Inserting into the source at or before the original shifted it down by one
-            var shifted = ReferenceEquals(source, target) && index >= targetIndex;
-            source.RemoveAt(shifted ? index + 1 : index);
+            var shifted = sameCollection && index >= targetIndex ? index + 1 : index;
+            if (shifted < source.Count && Equals(source[shifted], payload))
+            {
+                source.RemoveAt(shifted);
+                return;
+            }
         }
-        else if (payload is not null)
+
+        if (payload is null)
+            return;
+
+        int? inserted = sameCollection ? targetIndex ?? source.Count - 1 : null;
+        for (var i = 0; i < source.Count; i++)
         {
-            source.Remove(payload);
+            if (i != inserted && Equals(source[i], payload))
+            {
+                source.RemoveAt(i);
+                return;
+            }
         }
     }
 

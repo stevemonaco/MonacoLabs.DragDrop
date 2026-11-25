@@ -30,6 +30,25 @@ public class EndToEndTests
         Assert.Equal("first copy", copy.Name);
     }
 
+    [AvaloniaFact]
+    public void MovingAListItemOntoASingleValueTargetRemovesItFromTheList()
+    {
+        var moved = new Card("second");
+        var items = new ObservableCollection<Card> { new("first"), moved, new("third") };
+        var source = CardList(items);
+        DragDrop.SetDragOperation(source, new CollectionDragOperation { PayloadCollection = items });
+        var target = new Border { Width = 100, Height = 100, Background = Avalonia.Media.Brushes.Blue };
+        var drop = new ItemDropOperation();
+        DragDrop.SetDropOperation(target, drop);
+        var window = TestWindow.Show(new StackPanel { Orientation = Orientation.Horizontal, Spacing = 50, Children = { source, target } });
+
+        window.MouseDrag(window.PointIn(source.ContainerFromIndex(1)!), window.PointIn(target));
+
+        Assert.Same(moved, drop.PayloadTarget);
+        Assert.DoesNotContain(moved, items);
+        Assert.Equal(2, items.Count);
+    }
+
     private static ListBox CardList(ObservableCollection<Card> items) => new()
     {
         ItemsSource = items,

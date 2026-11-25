@@ -102,5 +102,4 @@ Each task first writes the listed tests and confirms they fail, then fixes the c
 
 ## Open questions
 
-- **Should command-only targets trigger source removal at all?** This proposal says yes (Decisions, "Every accepted in-process drop that did something reports back"), so a command that accepts a Move must insert the item or return `CanExecute` false. The alternative keeps today's behavior: the command owns the whole move, and `DropEventArgs` gains the source collection and index so it can remove. Recommendation: the proposal's design, because it keeps removal in one place.
-- **Should drags of value types (the sample's Guids) keep equality-based removal?** Reference equality would be stricter for reference-type payloads but cannot work for boxed values. Recommendation: `Equals`, as `OnDroppedOutside` uses today, with the index check making duplicates safe.
+None. Command-only targets do trigger source removal (Decisions, "Every accepted in-process drop that did something reports back"), and removal keeps `Equals` with the index checked first ("Removal checks the index before trusting it"), as recommended.

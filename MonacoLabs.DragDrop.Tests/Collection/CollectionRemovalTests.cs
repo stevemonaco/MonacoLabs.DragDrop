@@ -60,6 +60,63 @@ public class CollectionRemovalTests
     }
 
     [Fact]
+    public void AStalePressedIndexFallsBackToTheFirstEqualItem()
+    {
+        var source = new List<string> { "a", "b", "c" };
+        var target = new List<string>();
+        Drop(target, "c", 0);
+
+        CollectionRemoval.RemoveAfterDrop(source, "c", pressedIndex: 0, target, targetIndex: 0);
+
+        Assert.Equal(["a", "b"], source);
+    }
+
+    [Fact]
+    public void TheEqualitySearchSkipsTheItemTheDropInserted()
+    {
+        var list = new List<string> { "y", "x" };
+        Drop(list, "x", 0);
+
+        CollectionRemoval.RemoveAfterDrop(list, "x", pressedIndex: null, list, targetIndex: 0);
+
+        Assert.Equal(["x", "y"], list);
+    }
+
+    [Fact]
+    public void MovingOneOfTwoEqualItemsRemovesThatOne()
+    {
+        var list = new List<string> { "x", "y", "x" };
+        Drop(list, "x", 1);
+
+        CollectionRemoval.RemoveAfterDrop(list, "x", pressedIndex: 2, list, targetIndex: 1);
+
+        Assert.Equal(["x", "x", "y"], list);
+    }
+
+    [Theory]
+    [InlineData(2)]
+    [InlineData(null)]
+    public void WithoutAPressedIndexAnAppendRemovesTheOriginalNotTheAppendedItem(int? targetIndex)
+    {
+        var list = new List<string> { "a", "b" };
+        list.Add("a");
+
+        CollectionRemoval.RemoveAfterDrop(list, "a", pressedIndex: null, list, targetIndex);
+
+        Assert.Equal(["b", "a"], list);
+    }
+
+    [Fact]
+    public void AMoveOntoATargetWithoutACollectionRemovesThePressedIndex()
+    {
+        var source = new List<string> { "a", "b", "c" };
+
+        CollectionRemoval.RemoveAfterDrop(source, "b", pressedIndex: 1, target: null, targetIndex: null);
+
+        Assert.Equal(["a", "c"], source);
+    }
+
+    [Fact]
     public void ADropOutsideRemovesThePressedIndexWhenItHoldsThePayload()
     {
         var list = new List<string> { "x", "y", "x" };

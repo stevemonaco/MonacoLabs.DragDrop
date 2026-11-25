@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Xunit;
@@ -45,6 +46,25 @@ public class CollectionDragTests
         Assert.Same(items, info.PayloadCollection);
         Assert.Same(container, info.PayloadContainer);
         Assert.Equal(2, info.PayloadContainerIndex);
+    }
+
+    [AvaloniaFact]
+    public void OnlyAMoveWithAPayloadCollectionRemovesTheOriginal()
+    {
+        var items = new List<string> { "a", "b" };
+        var operation = new CollectionDragOperation();
+        var dropInfo = new DropInfo { HoveredControl = new Border(), DragEventArgs = null! };
+
+        foreach (var effect in new[] { DragDropEffects.Copy, DragDropEffects.Link, DragDropEffects.None })
+            operation.DropCompleted(effect, Info(items), dropInfo);
+        operation.DropCompleted(DragDropEffects.Move, Info(null), dropInfo);
+        Assert.Equal(["a", "b"], items);
+
+        operation.DropCompleted(DragDropEffects.Move, Info(items), dropInfo);
+        Assert.Equal(["a"], items);
+
+        CollectionDragInfo Info(List<string>? collection) =>
+            new() { DragOperation = operation, DragIds = ["app:default"], PayloadCollection = collection, PayloadContainerIndex = 1, Payload = "b" };
     }
 
     private static (Window, ListBox, Border, RecordingDropOperation) Show(List<string> items)
