@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Logging;
 using Avalonia.Platform.Storage;
 using Avalonia.VisualTree;
 using System.Runtime.CompilerServices;
@@ -11,6 +12,8 @@ using AvaDragDrop = Avalonia.Input.DragDrop;
 namespace MonacoLabs.DragDrop.Abstractions;
 public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
 {
+    private const string LogArea = "DragDrop";
+
     private RoutingStrategies _routing = RoutingStrategies.Bubble;
     private bool _handledEventsToo;
     private Control? _trackedControl;
@@ -88,7 +91,19 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
 
     private void HandlePointerCaptureLost(object? sender, PointerCaptureLostEventArgs e) => OnPointerCaptureLost(e);
 
-    private async void HandlePointerMoved(object? sender, PointerEventArgs e) => await OnPointerMoved(e);
+    // An exception escaping this async void would terminate the app, and on Win32 the platform has already reduced it to E_FAIL
+    private async void HandlePointerMoved(object? sender, PointerEventArgs e)
+    {
+        try
+        {
+            await OnPointerMoved(e);
+        }
+        catch (Exception ex)
+        {
+            StopTrackingPress();
+            Logger.TryGet(LogEventLevel.Error, LogArea)?.Log(this, "Drag failed: {Exception}", ex);
+        }
+    }
 
     /// <summary>
     /// Called when a pointer is pressed on the attached control. Tracks the press as a possible drag unless it is filtered out.

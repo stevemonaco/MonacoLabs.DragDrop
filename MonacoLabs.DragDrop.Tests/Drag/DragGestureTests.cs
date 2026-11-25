@@ -7,6 +7,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
+using Avalonia.Logging;
 using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.Threading;
@@ -120,6 +121,38 @@ public class DragGestureTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(0, operation.Starts);
+    }
+
+    [AvaloniaFact]
+    public void AThrowingPlatformDragIsLoggedAndResetsState()
+    {
+        var (window, source, target, operation, drop) = Show(new ThrowingDragOperation { Payload = "A" });
+        using var log = RecordingLogSink.Install();
+
+        window.MouseDrag(window.PointIn(source), window.PointIn(target));
+
+        var entry = Assert.Single(log.Entries, x => x.Area == "DragDrop");
+        Assert.Equal(LogEventLevel.Error, entry.Level);
+        Assert.Same(operation, entry.Source);
+        Assert.Contains(entry.Values, x => x is InvalidOperationException { Message: "platform drag failed" });
+        Assert.Null(drop.PayloadTarget);
+
+        operation.Throws = false;
+        window.MouseDrag(window.PointIn(source), window.PointIn(target));
+        Assert.Equal("A", drop.PayloadTarget);
+    }
+
+    [AvaloniaFact]
+    public void AThrowingOnPointerMovedOverrideIsLogged()
+    {
+        var (window, source, target, operation, _) = Show(new ThrowingMoveDragOperation { Payload = "A" });
+        using var log = RecordingLogSink.Install();
+
+        window.MouseDrag(window.PointIn(source), window.PointIn(target));
+
+        Assert.NotEmpty(log.Entries);
+        Assert.All(log.Entries, x => Assert.Equal(("DragDrop", LogEventLevel.Error), (x.Area, x.Level)));
+        Assert.Contains(log.Entries, x => x.Values.Any(v => v is InvalidOperationException { Message: "override failed" }));
     }
 
     [AvaloniaFact]
@@ -286,6 +319,23 @@ public class DragGestureTests
     private sealed class IgnoreTextBlockDragOperation : ItemDragOperation
     {
         protected override bool IsIgnoredPressSource(Visual element) => base.IsIgnoredPressSource(element) || element is TextBlock;
+    }
+
+    private sealed class ThrowingDragOperation : ItemDragOperation
+    {
+        public bool Throws { get; set; } = true;
+
+        protected override Task DoDragDrop(PointerPressedEventArgs triggerEvent, DragInfo metadata, object payload) =>
+            Throws ? throw new InvalidOperationException("platform drag failed") : base.DoDragDrop(triggerEvent, metadata, payload);
+    }
+
+    private sealed class ThrowingMoveDragOperation : ItemDragOperation
+    {
+        protected override async Task OnPointerMoved(PointerEventArgs e)
+        {
+            await Task.Yield();
+            throw new InvalidOperationException("override failed");
+        }
     }
 
     private sealed class CountingDragOperation : ItemDragOperation

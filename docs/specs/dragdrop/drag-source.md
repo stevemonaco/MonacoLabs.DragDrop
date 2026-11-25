@@ -71,6 +71,8 @@ depends:
   - Tests: untested
 - **DD-DRAG-026** — The drag source's moved handler shall await `OnPointerMoved`, so an override can await before calling the base and the drag still starts.
   - Tests: `DragGestureTests.AnOnPointerMovedOverrideCanAwaitBeforeCallingTheBase`
+- **DD-DRAG-030** — When the platform drag, or an `OnPointerMoved` override, throws, the drag source shall log the exception at Error level under the `DragDrop` log area, stop tracking the press, and not let the exception reach the application.
+  - Tests: `DragGestureTests.AThrowingPlatformDragIsLoggedAndResetsState`, `DragGestureTests.AThrowingOnPointerMovedOverrideIsLogged`
 
 ### Payload
 
@@ -117,7 +119,7 @@ depends:
 ## Threading and lifetime
 
 - UI thread only. The private moved handler awaits `OnPointerMoved` on the UI thread, and returns to the input system while the platform drag is in progress.
-- An exception thrown while the drag runs (including the `COMException` Win32 raises when a drop handler throws) escapes the private `async void` moved handler and goes to the app's unhandled-exception handling.
+- An exception thrown while the drag runs (including the `COMException` Win32 raises when a drop handler throws) or by an `OnPointerMoved` override is caught in the private `async void` moved handler and logged (DD-DRAG-030). The `using` around the drag session still removes the preview and `:dragging`.
 
 ## Platform behavior
 
@@ -134,6 +136,7 @@ depends:
 - **Subclasses get hooks, not fields.** Every protected member is a virtual method or a read-only property with a documented meaning. Reason: protected fields freeze the implementation, and the former ones let a subclass leave the press-tracking state inconsistent. The press origin, their only subclass reader, is a parameter of `CreateMetadata`.
 - **Pointer hooks, not event handlers.** The subscribed handlers are private, and subclasses override `OnPointerPressed`, `OnPointerReleased`, `OnPointerCaptureLost` and a `Task`-returning `OnPointerMoved`. Reason: `Control_*` was designer-handler naming for a public extension point, `sender` is always the attached control, and a virtual `async void` forces overrides to be `async void` too, whose exceptions bypass the library's handling and crash the app. Rejected: keeping the handlers virtual and only renaming them (an override still decides whether the exception handling runs).
 - **Capture loss is watched on the attached control.** `PointerCaptureLost` is a direct event, but Avalonia raises it on every element the capture leaves, up to the common ancestor with the new capture. The attached control therefore hears it exactly when capture leaves its subtree, and capture moving to a descendant (a `Button` capturing its own press) does not end the press. Reason: a press whose release went elsewhere must not start a drag later. Rejected: subscribing to the captured element at press time, which changes as later handlers capture.
+- **Drag failures are logged, not rethrown.** The moved handler catches exceptions from the drag, logs them at Error under the log area `DragDrop`, and stops tracking the press. Reason: an exception escaping an `async void` handler terminates the app, and on Win32 the original exception has already been reduced to `E_FAIL`. Rejected: rethrowing (crashes the app); a public `DragFailed` event (no consumer has asked; backlog).
 - **Routing options are settable only while detached.** `Routing` and `HandledEventsToo` are read when `Attach` subscribes, so a later change would silently do nothing. Throwing makes the mistake visible, and XAML sets both before the attached property attaches the operation. Rejected: a protected constructor parameter (XAML users could not change the routing of a built-in operation); re-subscribing on change (state for a case nobody needs).
 
 ## Non-goals
@@ -144,4 +147,3 @@ depends:
 
 ## Open items
 
-- Exceptions during a drag crash the app through the `async void` handler (Threading and lifetime). Addressed by [changes/correctness-fixes.md](../../changes/correctness-fixes.md).
