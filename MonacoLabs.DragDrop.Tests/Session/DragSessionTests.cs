@@ -289,6 +289,57 @@ public class DragSessionTests
         Assert.Empty(operation.Outside);
     }
 
+    [AvaloniaFact]
+    public void AWindowThatAllowsDropsItselfStillHasAreasOutsideAnyTarget()
+    {
+        var operation = new OutsideRecordingDragOperation { Payload = "A", RemoveOnDropOutside = true };
+        var scene = Scene.Show(operation);
+        AvaDragDrop.SetAllowDrop(scene.Window, true);
+        using var effects = new ReportedEffects(scene.Window);
+
+        using (var drag = HeldMouseDrag.Start(scene.Window, scene.InSource, scene.OnBackground))
+        {
+            drag.MoveTo(scene.OnBackground);
+            Assert.Equal(DragDropEffects.Move, effects.Last);
+            Assert.Equal([":remove"], EffectClasses(scene.Preview!));
+            drag.Release();
+        }
+
+        Assert.Single(operation.Outside);
+        Assert.Null(operation.Payload);
+    }
+
+    [AvaloniaFact]
+    public void AnAreaWhoseDragEventsTheAppHandlesIsNotOutsideAnyTarget()
+    {
+        var operation = new OutsideRecordingDragOperation { Payload = "A", AllowedEffects = DragDropEffects.Copy | DragDropEffects.Move, RemoveOnDropOutside = true };
+        var scene = Scene.Show(operation);
+        AvaDragDrop.SetAllowDrop(scene.Window, true);
+        var appDrops = 0;
+        scene.Window.AddHandler(AvaDragDrop.DragEnterEvent, AcceptAsCopy);
+        scene.Window.AddHandler(AvaDragDrop.DragOverEvent, AcceptAsCopy);
+        scene.Window.AddHandler(AvaDragDrop.DropEvent, (s, e) => { appDrops++; AcceptAsCopy(s, e); });
+        using var effects = new ReportedEffects(scene.Window);
+
+        using (var drag = HeldMouseDrag.Start(scene.Window, scene.InSource, scene.OnBackground))
+        {
+            drag.MoveTo(scene.OnBackground);
+            Assert.Equal(DragDropEffects.Copy, effects.Last);
+            Assert.Equal([":copy"], EffectClasses(scene.Preview!));
+            drag.Release();
+        }
+
+        Assert.Equal(1, appDrops);
+        Assert.Empty(operation.Outside);
+        Assert.Equal("A", operation.Payload);
+
+        static void AcceptAsCopy(object? sender, DragEventArgs e)
+        {
+            e.DragEffects = DragDropEffects.Copy;
+            e.Handled = true;
+        }
+    }
+
     [AvaloniaTheory]
     [InlineData(Outcome.Cancel)]
     [InlineData(Outcome.DropOutsideTheWindow)]

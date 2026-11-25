@@ -55,10 +55,10 @@ One internal `DragSession` exists per drag, created by the drag source (DD-DRAG)
 
 - **DD-SESSION-009** — When a preview is shown or `RemoveOnDropOutside` is true, and the window does not already set `AllowDrop`, the session shall set it for the drag's duration and clear it afterwards.
   - Tests: `DragSessionTests.TheSessionAllowsDropsOnTheWindowOnlyForTheDrag`, `DragSessionTests.AWindowThatAlreadyAllowsDropsKeepsIt`
-- **DD-SESSION-010** — While the pointer is over a part of the window where no element up to the window sets `AllowDrop` explicitly, and the session set the window's `AllowDrop`, the session shall report effect None, or, when `RemoveOnDropOutside` is true, Move if allowed, else Copy, else Link.
-  - Tests: `DragSessionTests.WhereNothingAllowsDropsTheSessionReportsNoneOrTheRemoveEffect`, `DragSessionTests.OverAnElementThatAllowsDropsTheSessionLeavesTheEffectAlone`
+- **DD-SESSION-010** — While the pointer is over a part of the window where no element below the window sets `AllowDrop` explicitly and no handler has marked the drag event handled, the session shall report effect None, or, when `RemoveOnDropOutside` is true, Move if allowed, else Copy, else Link. This holds whether the session or the app set the window's `AllowDrop`.
+  - Tests: `DragSessionTests.WhereNothingAllowsDropsTheSessionReportsNoneOrTheRemoveEffect`, `DragSessionTests.OverAnElementThatAllowsDropsTheSessionLeavesTheEffectAlone`, `DragSessionTests.AWindowThatAllowsDropsItselfStillHasAreasOutsideAnyTarget`, `DragSessionTests.AnAreaWhoseDragEventsTheAppHandlesIsNotOutsideAnyTarget`
 - **DD-SESSION-011** — When the drag is dropped on such a part of the window and `RemoveOnDropOutside` is true, the session shall report the drop as outside any target (DD-DRAG-021).
-  - Tests: `DragSessionTests.ADropWhereNothingAllowsDropsIsOutsideAnyTargetWithRemoveOnDropOutside`, `DragSessionTests.ADropOnATargetIsNotOutside`
+  - Tests: `DragSessionTests.ADropWhereNothingAllowsDropsIsOutsideAnyTargetWithRemoveOnDropOutside`, `DragSessionTests.ADropOnATargetIsNotOutside`, `DragSessionTests.AWindowThatAllowsDropsItselfStillHasAreasOutsideAnyTarget`, `DragSessionTests.AnAreaWhoseDragEventsTheAppHandlesIsNotOutsideAnyTarget`
 - **DD-SESSION-012** — Drops outside the window and canceled drags shall never count as outside any target.
   - Tests: `DragSessionTests.ACanceledDragOrADropOutsideTheWindowIsNeverOutsideAnyTarget`
 - **DD-SESSION-013** — Dropping an order slot's item on the window background shall clear the slot, and dropping it on the desktop or pressing Esc shall not.
@@ -77,7 +77,7 @@ One internal `DragSession` exists per drag, created by the drag source (DD-DRAG)
 
 ## Edge cases
 
-- When the app already sets `AllowDrop` on the window, the session does not inject it and treats nothing as outside a target (DD-SESSION-010), so `RemoveOnDropOutside` never removes and the preview never shows `:remove`.
+- When the app sets `AllowDrop` on the window to accept drops there, its window handlers must mark the DragEnter, DragOver and Drop events handled. Otherwise the session treats the area as outside any target (DD-SESSION-010): it overrides the app's effect, and with `RemoveOnDropOutside` a drop there removes the payload.
 - A drag visual with no adorner layer (not in a visual tree with one) gets no preview, but still gets `:dragging`.
 - The preview lives only in the source window. Over other windows and other applications, only the platform cursor shows.
 - The preview's snapshot is static: changes to the drag visual during the drag do not appear.
@@ -99,6 +99,7 @@ One internal `DragSession` exists per drag, created by the drag source (DD-DRAG)
 - **Removing on drop outside is limited to the source window.** Reason: outside the window the library cannot tell a drop on the desktop from a cancel (Platform behavior), and removing on cancel would lose data.
 - **The preview owns its snapshot.** `DragPreviewAdorner` implements `IDisposable` and disposes its bitmap. Reason: the adorner creates the bitmap in `Create`, so it is the natural owner, and `IDisposable` tells other callers of `Create` to release it. Rejected: an internal release method called only by the session, which leaks for any other caller of the public `Create`.
 - **The session only injects `AllowDrop` when the window lacks it.** Reason: changing an app's own `AllowDrop` value would change which drops the app accepts.
+- **An unhandled drag event marks an area as outside any target, even when the app owns the window's `AllowDrop`.** The session's window handlers are added when the drag starts, so they run after the app's own handlers and see whether one handled the event. Reason: without this, setting `AllowDrop` on the window silently disabled `RemoveOnDropOutside` and `:remove`. Rejected: never treating an area as outside when the app owns `AllowDrop` (the old behavior), and reading the app's effect, which can't tell an accepting handler from no handler because Avalonia starts each event with the allowed effects.
 
 ## Non-goals
 
@@ -107,4 +108,4 @@ One internal `DragSession` exists per drag, created by the drag source (DD-DRAG)
 
 ## Open items
 
-- An app that sets `AllowDrop` on its window silently disables `RemoveOnDropOutside` (Edge cases). Logged in the backlog.
+- None.

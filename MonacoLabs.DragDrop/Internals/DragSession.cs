@@ -92,11 +92,13 @@ internal sealed class DragSession : IDisposable
 
     /// <summary>
     /// Rejects drops over areas without a drop target, or accepts them when tracking drops so the platform raises Drop there.
+    /// An area has no drop target when no element below the window sets <c>AllowDrop</c> and no handler has handled the event.
     /// Returns whether the pointer is over such an area.
     /// </summary>
     private bool ApplyEffectOutsideTargets(DragEventArgs e)
     {
-        if (!_injectedAllowDrop || AllowsDropExplicitly(e.Source as Visual))
+        // The session's window handlers are added when the drag starts, so they run after the app's own window handlers
+        if (e.Handled || AllowsDropExplicitly(e.Source as Visual))
             return false;
 
         // Win32 raises DragLeave instead of Drop when the last DragOver returned None
