@@ -46,6 +46,21 @@ public class DragGestureTests
         Assert.False(operation.HandledEventsToo);
     }
 
+    [AvaloniaTheory]
+    [InlineData(RoutingStrategies.Bubble, false, false)]
+    [InlineData(RoutingStrategies.Bubble, true, true)]
+    [InlineData(RoutingStrategies.Tunnel, false, true)]
+    public void RoutingDecidesWhetherAPressAChildHandlesStartsADrag(RoutingStrategies routing, bool handledEventsToo, bool starts)
+    {
+        var child = new Border { Background = Brushes.Green, Width = 40, Height = 40 };
+        child.PointerPressed += (_, e) => e.Handled = true;
+        var (window, _, target, _, drop) = Show(new ItemDragOperation { Payload = "A", Routing = routing, HandledEventsToo = handledEventsToo }, child);
+
+        window.MouseDrag(window.PointIn(child), window.PointIn(target));
+
+        Assert.Equal(starts ? "A" : null, drop.PayloadTarget);
+    }
+
     [AvaloniaFact]
     public void AnOnPointerMovedOverrideCanAwaitBeforeCallingTheBase()
     {

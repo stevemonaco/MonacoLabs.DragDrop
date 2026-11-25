@@ -9,9 +9,8 @@ Small fixes that need no design skip the proposal: take the item from [`docs/BAC
 | Proposal | Depends on |
 |---|---|
 | [test-suite.md](test-suite.md): introduce the xUnit v3 test suite | — |
-| [correctness-fixes.md](correctness-fixes.md): fix the bugs found in the pre-1.0 review | test-suite.md tasks 1–4 (landed) |
 
-Suggested order: correctness-fixes, then the rest of test-suite. Test-suite tasks 1–4 and the pre-1.0 API changes have landed, so the fixes and the remaining tests are written against the settled API.
+Test-suite tasks 1–4, the pre-1.0 API changes and the correctness fixes have landed, so the remaining tests are written against the settled API.
 
 ## Format
 

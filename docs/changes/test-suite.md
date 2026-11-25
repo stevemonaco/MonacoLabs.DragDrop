@@ -2,7 +2,7 @@
 
 ## Why
 
-The library is approaching a stable API, and nothing checks it automatically: there is no test project and no CI, and every requirement in `docs/specs/` is `untested`. The pre-1.0 review found eight bugs (see [correctness-fixes.md](correctness-fixes.md)), all of them reachable only through specific gestures that nobody re-checks by hand after each change. Before the API settles and the bugs are fixed, the library needs a suite that pins the specified behavior, lets each fix start from a failing test, and keeps the specs honest through their `Tests:` lines.
+The library is approaching a stable API, and nothing checks it automatically: there is no test project and no CI, and every requirement in `docs/specs/` is `untested`. The pre-1.0 review found eight bugs (since fixed by the correctness-fixes change), all of them reachable only through specific gestures that nobody re-checks by hand after each change. Before the API settles and the bugs are fixed, the library needs a suite that pins the specified behavior, lets each fix start from a failing test, and keeps the specs honest through their `Tests:` lines.
 
 ## What
 
@@ -23,7 +23,7 @@ A new test project, `MonacoLabs.DragDrop.Tests/`, built on xUnit v3 and Avalonia
 - `window.MouseDrag(from, to or path, modifiers)`: presses at a source point, moves through the given points with the modifiers held, and releases on the last point. It returns once the drag has ended and the drag source's code after the platform drag has run (the in-process loop completes inside `MouseUp`). It always releases the mouse, because an in-process drag that never sees `MouseUp` never ends.
 - `TestDispatcher.PumpUntil(condition, timeout)`: an async loop of `RunJobs()` and short `Task.Delay`s until a condition holds, for timers. It throws `TimeoutException` naming the condition.
 
-**What does not change.** No public API, and no behavior: every requirement keeps its wording. The library gains an `InternalsVisibleTo` for the test assembly and an internal `DragOperationBase.CreateDataTransfer`, which its own drags use. Requirements that [correctness-fixes.md](correctness-fixes.md) changes are not pinned here; that proposal writes its tests. The pre-1.0 API changes have landed, so tasks 5–8 test the settled API. They already added several of the classes below (`WiringTests`, `DragGestureTests`, `DropTargetTests`, `CollectionDragTests`, `CollectionDropTests`, `TreeDragTests`, `TreeDropTests`, `DropAdornerTests`, `EndToEndTests`); tasks 5–8 extend them and skip the requirements those already cite.
+**What does not change.** No public API, and no behavior: every requirement keeps its wording. The library gains an `InternalsVisibleTo` for the test assembly and an internal `DragOperationBase.CreateDataTransfer`, which its own drags use. Requirements that the correctness fixes changed are not pinned here; that change wrote their tests. The pre-1.0 API changes have landed, so tasks 5–8 test the settled API. They already added several of the classes below (`WiringTests`, `DragGestureTests`, `DropTargetTests`, `CollectionDragTests`, `CollectionDropTests`, `TreeDragTests`, `TreeDropTests`, `DropAdornerTests`, `EndToEndTests`); tasks 5–8 extend them and skip the requirements those already cite.
 
 ## Decisions
 
@@ -73,7 +73,7 @@ A new test project, `MonacoLabs.DragDrop.Tests/`, built on xUnit v3 and Avalonia
    Verify: `dotnet test --project MonacoLabs.DragDrop.Tests` runs one `[Fact]` and one `[AvaloniaFact]` that shows a window with a `ListBox` and finds its containers.
 3. **Extract pure logic and unit-test it.** Move effect resolution, the collection removal index and the auto-scroll step into internal static helpers called by the operations. Tests:
    - `DropEffectResolverTests`: DD-EFFECTS-001 to 007, as theories over allowed sets × modifiers × in-process × macOS.
-   - `CollectionRemovalTests`: DD-COLLECTION-007 to 009 and 011, excluding the behavior correctness-fixes changes.
+   - `CollectionRemovalTests`: DD-COLLECTION-007 to 009 and 011, excluding the behavior the correctness fixes changed.
    - `AutoScrollStepTests`: DD-COLLECTION-033 to 035.
    - `ThrowIfTests`.
    - `InteractionIdTests`: DD-PLATFORM-001, DD-TRANSFER-001.
@@ -107,7 +107,7 @@ A new test project, `MonacoLabs.DragDrop.Tests/`, built on xUnit v3 and Avalonia
 
    Verify: it passes, and fails on a deliberately broken citation (then reverted).
 10. **CI.** Add `.github/workflows/ci.yml` on push and pull request, with `windows-latest` and `ubuntu-latest`. It runs `actions/setup-dotnet` from `global.json`, builds the solution, runs `dotnet test` with results uploaded on failure, and caches NuGet keyed on `Directory.Packages.props`. Verify: a branch push goes green on both legs.
-11. **Docs.** Make the ARCHITECTURE §3, specs README and CLAUDE.md edits listed above. Verify: `SpecTests` passes, and every non-manual requirement outside those correctness-fixes changes cites a test or says why it is `untested` in its spec's Open items.
+11. **Docs.** Make the ARCHITECTURE §3, specs README and CLAUDE.md edits listed above. Verify: `SpecTests` passes, and every non-manual requirement outside those the correctness fixes changed cites a test or says why it is `untested` in its spec's Open items.
 12. **Backlog.** Add what this change leaves out: code coverage reporting (`Microsoft.Testing.Extensions.CodeCoverage`), pixel tests for the adorners and preview, and a macOS CI leg for DD-EFFECTS-005.
 
 ## Open questions

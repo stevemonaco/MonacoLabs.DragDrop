@@ -28,7 +28,7 @@ depends:
 ### Subscribing
 
 - **DD-DRAG-001** — When attached, the drag source shall handle the control's pointer pressed, moved and released events with the strategy in `Routing`, including handled events when `HandledEventsToo` is true, and its pointer capture lost event.
-  - Tests: untested
+  - Tests: `DragGestureTests.RoutingDecidesWhetherAPressAChildHandlesStartsADrag`, `DragGestureTests.LosingCaptureEndsTheTrackedPress`
 - **DD-DRAG-002** — When detached, the drag source shall remove those handlers.
   - Tests: untested
 - **DD-DRAG-003** (inherited) — When `Routing` and `HandledEventsToo` are not set, the drag source shall use bubbling routing and ignore handled events.

@@ -4,7 +4,7 @@ The single list of work not done in MonacoLabs.DragDrop: known bugs, gaps, check
 Small items are taken straight from here and fixed with their spec updated. Larger ones become a change proposal in `docs/changes/` first (see [docs/changes/README.md](changes/README.md)).
 When an item is closed, its line is deleted.
 
-In progress elsewhere: the review bugs in [changes/correctness-fixes.md](changes/correctness-fixes.md), and the test suite in [changes/test-suite.md](changes/test-suite.md).
+In progress elsewhere: the test suite in [changes/test-suite.md](changes/test-suite.md).
 
 ## Bugs and gaps
 
@@ -16,8 +16,8 @@ In progress elsewhere: the review bugs in [changes/correctness-fixes.md](changes
 - [DD-DRAG] A press whose payload resolves to null stays tracked and re-resolves the payload on every move until release. Reset the press instead.
 - [DD-COLLECTION] Insertion and removal indexes come from item containers, so a `PayloadTarget` that differs from the displayed order (a filtered or sorted view over it) inserts at the wrong position.
 - [DD-COLLECTION] The auto-scroll `ScrollViewer` is cached for the operation's lifetime and is not refreshed when the control is re-templated or detached.
-- [DD-DROP] Consider consulting `PayloadCommand.CanExecute` during DragOver, so a drop the command will refuse shows None instead of failing on release (see correctness-fixes, "A drop that does nothing reports None").
-- [DD-DRAG] Consider a public `DragFailed` event alongside the logging that correctness-fixes adds.
+- [DD-DROP] Consider consulting `PayloadCommand.CanExecute` during DragOver, so a drop the command will refuse shows None instead of failing on release (see DD-COLLECTION, "A drop that does nothing reports None").
+- [DD-DRAG] Consider a public `DragFailed` event alongside the drag-failure logging (DD-DRAG-030).
 - [DD-COLLECTION] Check whether `CollectionDragOperation` still needs `HandledEventsToo`. With tunneling it sees a press before `ListBoxItem` handles it, and `CollectionDragTests.PressesOnAListBoxItemReachTheOperation` passes with it off; moves and releases may still need it.
 
 ## Docs and hygiene
@@ -28,7 +28,7 @@ In progress elsewhere: the review bugs in [changes/correctness-fixes.md](changes
 - [DD-TRANSFER] Cache `DataFormat` instances per interaction id instead of creating one per id on every DragOver.
 - [DD-WIRING] Remove the `Guid` and `ComVisible` assembly attributes.
 - Enable `GenerateDocumentationFile` and fix the resulting missing-doc warnings.
-- Add `Microsoft.CodeAnalysis.PublicApiAnalyzers` with `PublicAPI.Shipped.txt`/`Unshipped.txt`. The pre-1.0 API changes have landed; the drop-side redesign (Bugs and gaps) and correctness-fixes still change the surface, so their entries start in `Unshipped.txt`.
+- Add `Microsoft.CodeAnalysis.PublicApiAnalyzers` with `PublicAPI.Shipped.txt`/`Unshipped.txt`. The pre-1.0 API changes have landed; the drop-side redesign (Bugs and gaps) still changes the surface, so its entries start in `Unshipped.txt`.
 - Add package metadata (description, license expression, repository URL, readme, tags), SourceLink, and `ContinuousIntegrationBuild` under CI.
 - Add an `.editorconfig` with the repo's formatting rules.
 

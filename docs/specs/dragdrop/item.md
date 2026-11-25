@@ -83,4 +83,4 @@ depends:
 
 ## Open items
 
-- A collection drag dropped on an `ItemDropOperation` with Move leaves the item in the source list; that is a DD-COLLECTION issue, addressed by [changes/correctness-fixes.md](../../changes/correctness-fixes.md).
+- None.
