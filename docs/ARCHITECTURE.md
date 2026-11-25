@@ -59,9 +59,25 @@ All derive from `DragOperationBase` / `DropOperationBase` in `MonacoLabs.DragDro
 
 ## 3. Testing strategy
 
-There are no automated tests yet; every spec requirement is `untested`. The plan is [changes/test-suite.md](changes/test-suite.md): an xUnit v3 project running on Avalonia's headless platform, with pure logic extracted into internal helpers so it can be tested without a window. Once it lands, this section describes the layers and the test conventions.
+`MonacoLabs.DragDrop.Tests` is an xUnit v3 project on Avalonia's headless platform (`Avalonia.Headless.XUnit`, which pins `xunit.v3` to 3.2.2). CI runs it on Windows and Linux. Every spec requirement cites the tests that pin it in its `Tests:` line, or says why it has none.
 
-Behavior that needs the real OS (OLE drags with Explorer and other apps, drops outside the window, render scaling) stays manual. Each such check is a `manual —` requirement in its spec and a line in the backlog's manual checks.
+**Layers.**
+
+1. **Pure unit tests** (`[Fact]`/`[Theory]`) for the logic extracted into internal static helpers in `Internals/`: effect resolution, the collection removal index, the auto-scroll step, `ThrowIf` and the interaction-id format mapping. They need no window.
+2. **Headless component tests** (`[AvaloniaFact]`) for each operation, adorner and the drag session, inside a real `Window`. Drop targets get drag events raised on the window as if from another app (`SimulateDrag`); drag sources get synthetic mouse input.
+3. **End-to-end tests**, where synthetic mouse input drags from a real source into a real target. Headless `DoDragDropAsync` is Avalonia's in-process drag driven by that input, so the real `DataTransfer`, drag session and `DropCompleted` run with nothing in the library replaced. A drag can be held between moves to look at it in flight.
+
+**Test app.** `TestApp` adds the Fluent theme, without which `ListBox` and `TreeView` have no containers, and renders with Skia (`UseHeadlessDrawing = false`), so preview snapshots and the few pixel checks work.
+
+**Conventions.**
+
+- Test methods read as behaviors (`DroppingInTheTopHalfInsertsBeforeTheItem`) and are cited from the specs in the same change.
+- Item templates use fixed sizes, so hover zones and indexes do not depend on the machine's fonts. This is what lets CI run on Linux.
+- Headless `DispatcherTimer`s run on the real clock and fire only while the test awaits, so timer tests (hover expand, auto-scroll, the adorner fade) are async and use short intervals.
+- Adorners are tested through pseudo-classes, `IsAttached` and visibility. Pixels are read only where nothing else shows the behavior: whether the insertion line draws at all, its thickness and marker, and that it is not clipped.
+- The helpers live in `Infrastructure/`; CLAUDE.md lists them.
+
+**Manual checks.** Behavior that needs the real OS stays manual: OLE drags with Explorer and other apps, drops outside the window on Win32, and render scaling above 100%. Each is a `manual —` requirement in its spec and a line in the backlog's manual checks. The headless drag does not reproduce Win32's DragLeave-instead-of-Drop after a None DragOver, so the tests assert the non-None effect that prevents it (DD-SESSION-010).
 
 ## 4. Project-wide decisions
 
