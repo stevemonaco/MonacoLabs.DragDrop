@@ -208,6 +208,7 @@ public class CollectionDragTests
 
         window.MouseDrag(window.PointIn(list.ContainerFromIndex(0)!), window.PointIn(target));
 
+        Assert.NotNull(dragging);
         Assert.Equal(["a", "c"], dragging);
         Assert.DoesNotContain(list.GetRealizedContainers(), x => x.Classes.Contains(":dragging"));
     }
