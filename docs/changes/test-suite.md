@@ -23,7 +23,7 @@ A new test project, `MonacoLabs.DragDrop.Tests/`, built on xUnit v3 and Avalonia
 - `window.MouseDrag(from, to or path, modifiers)`: presses at a source point, moves through the given points with the modifiers held, and releases on the last point. It returns once the drag has ended and the drag source's code after the platform drag has run (the in-process loop completes inside `MouseUp`). It always releases the mouse, because an in-process drag that never sees `MouseUp` never ends.
 - `TestDispatcher.PumpUntil(condition, timeout)`: an async loop of `RunJobs()` and short `Task.Delay`s until a condition holds, for timers. It throws `TimeoutException` naming the condition.
 
-**What does not change.** No public API, and no behavior: every requirement keeps its wording. The library gains an `InternalsVisibleTo` for the test assembly and an internal `DragOperationBase.CreateDataTransfer`, which its own drags use. Requirements that [correctness-fixes.md](correctness-fixes.md) or [api-design.md](api-design.md) changes are not pinned here; those proposals write their tests. Tasks 5–8 are best done after api-design lands, so they test the settled API (see the order in [README.md](README.md)).
+**What does not change.** No public API, and no behavior: every requirement keeps its wording. The library gains an `InternalsVisibleTo` for the test assembly and an internal `DragOperationBase.CreateDataTransfer`, which its own drags use. Requirements that [correctness-fixes.md](correctness-fixes.md) changes are not pinned here; that proposal writes its tests. The pre-1.0 API changes have landed, so tasks 5–8 test the settled API. They already added several of the classes below (`WiringTests`, `DragGestureTests`, `DropTargetTests`, `CollectionDragTests`, `CollectionDropTests`, `TreeDragTests`, `TreeDropTests`, `DropAdornerTests`, `EndToEndTests`); tasks 5–8 extend them and skip the requirements those already cite.
 
 ## Decisions
 
@@ -51,7 +51,7 @@ A new test project, `MonacoLabs.DragDrop.Tests/`, built on xUnit v3 and Avalonia
 
 **`docs/ARCHITECTURE.md` §3** is rewritten to describe the four layers, the test app, the helpers, the fixed-size rule and the manual checks that remain.
 
-**`CLAUDE.md`**: "There are no tests, CI, or lint/format configs" is replaced; Commands gains `dotnet test --project MonacoLabs.DragDrop.Tests`; a short testing paragraph names the helpers, says drags run for real through `MouseDrag`, and warns that headless timers need an async wait.
+**`CLAUDE.md`**: "There are no tests, CI, or lint/format configs" is replaced; Commands gains `dotnet test --project MonacoLabs.DragDrop.Tests`; a short testing paragraph names the helpers, says drags run for real through `MouseDrag`, and warns that headless timers need an async wait. Done early, after the pre-1.0 API changes, except a CI mention, which task 10 adds; task 11 still makes the ARCHITECTURE §3 and specs README edits.
 
 ## Tasks
 

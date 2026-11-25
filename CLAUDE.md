@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-MonacoLabs.DragDrop is a WIP/prototype MVVM-friendly drag-and-drop library for Avalonia 12, plus a demo app (`DragDropSample`) that exercises it. There are no tests, CI, or lint/format configs yet ([docs/changes/test-suite.md](docs/changes/test-suite.md) plans them).
+MonacoLabs.DragDrop is a WIP/prototype MVVM-friendly drag-and-drop library for Avalonia 12, plus a demo app (`DragDropSample`) that exercises it, and a headless xUnit v3 test project (`MonacoLabs.DragDrop.Tests`). There is no CI or lint/format config yet ([docs/changes/test-suite.md](docs/changes/test-suite.md) plans CI).
 
 ## Docs
 
@@ -13,7 +13,7 @@ MonacoLabs.DragDrop is a WIP/prototype MVVM-friendly drag-and-drop library for A
 | `docs/ARCHITECTURE.md` | Goals, architecture map, testing strategy, project-wide decisions, sample |
 | `docs/specs/dragdrop/` | Feature specs, the source of truth for behavior; format in `docs/specs/README.md`, index in `index.md` |
 | `docs/changes/` | Change proposals for work in progress |
-| `docs/BACKLOG.md` | Open work: API design items, bugs, docs and hygiene, manual checks |
+| `docs/BACKLOG.md` | Open work: bugs and gaps, docs and hygiene, manual checks, candidates |
 
 **Specs:** before changing a feature's behavior, read its spec (and the specs in its `depends`), and update its requirements and `Tests:` lines in the same change. A change that diverges from its spec without updating it is incomplete. Design decisions and their reasons live in the spec's Decisions section, or ARCHITECTURE §4 when project-wide. New work that needs design starts as a proposal in `docs/changes/`; small fixes come straight from the backlog.
 
@@ -22,11 +22,21 @@ MonacoLabs.DragDrop is a WIP/prototype MVVM-friendly drag-and-drop library for A
 ```powershell
 dotnet build MonacoLabs.DragDrop.slnx
 dotnet run --project DragDropSample
+dotnet test --project MonacoLabs.DragDrop.Tests
 ```
 
-- Targets `net10.0`; the solution is a `.slnx` file.
+- Targets `net10.0`; the solution is a `.slnx` file. `global.json` pins SDK 10.0 with `rollForward: latestMajor` and selects the Microsoft Testing Platform runner for `dotnet test`.
+- `xunit.v3` is pinned to 3.2.2: `Avalonia.Headless.XUnit` 12.2 fails discovery of every `[AvaloniaFact]` on 4.x.
 - Package versions are centrally managed in `Directory.Packages.props`. Add `<PackageVersion>` there and a version-less `<PackageReference>` in the csproj.
 - Debug builds of the sample reference `AvaloniaUI.DiagnosticsSupport` and call `WithDeveloperTools()`, so the Avalonia DevTools MCP (`attach-to-app`) can inspect the running demo's visual tree, adorners, and pseudo-classes.
+
+## Tests (`MonacoLabs.DragDrop.Tests`)
+
+- Pure helpers in the library's `Internals/` (effect resolution, removal index, auto-scroll step) get plain `[Fact]`/`[Theory]` tests through `InternalsVisibleTo`. Anything with controls uses `[AvaloniaFact]`, which runs on the headless UI thread with Skia and the Fluent theme (`TestApp`).
+- Helpers in `Infrastructure/`: `TestWindow.Show(content)` and `window.PointIn(visual)`; `DragData.For(operation, payload)` builds the `DataTransfer` an operation would start with; `window.SimulateDrag(data)` raises drag events as if from another app and returns the effect the app reports; `window.MouseDrag(from, to)` runs a real drag, because headless `DoDragDropAsync` is Avalonia's in-process drag driven by mouse input; `TestDispatcher.PumpUntil(condition)`; `RecordingDropOperation`; `RelayCommand`.
+- Headless `DispatcherTimer`s fire only while the test awaits (`PumpUntil`, `await Task.Delay`), never from `Dispatcher.UIThread.RunJobs()`.
+- A control that handles its own presses (`TextBox`, `Button`, `Slider`) hides them from a bubbling drag source, so press-filter tests use `Routing = Tunnel`. A `TextBlock` without a `Background` is hit-testable only on its glyphs. Item templates use fixed sizes so hover zones don't depend on fonts.
+- Test methods read as behaviors and are cited from the specs' `Tests:` lines in the same change.
 
 ## Library architecture (`MonacoLabs.DragDrop`)
 
@@ -50,7 +60,7 @@ Avalonia's Win32 COM layer swallows exceptions thrown from drop handlers (DragEn
 
 ### Operation hierarchy (`Operations/`)
 - `ItemDragOperation` / `ItemDropOperation`: single-value transfer (`PayloadTarget` is replaced). `ItemDragOperation.Payload` binds TwoWay by default. When it is set and the effect is Move, `DropCompleted` clears it, or with `SwapOnDrop` assigns `DropInfo.ReplacedPayload` (the target's previous value). Self-drops are blocked by `IsDropTargetFor`, otherwise a slot dropped on itself would be cleared.
-- `CollectionDragOperation` (derives from `DragOperationBase`, not `ItemDragOperation`) / `CollectionDropOperation`: `PayloadTarget` and `PayloadCollection` are `IList`s. The drop side computes `DropLocation` (`CollectionDropLocation`: collection, index, parent) from the hovered container and `HoveredOffset`, then inserts (`TransferPayloadIndexed`) or appends (`TransferPayload`). It only transfers when `TransfersPayload` (default: `PayloadTarget` is an `IList`). `DropLocation` falls back to the control's `ItemsSource`, so platform drops get an insertion index without a `PayloadTarget`. The drag side's `DropCompleted` then removes the original, shifting the index by +1 for same-collection moves where the source index is at or after the target. `CollectionDragOperation` uses `Tunnel` routing with `handledEventsToo` because `ListBoxItem` handles pointer presses for selection.
+- `CollectionDragOperation` (derives from `DragOperationBase`, not `ItemDragOperation`) / `CollectionDropOperation`: `PayloadTarget` and `PayloadCollection` are `IList`s. The drop side computes `DropLocation` (`CollectionDropLocation`: collection, index, parent) from the hovered container and `HoveredOffset`, then inserts (`TransferPayloadIndexed`) or appends (`TransferPayload`). It only transfers when `TransfersPayload` (default: `PayloadTarget` is an `IList`). `DropLocation` falls back to the control's `ItemsSource`, so platform drops get an insertion index without a `PayloadTarget`. The drag side's `DropCompleted` then removes the original, shifting the index by +1 for same-collection moves where the source index is at or after the target. `CollectionDragOperation` sets `Routing` to `Tunnel` and `HandledEventsToo` to true because `ListBoxItem` handles pointer presses for selection.
 - `CollectionDropOperation` drives everything from one `UpdateDrag` path (DragEnter and DragOver): hover container, offset, location, validation, adorners, pseudo-classes, and auto-scroll (`AutoScrollMargin`, a `DispatcherTimer` scrolling the first descendant `ScrollViewer`). `EndDrag` resets it on leave or drop.
 - `TreeDragOperation` / `TreeDropOperation`: the drag side infers `PayloadCollection` from the parent's `ItemsSource`. The drop side reads collections from the tree, so `PayloadTarget` is unused and it always transfers. Zones use the item's `PART_Header` (a `TreeViewItem`'s bounds include its children): top/bottom quarter is before/after, the middle is inside, but only if the container has an `IList` `ItemsSource`. "After" an expanded node with children inserts as its first child. `CanDropAtLocation` rejects drops into the dragged node's own subtree (it runs before `CanDrop`, so overrides can't skip it). Collapsed nodes expand after `HoverExpandDelay` over their middle.
 - A left press is tracked for a drag unless `CanDrag` is false, the press is ignored, or `RequiresDragHandle` is set and no ancestor up to `AttachedControl` has `DragDrop.IsDragHandle`. A press is ignored when, walking from the pressed element up to `AttachedControl`, the first element that decides ignores it: one with the `bool?` `DragDrop.IgnoresPress` set (true ignores, false allows), or else one `IsIgnoredPressSource` matches (by default `ScrollBar`, `Button` (e.g. the tree expander), `TextBox`, `Thumb`). If the pressed element's nearest `ISelectable` ancestor (up to `AttachedControl`) is unselected, the press stays unhandled so the item selects itself in the same gesture. `SelectingItemsControl.UpdateSelectionFromEvent` ignores handled events. Presses on a selected item are handled so an existing multi-selection survives. On an `ItemsControl`, `CollectionDragOperation` only starts a drag from a press inside an item container.
