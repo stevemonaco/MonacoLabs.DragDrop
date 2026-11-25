@@ -50,11 +50,11 @@ depends:
 - **DD-COLLECTION-002** — When attached to an `ItemsControl`, the drag operation shall track only presses inside an item container of that control.
   - Tests: `CollectionDragTests.PressesOutsideAnItemContainerAreNotTracked`
 - **DD-COLLECTION-003** — When a press is inside an item container, the dragged payload shall be that container's item, whatever `Payload` and the selection say.
-  - Tests: untested
+  - Tests: `CollectionDragTests.ThePayloadIsThePressedItemWhateverPayloadAndSelectionSay`
 - **DD-COLLECTION-004** — When a press is not inside an item container (the operation is attached to a non-items control), the drag operation shall resolve the payload as DD-DRAG-016 does.
-  - Tests: untested
+  - Tests: `CollectionDragTests.OnAControlThatIsNotAnItemsControlThePayloadResolvesAsUsual`
 - **DD-COLLECTION-005** — The drag visual (DD-SESSION) shall be the pressed item container when there is one, and the attached control otherwise.
-  - Tests: untested
+  - Tests: `CollectionDragTests.TheDragVisualIsThePressedContainer`, `CollectionDragTests.OnAControlThatIsNotAnItemsControlTheDragVisualIsTheControl`
 - **DD-COLLECTION-006** — The drag's `CollectionDragInfo` shall carry `PayloadCollection`, the pressed container, and the container's index in the attached control.
   - Tests: `CollectionDragTests.TheDragInfoCarriesTheCollectionTheContainerAndItsIndex`
 

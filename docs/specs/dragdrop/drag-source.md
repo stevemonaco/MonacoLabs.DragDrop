@@ -11,6 +11,7 @@ types:
   - DragOperationBase
 tests:
   - DragGestureTests
+  - CollectionDragTests
 depends:
   - DD-WIRING
   - DD-TRANSFER
@@ -30,28 +31,28 @@ depends:
 - **DD-DRAG-001** — When attached, the drag source shall handle the control's pointer pressed, moved and released events with the strategy in `Routing`, including handled events when `HandledEventsToo` is true, and its pointer capture lost event.
   - Tests: `DragGestureTests.RoutingDecidesWhetherAPressAChildHandlesStartsADrag`, `DragGestureTests.LosingCaptureEndsTheTrackedPress`
 - **DD-DRAG-002** — When detached, the drag source shall remove those handlers.
-  - Tests: untested
+  - Tests: `DragGestureTests.DetachingStopsTheSourceFromStartingDrags`
 - **DD-DRAG-003** (inherited) — When `Routing` and `HandledEventsToo` are not set, the drag source shall use bubbling routing and ignore handled events.
-  - Tests: untested
+  - Tests: `DragGestureTests.ByDefaultTheSourceBubblesAndIgnoresHandledPresses`, `DragGestureTests.RoutingDecidesWhetherAPressAChildHandlesStartsADrag`
 - **DD-DRAG-025** — When `Routing` or `HandledEventsToo` is set while the operation is attached, the drag source shall throw `InvalidOperationException`.
   - Tests: `DragGestureTests.SettingRoutingWhileAttachedThrows`, `DragGestureTests.RoutingCanBeSetWhileDetached`
 
 ### Tracking a press
 
 - **DD-DRAG-004** — When the left button is pressed on the attached control, the drag source shall track the press as a possible drag, unless one of DD-DRAG-005 to DD-DRAG-008 applies.
-  - Tests: untested
+  - Tests: `DragGestureTests.ALeftPressIsTrackedAndMarkedHandled`
 - **DD-DRAG-005** — While `CanDrag` is false, the drag source shall not track presses.
-  - Tests: untested
+  - Tests: `DragGestureTests.WhileCanDragIsFalsePressesAreNotTracked`
 - **DD-DRAG-006** — Walking from the pressed element up to the attached control, the drag source shall let the first element that decides choose whether the press is ignored, and shall not track an ignored press. An element decides when `DragDrop.IgnoresPress` is set on it (true ignores, false allows), or else when `IsIgnoredPressSource` is true for it (ignores). By default `IsIgnoredPressSource` is true for a `ScrollBar`, `Button`, `TextBox` or `Thumb`.
   - Tests: `DragGestureTests.AStyleCanIgnorePressesOnAControlType`, `DragGestureTests.IgnoresPressFalseLetsAnIgnoredControlStartDrags`, `DragGestureTests.TheElementNearestThePressDecides`, `DragGestureTests.PressesInsideATextBoxDoNotStartDrags`, `DragGestureTests.PressesOnASliderThumbDoNotStartDrags`, `DragGestureTests.ATextBoxInASelectedRowReceivesItsPress`, `DragGestureTests.OverridingIsIgnoredPressSourceAddsControls`, `DragGestureTests.ADragHandleInsideAButtonDoesNotStartADrag`
 - **DD-DRAG-007** — When `RequiresDragHandle` is true and neither the pressed element nor any ancestor up to the attached control has `DragDrop.IsDragHandle` set to true, the drag source shall not track the press.
-  - Tests: untested
+  - Tests: `DragGestureTests.WithRequiresDragHandleOnlyPressesInsideAHandleAreTracked`, `DragGestureTests.ADragHandleInsideAButtonDoesNotStartADrag`
 - **DD-DRAG-008** — When a press other than the left button arrives, the drag source shall ignore it.
-  - Tests: untested
+  - Tests: `DragGestureTests.ARightPressIsIgnored`
 - **DD-DRAG-009** — When the drag source tracks a press, it shall mark the press handled unless the nearest `ISelectable` at or above the pressed element (up to the attached control) is unselected, so an unselected item selects itself in the same gesture and an existing multiple selection survives a press on a selected item.
-  - Tests: untested
+  - Tests: `DragGestureTests.ALeftPressIsTrackedAndMarkedHandled`, `CollectionDragTests.PressingAnUnselectedItemSelectsItInTheSameGesture`, `CollectionDragTests.PressingASelectedItemKeepsTheMultipleSelection`
 - **DD-DRAG-010** — When the pointer is released, the drag source shall stop tracking the press.
-  - Tests: untested
+  - Tests: `DragGestureTests.ReleasingStopsTrackingThePress`
 - **DD-DRAG-028** — When the pointer moves while a press is tracked but the left button is no longer pressed, the drag source shall stop tracking the press and not start a drag.
   - Tests: `DragGestureTests.AMoveWithoutTheButtonPressedDoesNotStartADrag`
 - **DD-DRAG-029** — When the pointer capture leaves the attached control and its descendants while a press is tracked, the drag source shall stop tracking the press.
@@ -66,9 +67,9 @@ depends:
 - **DD-DRAG-013** — When a drag starts, the drag source shall stop tracking the press before the drag runs, so moves during the drag do not start another.
   - Tests: `DragGestureTests.ADragDoesNotStartTwiceFromOnePress`
 - **DD-DRAG-014** — The drag source shall start the platform drag with the stored press event, not the move that crossed the threshold.
-  - Tests: untested
+  - Tests: `DragGestureTests.ThePlatformDragStartsWithThePressNotTheMove`
 - **DD-DRAG-015** — The drag source shall offer `AllowedEffects` to the platform drag.
-  - Tests: untested
+  - Tests: `DragGestureTests.TheSourceOffersItsAllowedEffects`
 - **DD-DRAG-026** — The drag source's moved handler shall await `OnPointerMoved`, so an override can await before calling the base and the drag still starts.
   - Tests: `DragGestureTests.AnOnPointerMovedOverrideCanAwaitBeforeCallingTheBase`
 - **DD-DRAG-030** — When the platform drag, or an `OnPointerMoved` override, throws, the drag source shall log the exception at Error level under the `DragDrop` log area, stop tracking the press, and not let the exception reach the application.
@@ -77,13 +78,13 @@ depends:
 ### Payload
 
 - **DD-DRAG-016** — When `Payload` is set or bound, the drag source shall drag its value, even when that value is null; otherwise it shall drag the attached control's `DataContext`.
-  - Tests: untested
+  - Tests: `DragGestureTests.WithoutAPayloadTheDataContextIsDragged`, `DragGestureTests.ASetPayloadIsDraggedInsteadOfTheDataContext`, `DragGestureTests.ANullPayloadStartsNoDrag`
 - **DD-DRAG-017** — When the resolved payload is null, the drag source shall not start a drag.
-  - Tests: untested
+  - Tests: `DragGestureTests.ANullPayloadStartsNoDrag`
 - **DD-DRAG-018** — When `PlatformInteractionIds.Text` is among `InteractionIds`, the drag source shall add the text `ResolvePlatformText` returns, which by default is the payload itself when it is a string and otherwise its `ToString()`.
-  - Tests: untested
+  - Tests: `DragGestureTests.PlatformTextIsAStringPayloadOrThePayloadsText`
 - **DD-DRAG-019** — When `PlatformInteractionIds.Files` is among `InteractionIds`, the drag source shall add the storage item `ResolvePlatformFile` returns, which by default is the payload when it is an `IStorageItem` and nothing otherwise.
-  - Tests: untested
+  - Tests: `DragGestureTests.APlatformFileIsAStorageItemPayload`
 
 ### Completion
 
@@ -97,9 +98,9 @@ depends:
 - **DD-DRAG-022** (inherited) — When `DragThreshold` is not set, the threshold shall be 6 DIPs.
   - Tests: `DragGestureTests.TheThresholdDefaultsToSixDips`
 - **DD-DRAG-023** (inherited) — When `AllowedEffects` is not set, the drag source shall allow Move only.
-  - Tests: untested
+  - Tests: `DragGestureTests.AllowedEffectsDefaultsToMove`
 - **DD-DRAG-024** (inherited) — When `CanDrag` is not set, it shall be true; `RequiresDragHandle` and `RemoveOnDropOutside` shall be false; `ShowDragPreview` shall be true.
-  - Tests: untested
+  - Tests: `DragGestureTests.TheSwitchesDefaultToDraggableWithAPreview`
 - **DD-DRAG-027** (inherited) — When `DragDrop.IgnoresPress` is not set, it shall be null.
   - Tests: `DragGestureTests.IgnoresPressDefaultsToNull`
 
@@ -115,6 +116,7 @@ depends:
 - An explicit `DragDrop.IgnoresPress` of false does not reach past a nearer element that decides: a `Button` inside an element set to false still keeps its presses.
 - The ignore check runs before the drag-handle check, so a drag handle inside an ignored control (a handle placed in a `Button`) never starts a drag.
 - Ignored presses (DD-DRAG-005 to 008) are left unhandled, so the pressed element and its ancestors handle them as usual.
+- Releasing the button also releases the press's implicit pointer capture, so a release stops tracking through DD-DRAG-029 as well as DD-DRAG-010. An `OnPointerCaptureLost` override that skips the base still stops on release.
 
 ## Threading and lifetime
 
