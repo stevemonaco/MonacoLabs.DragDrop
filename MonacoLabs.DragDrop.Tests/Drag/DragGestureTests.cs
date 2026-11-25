@@ -9,6 +9,7 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Styling;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 using MonacoLabs.DragDrop.Abstractions;
 using Xunit;
@@ -84,6 +85,39 @@ public class DragGestureTests
         var press = window.PointIn(source);
 
         window.MouseDrag(press, press + new Point(7.4, 7.4));
+
+        Assert.Equal(0, operation.Starts);
+    }
+
+    [AvaloniaFact]
+    public void AMoveWithoutTheButtonPressedDoesNotStartADrag()
+    {
+        var (window, source, target, operation, _) = Show(new CountingDragOperation { Payload = "A" });
+        var press = window.PointIn(source);
+
+        window.MouseDown(press, MouseButton.Left);
+        window.MouseMove(window.PointIn(target));
+        window.MouseMove(window.PointIn(target) + new Point(5, 5), RawInputModifiers.LeftMouseButton);
+        window.MouseUp(window.PointIn(target), MouseButton.Left);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(0, operation.Starts);
+    }
+
+    [AvaloniaFact]
+    public void LosingCaptureEndsTheTrackedPress()
+    {
+        var (window, source, _, operation, _) = Show(new CountingDragOperation { Payload = "A" });
+        IPointer? pointer = null;
+        source.AddHandler(InputElement.PointerPressedEvent, (_, e) => pointer = e.Pointer, RoutingStrategies.Tunnel, handledEventsToo: true);
+        var withinSource = window.PointIn(source, new Point(5, 5));
+
+        window.MouseDown(window.PointIn(source), MouseButton.Left);
+        Assert.NotNull(pointer?.Captured);
+        pointer.Capture(null);
+        window.MouseMove(withinSource, RawInputModifiers.LeftMouseButton);
+        window.MouseUp(withinSource, MouseButton.Left);
+        Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(0, operation.Starts);
     }

@@ -70,6 +70,8 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
         control.AddHandler(InputElement.PointerPressedEvent, HandlePointerPressed, Routing, HandledEventsToo);
         control.AddHandler(InputElement.PointerMovedEvent, HandlePointerMoved, Routing, HandledEventsToo);
         control.AddHandler(InputElement.PointerReleasedEvent, HandlePointerReleased, Routing, HandledEventsToo);
+        // Direct, but raised on every element the capture leaves, so this fires when capture leaves the attached control's subtree
+        control.AddHandler(InputElement.PointerCaptureLostEvent, HandlePointerCaptureLost, RoutingStrategies.Direct);
     }
 
     protected virtual void UnsubscribeDragEvents(Control control)
@@ -77,11 +79,14 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
         control.RemoveHandler(InputElement.PointerPressedEvent, HandlePointerPressed);
         control.RemoveHandler(InputElement.PointerMovedEvent, HandlePointerMoved);
         control.RemoveHandler(InputElement.PointerReleasedEvent, HandlePointerReleased);
+        control.RemoveHandler(InputElement.PointerCaptureLostEvent, HandlePointerCaptureLost);
     }
 
     private void HandlePointerPressed(object? sender, PointerPressedEventArgs e) => OnPointerPressed(e);
 
     private void HandlePointerReleased(object? sender, PointerReleasedEventArgs e) => OnPointerReleased(e);
+
+    private void HandlePointerCaptureLost(object? sender, PointerCaptureLostEventArgs e) => OnPointerCaptureLost(e);
 
     private async void HandlePointerMoved(object? sender, PointerEventArgs e) => await OnPointerMoved(e);
 
@@ -154,7 +159,14 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
     /// <summary>
     /// Called when a pointer is released on the attached control. Stops tracking the press.
     /// </summary>
-    protected virtual void OnPointerReleased(PointerReleasedEventArgs e)
+    protected virtual void OnPointerReleased(PointerReleasedEventArgs e) => StopTrackingPress();
+
+    /// <summary>
+    /// Called when the pointer capture leaves the attached control and its descendants. Stops tracking the press, whose release may never arrive.
+    /// </summary>
+    protected virtual void OnPointerCaptureLost(PointerCaptureLostEventArgs e) => StopTrackingPress();
+
+    private void StopTrackingPress()
     {
         _trackedControl = null;
         _dragOrigin = null;
@@ -163,7 +175,7 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
 
     /// <summary>
     /// Called when a pointer moves over the attached control. Starts a drag once a tracked press has moved past <see cref="DragThreshold"/>,
-    /// and completes when that drag ends.
+    /// and completes when that drag ends. A move without the left button pressed stops tracking the press.
     /// </summary>
     protected virtual Task OnPointerMoved(PointerEventArgs e)
     {
@@ -171,6 +183,12 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
             return Task.CompletedTask;
 
         var local = e.GetCurrentPoint(AttachedControl);
+        if (!local.Properties.IsLeftButtonPressed)
+        {
+            StopTrackingPress();
+            return Task.CompletedTask;
+        }
+
         var delta = local.Position - _dragOrigin.Value;
         if (delta.X * delta.X + delta.Y * delta.Y < DragThreshold * DragThreshold)
             return Task.CompletedTask;
@@ -191,9 +209,7 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
         var metadata = CreateMetadata(pressedEventArgs, origin);
         metadata.Payload = payload;
 
-        _trackedControl = null;
-        _dragOrigin = null;
-        _pressedEventArgs = null;
+        StopTrackingPress();
 
         await DoDragDrop(pressedEventArgs, metadata, payload);
     }

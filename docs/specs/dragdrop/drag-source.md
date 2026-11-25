@@ -27,7 +27,7 @@ depends:
 
 ### Subscribing
 
-- **DD-DRAG-001** — When attached, the drag source shall handle the control's pointer pressed, moved and released events with the strategy in `Routing`, including handled events when `HandledEventsToo` is true.
+- **DD-DRAG-001** — When attached, the drag source shall handle the control's pointer pressed, moved and released events with the strategy in `Routing`, including handled events when `HandledEventsToo` is true, and its pointer capture lost event.
   - Tests: untested
 - **DD-DRAG-002** — When detached, the drag source shall remove those handlers.
   - Tests: untested
@@ -52,6 +52,10 @@ depends:
   - Tests: untested
 - **DD-DRAG-010** — When the pointer is released, the drag source shall stop tracking the press.
   - Tests: untested
+- **DD-DRAG-028** — When the pointer moves while a press is tracked but the left button is no longer pressed, the drag source shall stop tracking the press and not start a drag.
+  - Tests: `DragGestureTests.AMoveWithoutTheButtonPressedDoesNotStartADrag`
+- **DD-DRAG-029** — When the pointer capture leaves the attached control and its descendants while a press is tracked, the drag source shall stop tracking the press.
+  - Tests: `DragGestureTests.LosingCaptureEndsTheTrackedPress`
 
 ### Starting a drag
 
@@ -128,7 +132,8 @@ depends:
 - **Ignored presses are configured by a non-inherited attached property.** `DragDrop.IgnoresPress` is a `bool?` read during the walk, like `DragDrop.IsDragHandle`, and the nearest element with a value decides. Reason: apps add control types with a style and opt single elements out in XAML, without subclassing an operation, and the walk keeps the boundary at the attached control. Rejected: an inherited property, checked only on the pressed element. Avalonia does not inherit per-type default values, so the defaults would need app-wide styles that every consumer adds, or the library setting values on unrelated controls. Values inherited from above the attached control (a drag source inside a `Button` or an `Expander` header) would also ignore every press, unless the operation overwrote a local value on its control.
 - **An explicit null `Payload` means nothing to drag.** Reason: a bound slot that is empty (an empty order slot on the single-item page) must not fall back to its `DataContext` and drag the whole view model.
 - **Subclasses get hooks, not fields.** Every protected member is a virtual method or a read-only property with a documented meaning. Reason: protected fields freeze the implementation, and the former ones let a subclass leave the press-tracking state inconsistent. The press origin, their only subclass reader, is a parameter of `CreateMetadata`.
-- **Pointer hooks, not event handlers.** The subscribed handlers are private, and subclasses override `OnPointerPressed`, `OnPointerReleased` and a `Task`-returning `OnPointerMoved`. Reason: `Control_*` was designer-handler naming for a public extension point, `sender` is always the attached control, and a virtual `async void` forces overrides to be `async void` too, whose exceptions bypass the library's handling and crash the app. Rejected: keeping the handlers virtual and only renaming them (an override still decides whether the exception handling runs).
+- **Pointer hooks, not event handlers.** The subscribed handlers are private, and subclasses override `OnPointerPressed`, `OnPointerReleased`, `OnPointerCaptureLost` and a `Task`-returning `OnPointerMoved`. Reason: `Control_*` was designer-handler naming for a public extension point, `sender` is always the attached control, and a virtual `async void` forces overrides to be `async void` too, whose exceptions bypass the library's handling and crash the app. Rejected: keeping the handlers virtual and only renaming them (an override still decides whether the exception handling runs).
+- **Capture loss is watched on the attached control.** `PointerCaptureLost` is a direct event, but Avalonia raises it on every element the capture leaves, up to the common ancestor with the new capture. The attached control therefore hears it exactly when capture leaves its subtree, and capture moving to a descendant (a `Button` capturing its own press) does not end the press. Reason: a press whose release went elsewhere must not start a drag later. Rejected: subscribing to the captured element at press time, which changes as later handlers capture.
 - **Routing options are settable only while detached.** `Routing` and `HandledEventsToo` are read when `Attach` subscribes, so a later change would silently do nothing. Throwing makes the mistake visible, and XAML sets both before the attached property attaches the operation. Rejected: a protected constructor parameter (XAML users could not change the routing of a built-in operation); re-subscribing on change (state for a case nobody needs).
 
 ## Non-goals
@@ -139,5 +144,4 @@ depends:
 
 ## Open items
 
-- A pointer move with no button pressed can start a drag from a stale press, because moves don't check the button and `PointerCaptureLost` is not handled. Not yet reproduced. Addressed by [changes/correctness-fixes.md](../../changes/correctness-fixes.md).
 - Exceptions during a drag crash the app through the `async void` handler (Threading and lifetime). Addressed by [changes/correctness-fixes.md](../../changes/correctness-fixes.md).
