@@ -1,4 +1,3 @@
-using System.Reflection;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Layout;
@@ -9,16 +8,6 @@ namespace MonacoLabs.DragDrop.Tests;
 
 public class ItemDropTests
 {
-    [Fact]
-    public void ItemDropOperationAddsNothingToTheDropTarget()
-    {
-        const BindingFlags declared = BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
-
-        var members = typeof(ItemDropOperation).GetMembers(declared);
-
-        Assert.All(members, member => Assert.IsAssignableFrom<ConstructorInfo>(member));
-    }
-
     [AvaloniaFact]
     public void ASlotDroppedOnItselfKeepsItsValue()
     {

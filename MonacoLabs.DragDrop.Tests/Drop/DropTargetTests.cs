@@ -20,9 +20,7 @@ public class DropTargetTests
         operation.Attach(new Border());
 
         Assert.Throws<InvalidOperationException>(() => operation.HandledEventsToo = true);
-        Assert.Throws<InvalidOperationException>(() => operation.Routing = RoutingStrategies.Tunnel);
         Assert.False(operation.HandledEventsToo);
-        Assert.Equal(RoutingStrategies.Bubble, operation.Routing);
     }
 
     [AvaloniaFact]
@@ -48,18 +46,16 @@ public class DropTargetTests
         Assert.True(AvaDragDrop.GetAllowDrop(control));
     }
 
-    // Avalonia raises drag events as bubbling only, so a tunneling target never sees them
     [AvaloniaTheory]
-    [InlineData(RoutingStrategies.Bubble, false, false)]
-    [InlineData(RoutingStrategies.Bubble, true, true)]
-    [InlineData(RoutingStrategies.Tunnel, true, false)]
-    public void RoutingDecidesWhetherADropAChildHandlesReachesTheTarget(RoutingStrategies routing, bool handledEventsToo, bool reaches)
+    [InlineData(false, false)]
+    [InlineData(true, true)]
+    public void HandledEventsTooDecidesWhetherADropAChildHandlesReachesTheTarget(bool handledEventsToo, bool reaches)
     {
         var child = new Border { Background = Brushes.Green, Width = 40, Height = 40 };
         AvaDragDrop.SetAllowDrop(child, true);
         foreach (var routedEvent in new[] { AvaDragDrop.DragEnterEvent, AvaDragDrop.DragOverEvent, AvaDragDrop.DropEvent })
             child.AddHandler(routedEvent, (_, e) => e.Handled = true);
-        var operation = new ItemDropOperation { Routing = routing, HandledEventsToo = handledEventsToo };
+        var operation = new ItemDropOperation { HandledEventsToo = handledEventsToo };
         var (window, _) = Show(operation, child);
         using var drag = window.SimulateDrag(DragData.For(new ItemDragOperation(), "A"));
 
@@ -494,7 +490,8 @@ public class DropTargetTests
         DragDrop.SetDropOperation(target, null);
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(0, operation.Leaves);
+        // Once, from the detach
+        Assert.Equal(1, operation.Leaves);
     }
 
     [AvaloniaFact]
@@ -512,6 +509,96 @@ public class DropTargetTests
 
         Assert.DoesNotContain(":dropover", target.Classes);
         Assert.False(operation.DropAdorner.IsAttached);
+    }
+
+    [AvaloniaFact]
+    public void AValidDragIsMarkedHandled()
+    {
+        var operation = new RejectingDropOperation();
+        var (window, target) = Show(operation);
+        var handled = new List<bool>();
+        foreach (var routedEvent in new[] { AvaDragDrop.DragEnterEvent, AvaDragDrop.DragOverEvent, AvaDragDrop.DropEvent })
+            window.AddHandler(routedEvent, (_, e) => handled.Add(e.Handled), handledEventsToo: true);
+        using var drag = window.SimulateDrag(DragData.For(new ItemDragOperation(), "A"));
+
+        drag.Enter(window.PointIn(target));
+        drag.Over(window.PointIn(target));
+        operation.Message = "Not here";
+        drag.Over(window.PointIn(target));
+        operation.Message = null;
+        drag.Drop(window.PointIn(target));
+
+        Assert.Equal([true, true, false, true], handled);
+    }
+
+    [AvaloniaFact]
+    public void ADragThatStopsBeingMeantForTheTargetClearsTheHover()
+    {
+        var operation = new RejectingDropOperation { Message = "Not here" };
+        var (window, target) = Show(operation);
+        using var drag = window.SimulateDrag(DragData.For(new ItemDragOperation(), "A"));
+        drag.Enter(window.PointIn(target));
+        Assert.True(operation.DropAdorner!.IsAttached);
+
+        using var other = window.SimulateDrag(DragData.For(new ItemDragOperation { InteractionIds = ["other"] }, "A"));
+        Assert.Equal(DragDropEffects.None, other.Over(window.PointIn(target)));
+
+        Assert.DoesNotContain(":dropover", target.Classes);
+        Assert.False(operation.DropAdorner.IsAttached);
+        Assert.Null(operation.ErrorMessage);
+    }
+
+    [AvaloniaFact]
+    public void AnInnerTargetThatAcceptsWinsOverItsOuterTarget()
+    {
+        var child = new Border { Background = Brushes.Green, Width = 40, Height = 40 };
+        var inner = new ItemDropOperation();
+        DragDrop.SetDropOperation(child, inner);
+        var outer = new RejectingDropOperation { Message = "Not here" };
+        var (window, _) = Show(outer, child);
+        using var drag = window.SimulateDrag(DragData.For(new ItemDragOperation(), "A"));
+
+        Assert.Equal(DragDropEffects.Move, drag.Enter(window.PointIn(child)));
+        Assert.Equal(DragDropEffects.Move, drag.Over(window.PointIn(child)));
+        Assert.Equal(DragDropEffects.Move, drag.Drop(window.PointIn(child)));
+
+        Assert.Equal("A", inner.PayloadTarget);
+        Assert.Null(outer.PayloadTarget);
+        Assert.Equal(0, outer.Evaluations);
+    }
+
+    [AvaloniaFact]
+    public void ACommandOnlyBaseSubclassCompletesAMove()
+    {
+        var source = new RecordingDragOperation();
+        DropEventArgs? args = null;
+        var operation = new CommandOnlyDropOperation { PayloadCommand = new RelayCommand(a => args = (DropEventArgs?)a) };
+        var (window, target) = Show(operation);
+        using var drag = window.SimulateDrag(DragData.For(source, "A"));
+
+        drag.Enter(window.PointIn(target));
+        Assert.Equal(DragDropEffects.Move, drag.Drop(window.PointIn(target)));
+
+        Assert.Equal(["A"], args?.Items);
+        Assert.Null(operation.PayloadTarget);
+        var (effect, dropInfo) = Assert.Single(source.Completions);
+        Assert.Equal(DragDropEffects.Move, effect);
+        Assert.Same(target, dropInfo.HoveredControl);
+    }
+
+    [AvaloniaFact]
+    public void ABaseSubclassWithoutACommandReportsNone()
+    {
+        var source = new RecordingDragOperation();
+        var operation = new CommandOnlyDropOperation();
+        var (window, target) = Show(operation);
+        using var drag = window.SimulateDrag(DragData.For(source, "A"));
+
+        Assert.Equal(DragDropEffects.Move, drag.Enter(window.PointIn(target)));
+        Assert.Equal(DragDropEffects.None, drag.Drop(window.PointIn(target)));
+
+        Assert.Empty(source.Completions);
+        Assert.Null(operation.PayloadTarget);
     }
 
     private static (Window, Border) Show(DropOperationBase operation, Control? child = null)
@@ -532,6 +619,8 @@ public class DropTargetTests
         return (window, target, operation);
     }
 
+    private sealed class CommandOnlyDropOperation : DropOperationBase;
+
     private sealed class CopyingDropOperation : ItemDropOperation
     {
         protected override object CreateCopy(object payload) => $"{payload} copy";
@@ -541,11 +630,7 @@ public class DropTargetTests
     {
         public int Leaves { get; private set; }
 
-        protected override void OnDragLeave(DragEventArgs dragEventArgs)
-        {
-            Leaves++;
-            base.OnDragLeave(dragEventArgs);
-        }
+        protected override void OnDragLeave(DragEventArgs e) => Leaves++;
     }
 
     private sealed class RejectingDropOperation : ItemDropOperation

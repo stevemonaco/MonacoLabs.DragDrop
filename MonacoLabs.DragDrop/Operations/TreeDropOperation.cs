@@ -21,15 +21,15 @@ public partial class TreeDropOperation : CollectionDropOperation
 
     protected override bool TransfersPayload => true;
 
-    protected override void UpdateDrag(DragEventArgs e)
+    private protected override void UpdateFeedback(DragEventArgs e)
     {
-        base.UpdateDrag(e);
+        base.UpdateFeedback(e);
         UpdateHoverExpand();
     }
 
-    protected override void EndDrag()
+    private protected override void ClearFeedback()
     {
-        base.EndDrag();
+        base.ClearFeedback();
         CancelHoverExpand();
     }
 

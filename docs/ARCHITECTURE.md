@@ -31,8 +31,9 @@ One package, `MonacoLabs.DragDrop` (`net10.0`, depends only on `Avalonia`). The 
 
 1. The drag source (DD-DRAG) tracks a press, waits for the threshold, resolves the payload and starts Avalonia's `DoDragDropAsync` inside a drag session (DD-SESSION).
 2. The `DataTransfer` holds the payload once per interaction id, plus a `DragInfo` (DD-TRANSFER). Platform ids add files or text (DD-PLATFORM).
-3. The drop target (DD-DROP) decides whether the drag is meant for it, validates it with `CanDrop`, shows its adorners (DD-ADORNERS) and reports an effect (DD-EFFECTS).
-4. On drop, the target assigns or inserts the payload, calls the drag operation's `DropCompleted`, and runs `PayloadCommand`. The drag side removes its original when the effect is Move.
+3. The drop target (DD-DROP) runs one flow on every DragEnter and DragOver, for every kind of target: it decides whether the drag is meant for it, resolves what is under the pointer, validates it with `CanDrop`, shows its adorners (DD-ADORNERS) and reports an effect (DD-EFFECTS).
+4. On drop, the same steps run, then the target's `Transfer` step assigns or inserts the payload, the target calls the drag operation's `DropCompleted`, and runs `PayloadCommand`. The drag side removes its original when the effect is Move.
+5. Every target raises the same notifications, `OnDragEnter`, `OnDragOver`, `OnDragLeave` and `OnDrop`, after the library has done its work for the event.
 
 ### 2.3 Operations
 
@@ -42,7 +43,7 @@ One package, `MonacoLabs.DragDrop` (`net10.0`, depends only on `Avalonia`). The 
 | `CollectionDragOperation` | `CollectionDropOperation` | DD-COLLECTION: insert into and remove from `IList`s |
 | `TreeDragOperation` | `TreeDropOperation` | DD-TREE: per-node collections, three zones, subtree protection |
 
-All derive from `DragOperationBase` / `DropOperationBase` in `MonacoLabs.DragDrop.Abstractions`. Consumers customize validation by subclassing a drop operation and overriding `CanDrop` (and, for trees and collections, reading `DropLocation`).
+All derive from `DragOperationBase` / `DropOperationBase` in `MonacoLabs.DragDrop.Abstractions`. Both bases subscribe private event handlers and expose overridable steps and hooks: pointer hooks on the drag side, and on the drop side `IsDropTargetFor`, `CanDrop`, `GetDropEffect`, `CreateCopy`, `Transfer` and the four notifications. Consumers customize validation by subclassing a drop operation and overriding `CanDrop` (and, for trees and collections, reading `DropLocation`).
 
 ### 2.4 Source layout
 

@@ -2,7 +2,7 @@
 
 ## Why
 
-A drag carries exactly one payload. With multiple selection, only the pressed item is dragged and moved and the rest of the selection stays (DD-COLLECTION Edge cases, DD-TRANSFER Invariants); dragging several items is a non-goal of both specs and a backlog candidate. Users expect to select several workers, files or tree nodes and move them in one gesture, as in Explorer and most list UIs. The payload model (`DragInfo.Payload`, `CollectionDragInfo.PayloadContainerIndex`, one `DataTransfer` item) and the protected drag hooks (`ResolvePayload`, `DoDragDrop`, `CreateDataTransferItem`, `OnDroppedOutside`) all assume one item, so changing them is an API break that has to land before the 1.0 freeze. It builds on [drop-side-redesign.md](drop-side-redesign.md), whose transfer step is where several payloads get inserted.
+A drag carries exactly one payload. With multiple selection, only the pressed item is dragged and moved and the rest of the selection stays (DD-COLLECTION Edge cases, DD-TRANSFER Invariants); dragging several items is a non-goal of both specs and a backlog candidate. Users expect to select several workers, files or tree nodes and move them in one gesture, as in Explorer and most list UIs. The payload model (`DragInfo.Payload`, `CollectionDragInfo.PayloadContainerIndex`, one `DataTransfer` item) and the protected drag hooks (`ResolvePayload`, `DoDragDrop`, `CreateDataTransferItem`, `OnDroppedOutside`) all assume one item, so changing them is an API break that has to land before the 1.0 freeze. It builds on the drop side's transfer step (DD-DROP, "Transfer is a step, not a handler"), which is where several payloads get inserted.
 
 ## What
 
@@ -16,7 +16,7 @@ A drag carries exactly one payload. With multiple selection, only the pressed it
 
 - `DragInfo.Payloads` holds every payload in order; `DragInfo.Payload` is the first. A single-item drag has one entry.
 - `CollectionDragInfo.Items` replaces `PayloadCollection`, `PayloadContainer` and `PayloadContainerIndex` with one `CollectionDragItem` per payload: the item, its source collection, its index in it, and its container when realized. Tree items each carry their own parent's collection. `CollectionDragInfo.PressedContainer` keeps the container under the pointer.
-- The `DataTransfer` holds one item per payload, each carrying that payload under every in-process id; the `DragInfo` rides on the first. Platform files go one per item, so Explorer receives every file. Platform text is the payloads' texts joined by newlines, carried once.
+- The `DataTransfer` holds one item per payload, each carrying that payload under every in-process id; the `DragInfo` rides on the first. Platform files go one per item, so Explorer receives every file. Platform text is carried once: `ResolvePlatformText` receives the payload list and by default joins their texts with newlines.
 - `TryGetPayload<T>` keeps returning the first payload. New `TryGetPayloads<T>` returns all of them, and succeeds only when every payload is a `T`.
 
 **Drop targets.**
@@ -30,7 +30,7 @@ A drag carries exactly one payload. With multiple selection, only the pressed it
 
 **Visuals.** `:dragging` goes on every dragged container that is realized. The preview stays a snapshot of the pressed container and, for several payloads, shows their count in a badge and gets a `:multiple` pseudo-class.
 
-**Protected API.** `ResolvePayload` becomes `ResolvePayloads`, returning the list; `DoDragDrop`, `CreateDataTransferItem` and `OnDroppedOutside` take the `DragInfo` and read `Payloads` from it, with `CreateDataTransferItem` called once per payload.
+**Protected API.** `ResolvePayload` becomes `ResolvePayloads`, returning the list; `ResolvePlatformText` takes the payload list; `DoDragDrop`, `CreateDataTransferItem` and `OnDroppedOutside` take the `DragInfo` and read `Payloads` from it, with `CreateDataTransferItem` called once per payload.
 
 **What does not change:** single-value drags and drops, interaction ids and targeting, effect resolution, hover zones and locations, and selection itself. The library does not select the dropped items in the target or clear the source's selection.
 
@@ -43,6 +43,8 @@ A drag carries exactly one payload. With multiple selection, only the pressed it
 - **Single-value targets refuse several payloads.** Reason: assigning one of them would lose the rest, and on a Move the source would remove them all. Rejected: assigning the first; a validation message (the drag is not meant for a slot at all).
 - **Selected descendants of selected nodes are not dragged separately.** Reason: they move with their ancestor; dragging them too would insert them twice and detach them from the moved subtree.
 - **Flat lists drag unrealized selected items; trees drag only realized ones.** Reason: a flat list's selection model gives indexes without containers, but a tree's selection gives only items, and a node's collection is known only through its container. A selected node under a collapsed ancestor is not visible to the user either.
+- **The library does not select the dropped items.** Reason: what the target's selection should be after a drop (the dropped items, unchanged, or cleared) is an app decision, and apps can do it from `PayloadCommand` or `DropCompleted`. Rejected: selecting the dropped items in the target.
+- **`ResolvePlatformText` receives the payload list.** It joins their texts with newlines by default. Reason: the separator, and whether to offer text for several payloads at all, depends on what the receiving application expects. Rejected: a fixed newline separator.
 
 ## Spec changes
 
@@ -55,7 +57,7 @@ A drag carries exactly one payload. With multiple selection, only the pressed it
 
 **DD-DRAG**
 - Changed **DD-DRAG-016**: the drag source resolves its payloads through `ResolvePayloads`; for the base, `Payload` or the `DataContext`, as one payload.
-- Changed **DD-DRAG-018** and **019**: platform text is the payloads' texts joined by newlines; platform files are one per payload.
+- Changed **DD-DRAG-018** and **019**: platform text is what `ResolvePlatformText` returns for the payload list, by default their texts joined by newlines; platform files are one per payload.
 - Changed **DD-DRAG-021**: `OnDroppedOutside` receives the `DragInfo`.
 
 **DD-COLLECTION**
@@ -82,7 +84,7 @@ A drag carries exactly one payload. With multiple selection, only the pressed it
 
 ## Tasks
 
-Each task first writes the listed tests and confirms they fail, then changes the code, updates the spec and cites the tests. Depends on drop-side-redesign tasks 1 to 4.
+Each task first writes the listed tests and confirms they fail, then changes the code, updates the spec and cites the tests.
 
 1. **Payload model.** `DragInfo.Payloads`, `CollectionDragItem`, `CollectionDragInfo.Items`, one `DataTransfer` item per payload, `TryGetPayloads<T>`, and the protected hook signatures. Single-item behavior unchanged.
    - `InteractionIdTests` / `EndToEndTests`: the data layout for one and several payloads.
@@ -115,5 +117,4 @@ Each task first writes the listed tests and confirms they fail, then changes the
 
 ## Open questions
 
-- Should the library select the dropped items in the target list after a move? Recommended: no, as a non-goal; apps that want it can do it from `PayloadCommand` or `DropCompleted`.
-- Is newline the right separator for joined platform text, or should it be configurable through `ResolvePlatformText`, which would then receive the list? Recommended: `ResolvePlatformText` receives the payload list and defaults to newline-joined text.
+- None.

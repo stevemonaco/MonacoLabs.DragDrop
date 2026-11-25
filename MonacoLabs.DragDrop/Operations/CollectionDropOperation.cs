@@ -41,73 +41,41 @@ public partial class CollectionDropOperation : DropOperationBase
     /// </summary>
     protected virtual bool TransfersPayload => PayloadTarget is IList;
 
-    public override void Attach(Control control)
+    private protected override void OnAttached() => ItemDropAdorner ??= new DropInsertionAdorner();
+
+    private protected override void ResolveHover(DragEventArgs e)
     {
-        base.Attach(control);
-        ItemDropAdorner ??= new DropInsertionAdorner();
-    }
-
-    public override void Detach(Control control)
-    {
-        EndDrag();
-        base.Detach(control);
-    }
-
-    protected override void DragEnter(object? sender, DragEventArgs e)
-    {
-        CancelPendingDragLeave();
-        UpdateDrag(e);
-    }
-
-    protected override void DragOver(object? sender, DragEventArgs e) => UpdateDrag(e);
-
-    protected override void OnDragLeave(DragEventArgs dragEventArgs) => EndDrag();
-
-    protected virtual void UpdateDrag(DragEventArgs e)
-    {
-        if (!IsDropTargetFor(e))
-        {
-            e.DragEffects = DragDropEffects.None;
-            EndDrag();
-            return;
-        }
-
-        UpdateHover(e);
+        UpdateHoveredContainer(e);
         DropLocation = ResolveDropLocation();
+    }
 
-        var canDrop = EvaluateCanDrop(e);
-
-        if (DropAdorner is not null)
-        {
-            DropAdorner.IsDropValid = canDrop;
-            DropAdorner.Attach();
-        }
+    private protected override void UpdateFeedback(DragEventArgs e)
+    {
+        base.UpdateFeedback(e);
 
         if (ItemDropAdorner is not null)
-            ItemDropAdorner.IsDropValid = canDrop;
+            ItemDropAdorner.IsDropValid = IsDropValid;
 
-        ((IPseudoClasses)AttachedControl!.Classes).Set(":dropover", canDrop);
         if (HoveredContainer is not null)
-            SetContainerPseudoClasses(HoveredContainer, canDrop ? HoveredOffset : null);
+            SetContainerPseudoClasses(HoveredContainer, IsDropValid ? HoveredOffset : null);
 
         UpdateAutoScroll(e);
-
-        if (!canDrop)
-        {
-            e.DragEffects = DragDropEffects.None;
-            return;
-        }
-
-        e.DragEffects = GetDropEffect(e);
-        e.Handled = true;
     }
 
-    private void UpdateHover(DragEventArgs e)
+    private protected override void ClearFeedback()
+    {
+        ClearHoveredContainer();
+        StopAutoScroll();
+        DropLocation = null;
+        base.ClearFeedback();
+    }
+
+    private void UpdateHoveredContainer(DragEventArgs e)
     {
         var container = LocateTargetContainer(e);
         if (!ReferenceEquals(container, HoveredContainer))
         {
-            ClearHover();
+            ClearHoveredContainer();
             HoveredContainer = container;
 
             if (container is not null && ItemDropAdorner is not null)
@@ -128,7 +96,7 @@ public partial class CollectionDropOperation : DropOperationBase
         ItemDropAdorner?.Update(HoveredOffset);
     }
 
-    private void ClearHover()
+    private void ClearHoveredContainer()
     {
         if (HoveredContainer is not null)
             SetContainerPseudoClasses(HoveredContainer, null);
@@ -147,89 +115,39 @@ public partial class CollectionDropOperation : DropOperationBase
     }
 
     /// <summary>
-    /// Clears hover state, adorners and auto-scrolling once the drag leaves or drops.
+    /// Inserts <paramref name="value"/> at <see cref="DropLocation"/>, or appends it when the location has no index, and reports where it landed.
+    /// Transfers nothing when <see cref="TransfersPayload"/> is false or there is no location.
     /// </summary>
-    protected virtual void EndDrag()
+    protected override DropInfo? Transfer(DragEventArgs e, DragInfo dragInfo, object value)
     {
-        ClearHover();
-        StopAutoScroll();
-        DropLocation = null;
+        if (!TransfersPayload || DropLocation is not { } location)
+            return null;
 
-        if (AttachedControl is not null)
-            ((IPseudoClasses)AttachedControl.Classes).Set(":dropover", false);
+        var payloadCollection = (dragInfo as CollectionDragInfo)?.PayloadCollection;
+        var payloadIndex = (dragInfo as CollectionDragInfo)?.PayloadContainerIndex;
 
-        DropAdorner?.Detach();
-        ClearErrorMessage();
+        var actualIndex = location.Index is int index
+            ? TransferPayloadIndexed(value, location.Collection, index, payloadCollection, payloadIndex)
+            : TransferPayload(value, location.Collection, payloadCollection, payloadIndex);
+
+        return CreateDropInfo(e, actualIndex);
     }
 
-    protected override void Drop(object? sender, DragEventArgs e)
-    {
-        CancelPendingDragLeave();
+    private protected override DropInfo CreateUntransferredDropInfo(DragEventArgs e) => CreateDropInfo(e, DropLocation?.Index);
 
-        if (!IsDropTargetFor(e))
-        {
-            e.DragEffects = DragDropEffects.None;
-            return;
-        }
+    private protected override DropTargetOffset CommandOffset => HoveredOffset;
 
-        UpdateHover(e);
-        DropLocation = ResolveDropLocation();
-        var location = DropLocation;
+    private protected override CollectionDropLocation? CommandLocation => DropLocation;
 
-        if (!EvaluateCanDrop(e))
-        {
-            e.DragEffects = DragDropEffects.None;
-            EndDrag();
-            return;
-        }
-
-        e.DragEffects = GetDropEffect(e);
-
-        if (TryGetDragInfo<DragInfo>(e, out var dragInfo) && TryGetPayload<object>(e, out var payload))
-        {
-            var value = ResolveDroppedValue(e.DragEffects, payload);
-
-            if (TransfersPayload && location is not null)
-            {
-                var payloadCollection = (dragInfo as CollectionDragInfo)?.PayloadCollection;
-                var payloadIndex = (dragInfo as CollectionDragInfo)?.PayloadContainerIndex;
-
-                var actualIndex = location.Index is int index
-                    ? TransferPayloadIndexed(value, location.Collection, index, payloadCollection, payloadIndex)
-                    : TransferPayload(value, location.Collection, payloadCollection, payloadIndex);
-
-                dragInfo.DragOperation.DropCompleted(e.DragEffects, dragInfo, CreateDropInfo(e, location, actualIndex));
-                InvokePayloadCommand(e, [value], HoveredOffset, location);
-            }
-            else if (InvokePayloadCommand(e, [value], HoveredOffset, location))
-            {
-                dragInfo.DragOperation.DropCompleted(e.DragEffects, dragInfo, CreateDropInfo(e, location, location?.Index));
-            }
-            else
-            {
-                // Reporting Move for a drop that went nowhere would let the source remove the item
-                e.DragEffects = DragDropEffects.None;
-            }
-        }
-        else if (TryGetPlatformItems(e, out var items))
-        {
-            InvokePayloadCommand(e, items, HoveredOffset, location, isPlatformDrop: true);
-        }
-
-        OnDrop(e);
-        e.Handled = true;
-        EndDrag();
-    }
-
-    private CollectionDropInfo CreateDropInfo(DragEventArgs e, CollectionDropLocation? location, int? targetIndex) => new()
+    private CollectionDropInfo CreateDropInfo(DragEventArgs e, int? targetIndex) => new()
     {
         DragEventArgs = e,
         HoveredControl = HoveredContainer ?? AttachedControl!,
         HoverLocation = e.GetPosition(AttachedControl!),
-        TargetCollection = location?.Collection,
+        TargetCollection = DropLocation?.Collection,
         TargetIndex = targetIndex,
         TargetContainer = HoveredContainer,
-        TargetParent = location?.Parent
+        TargetParent = DropLocation?.Parent
     };
 
     /// <summary>

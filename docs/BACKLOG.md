@@ -4,7 +4,7 @@ The single list of work not done in MonacoLabs.DragDrop: known bugs, gaps, check
 Small items are taken straight from here and fixed with their spec updated. Larger ones become a change proposal in `docs/changes/` first (see [docs/changes/README.md](changes/README.md)).
 When an item is closed, its line is deleted.
 
-In progress elsewhere: the drop-side redesign in [changes/drop-side-redesign.md](changes/drop-side-redesign.md), and dragging several selected items in [changes/multiple-selection.md](changes/multiple-selection.md).
+In progress elsewhere: dragging several selected items in [changes/multiple-selection.md](changes/multiple-selection.md).
 
 ## Bugs and gaps
 
@@ -25,7 +25,7 @@ In progress elsewhere: the drop-side redesign in [changes/drop-side-redesign.md]
 - [DD-TRANSFER] Cache `DataFormat` instances per interaction id instead of creating one per id on every DragOver.
 - [DD-WIRING] Remove the `Guid` and `ComVisible` assembly attributes.
 - Enable `GenerateDocumentationFile` and fix the resulting missing-doc warnings.
-- Add `Microsoft.CodeAnalysis.PublicApiAnalyzers` with `PublicAPI.Shipped.txt`/`Unshipped.txt`. The pre-1.0 API changes have landed; the drop-side redesign and multiple-selection proposals still change the surface, so their entries start in `Unshipped.txt`.
+- Add `Microsoft.CodeAnalysis.PublicApiAnalyzers` with `PublicAPI.Shipped.txt`/`Unshipped.txt`. The multiple-selection proposal still changes the surface, so its entries start in `Unshipped.txt`.
 - Add package metadata (description, license expression, repository URL, readme, tags), SourceLink, and `ContinuousIntegrationBuild` under CI.
 - Add an `.editorconfig` with the repo's formatting rules.
 - Report code coverage from CI with `Microsoft.Testing.Extensions.CodeCoverage`.
@@ -33,6 +33,7 @@ In progress elsewhere: the drop-side redesign in [changes/drop-side-redesign.md]
 
 ## Manual and platform checks
 
+- [DD-DROP] After the drop-side redesign (one flow and notifications for every target, valid events marked handled), drag on every sample page on Win32 and confirm the drags, adorners, validation messages and removals still work.
 - [DD-PLATFORM] Drag a file from Explorer onto the Desktop page's file list and confirm Explorer keeps it (DD-PLATFORM-008).
 - [DD-PLATFORM] Drag a snippet from the Desktop page into Notepad and a browser text field (DD-PLATFORM-009).
 - [DD-SESSION] On the Single-item page, drop a slot's item on the window background (clears), on the desktop and with Esc (both keep) (DD-SESSION-013).
