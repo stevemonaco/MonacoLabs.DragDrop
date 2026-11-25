@@ -79,6 +79,19 @@ All derive from `DragOperationBase` / `DropOperationBase` in `MonacoLabs.DragDro
 
 **Manual checks.** Behavior that needs the real OS stays manual: OLE drags with Explorer and other apps, drops outside the window on Win32, and render scaling above 100%. Each is a `manual —` requirement in its spec and a line in the backlog's manual checks. The headless drag does not reproduce Win32's DragLeave-instead-of-Drop after a None DragOver, so the tests assert the non-None effect that prevents it (DD-SESSION-010).
 
+**Decisions.**
+
+- **xUnit v3 with `Avalonia.Headless.XUnit`, pinned to `xunit.v3` 3.2.2.** `Avalonia.Headless.XUnit` 12.2 is built on xUnit v3 3.2.2, so `[AvaloniaFact]` runs each test on the headless UI thread with no custom fixture. On `xunit.v3` 4.x every `[AvaloniaFact]` fails discovery with a `MissingMethodException`. Revisit when `Avalonia.Headless.XUnit` ships against 4.x. Rejected: NUnit with `Avalonia.Headless.NUnit` (no advantage); a hand-rolled dispatcher fixture.
+- **Microsoft Testing Platform runner.** xUnit v3 test projects are executables that support it natively, and `global.json` selects it for `dotnet test`. `global.json` pins a 10.0 SDK with `rollForward: latestMajor`, so CI uses 10.0 and newer local SDKs still work. Rejected: VSTest (`Microsoft.NET.Test.Sdk`, `xunit.runner.visualstudio`), kept only as a fallback if an IDE cannot discover the tests.
+- **Tests drive the real platform drag.** The headless platform registers Avalonia's in-process drag source, so `DoDragDropAsync` runs as in production, driven by synthetic mouse input, and delivers the real `DataTransfer` and allowed effects. It completes only on release or Escape, so the helpers always release the mouse. It does not reproduce two Win32 behaviors: DragLeave instead of Drop after a None DragOver, and a drop handler's exception surfacing as a `COMException`; a failing drag is simulated by overriding `DoDragDrop`. Rejected: an internal hook replacing `DoDragDropAsync`, which would leave the in-process path untested.
+- **`SimulateDrag` reads the reported effect from `RouteFinished`.** The headless `TopLevel.DragDrop` extension hit-tests and routes like the platform but returns nothing, so the effect is read after every handler has run, the drag session's window handlers included.
+- **Timers run on the real clock, only while the dispatcher waits.** `Dispatcher.UIThread.RunJobs()` never runs `DispatcherTimer`s; they fire when a test awaits. `PumpUntil` is async, and timer tests use short intervals.
+- **Real Skia rendering.** `UseHeadlessDrawing = false`, so preview snapshots and pixel checks work. Rejected: headless drawing stubs, which make the preview tests impossible.
+- **Pure logic is extracted, not mocked.** Effect resolution, the removal index and the auto-scroll step are internal static helpers the operations call, so their many cases run without a window. Rejected: mocking `DragEventArgs` (Avalonia types are not designed for it).
+- **Plain xUnit `Assert`.** Rejected: FluentAssertions (commercial license since v8) and Shouldly (an extra dependency for little gain).
+- **No spec-format tests.** AI agents maintain the specs and read past small format drift, so tests enforcing the spec schema cost more in friction than they return. Cited tests are still checked when specs change. Rejected: a `SpecTests` class, built and removed.
+- **CI runs on Windows and Linux.** Fixed-size item templates remove the font dependence that keeps many Avalonia suites Windows-only. CI runs on pushes to `main`, pull requests and manual runs, skips Markdown-only changes, and packs nothing yet.
+
 ## 4. Project-wide decisions
 
 - **MVVM first.** View models expose collections, properties and `ICommand`s, and never reference controls or drag events. Validation that needs domain knowledge lives in a `CanDrop` override in the view layer (the sample's `CustomDragDrop` operations), not in the view model.

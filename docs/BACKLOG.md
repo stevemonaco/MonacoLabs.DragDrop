@@ -4,8 +4,6 @@ The single list of work not done in MonacoLabs.DragDrop: known bugs, gaps, check
 Small items are taken straight from here and fixed with their spec updated. Larger ones become a change proposal in `docs/changes/` first (see [docs/changes/README.md](changes/README.md)).
 When an item is closed, its line is deleted.
 
-In progress elsewhere: the test suite in [changes/test-suite.md](changes/test-suite.md).
-
 ## Bugs and gaps
 
 - [DD-DROP] Redesign the drop side's overridable surface; needs a change proposal. `DropOperationBase` has two layers: the subscribed handlers `DragEnter`/`DragOver`/`DragLeave`/`Drop(object? sender, DragEventArgs e)`, which do targeting, validation and adorners, and the hooks `OnDragEnter`/`OnDragOver`/`OnDragLeave`/`OnDrop`, which they call. `CollectionDropOperation` replaces the `DragEnter`, `DragOver` and `Drop` handlers with its `UpdateDrag` flow and overrides only the `OnDragLeave` hook. As a result, on collection and tree targets an `OnDragEnter` or `OnDragOver` override is silently never called, `OnDrop` is, and `OnDragLeave` means "end the drag". Which layer to override depends on the base class, and nothing tells the consumer.
