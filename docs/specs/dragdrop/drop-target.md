@@ -31,8 +31,8 @@ depends:
 
 - **DD-DROP-001** — When attached, the drop target shall set `AllowDrop` on the control and handle its DragEnter, DragOver, DragLeave and Drop events with the strategy in `Routing`, including handled events when `HandledEventsToo` is true.
   - Tests: untested
-- **DD-DROP-002** — When attached with no `DropAdorner`, the drop target shall create a solid `DropHighlightAdorner`. In either case it shall point the adorner's `TargetControl` at the attached control.
-  - Tests: untested
+- **DD-DROP-002** — When attached with no `DropAdorner`, the drop target shall create a `DropHighlightAdorner` with its default `Kind`. In either case it shall point the adorner's `TargetControl` at the attached control.
+  - Tests: `DropTargetTests.AttachingWithoutAnAdornerCreatesASolidHighlight`
 - **DD-DROP-003** — When detached, the drop target shall clear `AllowDrop` on the control and remove its handlers.
   - Tests: untested
 - **DD-DROP-023** — When `Routing` or `HandledEventsToo` is set while the operation is attached, the drop target shall throw `InvalidOperationException`.
@@ -137,5 +137,4 @@ depends:
 
 - Detach leaves a pending deferred leave able to throw, and leaves `:dropover`, the adorner and `DropAdorner.TargetControl` in place. Addressed by [changes/correctness-fixes.md](../../changes/correctness-fixes.md).
 - `Context` is a public property that nothing reads. Addressed by [changes/api-design.md](../../changes/api-design.md).
-- `DropAdornerType` is protected with no way to set it from XAML, so `DropAdornerKind.Border` and `None` are reachable only by constructing the adorner. Addressed by [changes/api-design.md](../../changes/api-design.md).
 - Subclasses can override either the subscribed handlers (`DragEnter`, `DragOver`, `DragLeave`, `Drop`) or the hooks they call (`OnDragEnter`, `OnDragOver`, `OnDragLeave`, `OnDrop`). Collection targets replace the handlers, so which hooks run depends on the base class (see DD-COLLECTION Open items). Logged in the backlog (drop-side redesign).

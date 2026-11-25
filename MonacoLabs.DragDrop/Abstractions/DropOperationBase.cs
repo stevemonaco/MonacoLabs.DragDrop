@@ -6,7 +6,6 @@ using Avalonia.Platform.Storage;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Avalonia.Threading;
-using MonacoLabs.DragDrop.Adorners;
 using AvaDragDrop = Avalonia.Input.DragDrop;
 
 namespace MonacoLabs.DragDrop.Abstractions;
@@ -49,8 +48,6 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
     private void ThrowIfAttached([CallerMemberName] string property = "") =>
         ThrowIf.InvalidOperation(AttachedControl is not null, $"{property} can only be set while {GetType().Name} is detached");
 
-    protected DropAdornerKind DropAdornerType { get; set; } = DropAdornerKind.Solid;
-
     /// <summary>
     /// Whether a drag started from <see cref="AttachedControl"/> can drop back onto it. False for single-value targets,
     /// where such a drop would replace the value with itself and then let the drag side clear it.
@@ -65,7 +62,7 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
         AvaDragDrop.SetAllowDrop(control, true);
         SubscribeDropEvents(control);
 
-        DropAdorner ??= new DropHighlightAdorner(DropAdornerType);
+        DropAdorner ??= new DropHighlightAdorner();
         DropAdorner.TargetControl = AttachedControl;
     }
 

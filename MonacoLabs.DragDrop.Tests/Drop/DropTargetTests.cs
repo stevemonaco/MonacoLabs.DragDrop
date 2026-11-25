@@ -23,6 +23,19 @@ public class DropTargetTests
     }
 
     [AvaloniaFact]
+    public void AttachingWithoutAnAdornerCreatesASolidHighlight()
+    {
+        var control = new Border();
+        var operation = new ItemDropOperation();
+
+        operation.Attach(control);
+
+        var adorner = Assert.IsType<DropHighlightAdorner>(operation.DropAdorner);
+        Assert.Equal(DropAdornerKind.Solid, adorner.Kind);
+        Assert.Same(control, adorner.TargetControl);
+    }
+
+    [AvaloniaFact]
     public void RejectSetsTheMessageAndTheAdornerMirrorsIt()
     {
         var (window, target, operation) = ShowRejectingTarget("Not here");

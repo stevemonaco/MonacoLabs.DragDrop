@@ -58,16 +58,17 @@ Avalonia's Win32 COM layer swallows exceptions thrown from drop handlers (DragEn
 - Custom validation is done by subclassing and overriding `CanDrop`. Use `TryGetDragInfo<T>`, `TryGetPayload<T>`, and `DropLocation` for collections and trees, and reject with `return Reject(message)`, which sets the bindable `ErrorMessage` (see `DragDropSample/ListBoxPage/WorkerDropOperation.cs` and `TreeViewPage/NodeDropOperation.cs`).
 
 ### Adorners and styling hooks (`Adorners/`)
-`DropAdornerBase` is a `Border`. It is placed in the `AdornerLayer` over `TargetControl`, is not hit-testable, and gets the `:error` pseudo-class when `!IsDropValid`. `DropHighlightAdorner` covers the whole drop target. `DropInsertionAdorner` is passive: the operation calls `Update(DropTargetOffset)`, and it draws a line above (`BeforeTarget`) or below (`AfterTarget`) its target, or an outline (`OnTarget`). One instance is retargeted as the hover moves, so styles set on a custom `ItemDropAdorner` survive.
+`DropAdornerBase` is a `Border`. It is placed in the `AdornerLayer` over `TargetControl`, is not hit-testable, and gets the `:error` pseudo-class when `!IsDropValid`. `DropHighlightAdorner` covers the whole drop target; its styled `Kind` (`Solid`, `Border`, `None`) only sets pseudo-classes that its built-in `ControlTheme` styles, so app styles still win. `DropInsertionAdorner` is passive: the operation calls `Update(DropTargetOffset)`, and it draws a line above (`BeforeTarget`) or below (`AfterTarget`) its target, or an outline (`OnTarget`). One instance is retargeted as the hover moves, so styles set on a custom `ItemDropAdorner` survive.
 
 The library sets pseudo-classes for consumers to style:
 - `:dropover` on the drop control and the hovered item container.
 - `:droptop` / `:dropbottom` / `:dropinside` on the hovered item container (set by the operation, not the adorner).
+- `:outline` / `:hidden` on `DropHighlightAdorner` for `Kind` `Border` / `None`.
 - `:dragging` on the drag visual, and `:nodrop` / `:copy` / `:remove` on `DragPreviewAdorner`.
 
 ### Conventions
 - Avalonia property registrations live in `*.props.cs` partial files next to the logic file (`DragDrop.props.cs`, `DragOperationBase.props.cs`, ...).
-- Most public types use the root `MonacoLabs.DragDrop` namespace regardless of folder. The exceptions are `MonacoLabs.DragDrop.Abstractions` and `DropAdornerKind` in `MonacoLabs.DragDrop.Adorners`. The `XmlnsDefinition` maps only the root namespace. The samples use `xmlns:dd="using:MonacoLabs.DragDrop"`.
+- Most public types use the root `MonacoLabs.DragDrop` namespace regardless of folder. The exception is `MonacoLabs.DragDrop.Abstractions`. The `XmlnsDefinition` maps only the root namespace. The samples use `xmlns:dd="using:MonacoLabs.DragDrop"`.
 - Use `ThrowIf` (in `Internals/`) for guard clauses.
 - The library has `ImplicitUsings` enabled. The sample does not, so it uses explicit `using System;` etc.
 

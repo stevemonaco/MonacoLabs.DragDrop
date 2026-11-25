@@ -26,4 +26,4 @@ One spec per feature; format and usage in [../README.md](../README.md). Find a t
 | Spec | Id | Owns |
 |---|---|---|
 | [Drag session, preview and drops outside targets](drag-session.md) | DD-SESSION | `DragPreviewAdorner` |
-| [Drop adorners](adorners.md) | DD-ADORNERS | `DropAdornerBase`, `DropHighlightAdorner`, `DropInsertionAdorner`, `IDropAdorner`, `DropAdornerKind` |
+| [Drop adorners](adorners.md) | DD-ADORNERS | `DropAdornerBase`, `DropHighlightAdorner`, `DropInsertionAdorner`, `DropAdornerKind` |

@@ -28,7 +28,7 @@ The public surface grew while the library was a prototype, and parts of it will 
 - `DropOperationBase` gains `protected virtual object CreateCopy(object payload)`, returning the payload by default. When the drop effect is Copy, single-value and collection targets assign or insert the value it returns, and `DropEventArgs.Items` carries that value.
 
 **Adorners.**
-- `DropHighlightAdorner` gains a styled `Kind` property (`DropAdornerKind`: `Solid`, `Border`, `None`), which drives `:outline` and visibility. It replaces the constructor parameter and the protected `DropOperationBase.DropAdornerType`. A border-only highlight is then one XAML element or one app style.
+- `DropHighlightAdorner` gains a styled `Kind` property (`DropAdornerKind`: `Solid`, `Border`, `None`), which sets the `:outline` and `:hidden` pseudo-classes. The built-in theme maps them to a transparent background and invisibility, so app styles still override the look (the old constructor set a local `IsVisible` that no style could override). It replaces the constructor parameter and the protected `DropOperationBase.DropAdornerType`. A border-only highlight is then one XAML element or one app style.
 - `DropAdornerKind` moves to the root `MonacoLabs.DragDrop` namespace, so the XAML namespace reaches it.
 - The unused `IDropAdorner` interface is deleted.
 - `DropAdornerBase.TargetControlProperty` drops its `OneWayToSource` default binding mode.
@@ -164,6 +164,10 @@ Each task writes or adjusts its tests first, then changes the code, updates the 
    - `DropAdornerTests.BorderKindHasTheOutlinePseudoClass`
    - `DropAdornerTests.NoneKindIsInvisible`
    - `DropAdornerTests.KindCanBeSetFromAStyle`
+   - `DropAdornerTests.AppStylesOverrideTheLookOfAKind`
+   - `DropAdornerTests.KindDefaultsToSolid`
+   - `DropAdornerTests.TargetControlBindsOneWayByDefault`
+   - `DropTargetTests.AttachingWithoutAnAdornerCreatesASolidHighlight`
 8. **Removals and types.** Delete `Context` and make `DragThreshold` a `double`. Tests: `DragGestureTests` DD-DRAG-011, 012 and 022 stay green with fractional thresholds.
 9. **Sample.** Show `Kind="Border"` on one drop target and a bound `ErrorMessage` on the List page. Manual, on the Win32 Desktop head:
    - every page's drags and validation messages behave as before

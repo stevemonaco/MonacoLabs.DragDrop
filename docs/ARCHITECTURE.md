@@ -72,7 +72,7 @@ Behavior that needs the real OS (OLE drags with Explorer and other apps, drops o
 - **Never report Move for platform data.** See DD-EFFECTS, "Platform data is always copied or linked".
 - **Visual feedback is styleable.** The library sets pseudo-classes on the controls involved (`:dropover`, `:droptop`, `:dropbottom`, `:dropinside`, `:dragging`, and `:error`, `:nodrop`, `:copy`, `:remove` on adorners) and takes its default adorner looks from control themes, so app styles override them.
 - **Avalonia property registrations live in `*.props.cs` partial files** next to the logic file.
-- **Most public types use the root `MonacoLabs.DragDrop` namespace regardless of folder.** The exceptions are `MonacoLabs.DragDrop.Abstractions` and `DropAdornerKind` in `MonacoLabs.DragDrop.Adorners`. The XML namespace maps only the root namespace.
+- **Most public types use the root `MonacoLabs.DragDrop` namespace regardless of folder.** The exception is `MonacoLabs.DragDrop.Abstractions`. The XML namespace maps only the root namespace.
 - **Guard clauses use `ThrowIf`** (`Internals/ThrowIf.cs`).
 - **Package versions are central** in `Directory.Packages.props`.
 
