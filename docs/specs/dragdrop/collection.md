@@ -235,6 +235,7 @@ depends:
 - Cloning payloads automatically on Copy. `CreateCopy` is the hook (DD-COLLECTION-030).
 - Horizontal insertion zones for wrap or horizontal panels. `GetDropOffset` is virtual for that.
 - Filtered or sorted trees. Trees read every collection from the tree (DD-TREE), so `TreeDragOperation` keeps display indexes.
+- Drag sources nested in another drag source's items (a `ListBox` inside an outer `ListBox`'s item). The outer collection operation tunnels first and starts the drag, so the inner list never drags its own items. Too niche to justify arbitrating between sources; a drag handle on the outer item (`RequiresDragHandle`) avoids it.
 
 ## Open items
 

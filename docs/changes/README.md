@@ -6,7 +6,16 @@ Small fixes that need no design skip the proposal: take the item from [`docs/BAC
 
 ## Current proposals
 
-None.
+| Proposal | Depends on |
+|---|---|
+| [collection-fixes.md](collection-fixes.md): reorders keep their selection, `:dragging` follows items in virtualized lists, read-only and fixed-size collections are never changed | — |
+| [flow-layouts.md](flow-layouts.md): horizontal, wrap and grid items panels (zones, gaps, insertion line, right-to-left), a Layouts sample page | — |
+| [drop-onto-items.md](drop-onto-items.md): drop onto items in flat lists to act on, replace or swap them, a sample page | — |
+| [drag-in-progress.md](drag-in-progress.md): `IsDragging`, drag start and end events, `:dragactive` on the window, `:dropcandidate` on targets | — |
+| [items-hosts.md](items-hosts.md): an internal items-host abstraction, `DataGrid` and `ItemsRepeater` satellite packages, two sample pages | collection-fixes (lifecycle tracking), flow-layouts (repeater grids) |
+| [custom-surfaces.md](custom-surfaces.md): protected hover steps, slot operations, grab offset and placement preview, Tilemap and Image editor sample pages | drop-onto-items (swap reporting) |
+
+Suggested order: collection-fixes (small), flow-layouts, drop-onto-items, drag-in-progress, items-hosts, custom-surfaces.
 
 ## Format
 
