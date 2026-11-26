@@ -76,7 +76,7 @@ public partial class CollectionDropOperation : DropOperationBase
         base.ClearFeedback();
     }
 
-    // Avalonia 12.2: inserting before a focused, selected item while AutoScrollToSelectedItem is on leaves a stale container behind
+    // Avalonia 12.2 (#22002) scrolls to a shifted selection anchor before the panel sees the insert, leaving a stale container
     private protected override IDisposable? BeginCompleteDrop() =>
         AttachedControl is SelectingItemsControl { AutoScrollToSelectedItem: true } control
             ? control.SetValue(SelectingItemsControl.AutoScrollToSelectedItemProperty, false, BindingPriority.Animation)

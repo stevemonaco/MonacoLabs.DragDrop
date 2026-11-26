@@ -30,7 +30,7 @@ public class CollectionDropTests
     }
 
     [AvaloniaFact]
-    public void InsertingBeforeTheFocusedSelectedItemKeepsTheContainersInStep()
+    public void InsertingBeforeTheSelectedItemKeepsTheContainersInStep()
     {
         var items = new ObservableCollection<string> { "a", "b", "c" };
         var (window, list) = ShowList(new CollectionDropOperation { PayloadTarget = items }, items);
