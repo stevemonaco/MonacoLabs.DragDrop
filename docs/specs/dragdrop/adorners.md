@@ -124,4 +124,4 @@ Drop adorners are the drop target's visual feedback, placed in the `AdornerLayer
 ## Open items
 
 - DD-ADORNERS-013, 014 and 016 are untested. They describe where and how crisply the insertion line and outline are drawn, which only exact pixel comparisons can check, and the headless test windows render at scaling 1. Pixel tests are logged in the backlog.
-- `IsDropValid`'s doc comment is copied from `TargetControl`. Logged in the backlog.
+- `IsDropValid`'s doc comment is copied from `TargetControl`. Addressed by [changes/package-hygiene.md](../../changes/package-hygiene.md).

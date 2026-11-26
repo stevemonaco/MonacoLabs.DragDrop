@@ -140,8 +140,8 @@ depends:
 
 ### Auto-scroll
 
-- **DD-COLLECTION-032** — While a drag meant for the target is within `AutoScrollMargin` of an edge of the scroll viewer (the attached control itself, or its first descendant `ScrollViewer`), the drop operation shall scroll that viewer towards the edge on a 16 ms timer.
-  - Tests: `AutoScrollTests.HoveringNearAnEdgeScrollsTheListTowardsIt`, `AutoScrollTests.AnAttachedScrollViewerScrollsItself`, `AutoScrollTests.OutsideTheMarginsTheListDoesNotScroll`
+- **DD-COLLECTION-032** — While a drag meant for the target is within `AutoScrollMargin` of an edge of the scroll viewer (the attached control itself, or its first descendant `ScrollViewer`, looked up once per hover), the drop operation shall scroll that viewer towards the edge on a 16 ms timer.
+  - Tests: `AutoScrollTests.HoveringNearAnEdgeScrollsTheListTowardsIt`, `AutoScrollTests.AnAttachedScrollViewerScrollsItself`, `AutoScrollTests.OutsideTheMarginsTheListDoesNotScroll`, `AutoScrollTests.AScrollViewerReplacedBetweenDragsIsTheOneScrolled`, `AutoScrollTests.AnOperationMovedToAnotherControlScrollsThatControlsViewer`
 - **DD-COLLECTION-033** — The scroll step shall grow linearly from 0 at the margin's inner edge to 14 DIPs per tick at the viewer's edge, per axis.
   - Tests: `AutoScrollStepTests.TheStepGrowsLinearlyFromTheMarginsInnerEdgeToTheViewersEdge`
 - **DD-COLLECTION-034** — The effective margin shall be at most a third of the viewer's extent on that axis, so small viewers keep a middle zone that does not scroll.
@@ -170,7 +170,7 @@ depends:
 - Only a `ListBox` exposes its selection model, so other selecting controls drag the pressed item even with several items selected.
 - The selection is read when the drag starts, after the press has updated it: a plain press on an unselected item makes it the only selection (DD-DRAG-009), so it drags alone, and a Ctrl-press adds it to the selection, which then drags as a whole.
 - The library does not change selection on drop: the target does not select the dropped items, and the source keeps whatever selection survives the removal.
-- The scroll viewer is looked up on the first drag and cached for the operation's lifetime, so a re-templated control keeps scrolling the old viewer.
+- The scroll viewer is looked up when a hover starts and kept until it ends, so a control re-templated in the middle of a hover keeps scrolling the old viewer until the drag leaves.
 
 ## Threading and lifetime
 
@@ -203,4 +203,5 @@ depends:
 
 ## Open items
 
-- None.
+- Indexes come from the item control's containers, so a filtered or sorted view over `PayloadTarget` inserts and removes at the wrong positions (Edge cases). Addressed by [changes/filtered-sorted-collections.md](../../changes/filtered-sorted-collections.md).
+- DD-COLLECTION-001 also receives handled pointer events, which only overrides ancestors that claim the gesture. Addressed by [changes/collection-drag-handled-events.md](../../changes/collection-drag-handled-events.md).

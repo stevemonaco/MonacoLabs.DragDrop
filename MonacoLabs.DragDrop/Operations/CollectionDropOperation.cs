@@ -66,6 +66,7 @@ public partial class CollectionDropOperation : DropOperationBase
     {
         ClearHoveredContainer();
         StopAutoScroll();
+        _autoScrollViewer = null;
         DropLocation = null;
         base.ClearFeedback();
     }

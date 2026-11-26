@@ -85,7 +85,55 @@ public class AutoScrollTests
     }
 
     [AvaloniaFact]
+    public async Task AScrollViewerReplacedBetweenDragsIsTheOneScrolled()
+    {
+        var host = new Decorator { Width = 150, Height = 100, VerticalAlignment = VerticalAlignment.Top, Child = TallViewer() };
+        DragDrop.SetDropOperation(host, new CollectionDropOperation { PayloadTarget = new List<string>() });
+        var window = TestWindow.Show(host);
+        var nearBottom = window.PointIn(host, new Point(10, 95));
+        await ScrollWithOneDrag(window, nearBottom, (ScrollViewer)host.Child);
+
+        var replacement = TallViewer();
+        host.Child = replacement;
+        window.UpdateLayout();
+
+        await ScrollWithOneDrag(window, nearBottom, replacement);
+    }
+
+    [AvaloniaFact]
+    public async Task AnOperationMovedToAnotherControlScrollsThatControlsViewer()
+    {
+        var first = TallViewer();
+        var second = TallViewer();
+        var operation = new CollectionDropOperation { PayloadTarget = new List<string>() };
+        DragDrop.SetDropOperation(first, operation);
+        var window = TestWindow.Show(new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Top, Children = { first, second } });
+        await ScrollWithOneDrag(window, window.PointIn(first, new Point(10, 95)), first);
+
+        DragDrop.SetDropOperation(first, null);
+        DragDrop.SetDropOperation(second, operation);
+
+        await ScrollWithOneDrag(window, window.PointIn(second, new Point(10, 95)), second);
+    }
+
+    [AvaloniaFact]
     public void TheMarginDefaultsTo28Dips() => Assert.Equal(28, new CollectionDropOperation().AutoScrollMargin);
+
+    private static ScrollViewer TallViewer() => new()
+    {
+        Width = 150,
+        Height = 100,
+        Content = new Border { Height = 1000, Background = Brushes.Blue },
+        VerticalAlignment = VerticalAlignment.Top
+    };
+
+    private static async Task ScrollWithOneDrag(Window window, Point nearEdge, ScrollViewer expected)
+    {
+        using var drag = window.SimulateDrag(DragData.For(new CollectionDragOperation(), "x"));
+        drag.Enter(nearEdge);
+        await TestDispatcher.PumpUntil(() => expected.Offset.Y > 0);
+        drag.Leave(nearEdge);
+    }
 
     private static (Window, ListBox, ScrollViewer) ShowLongList(CollectionDropOperation operation)
     {
