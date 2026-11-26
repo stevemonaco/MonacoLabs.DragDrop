@@ -154,6 +154,8 @@ depends:
   - Tests: `DisplayIndexMapTests.AViewOfTheWholeCollectionMapsEachIndexToItself`, `DisplayIndexMapTests.AShownItemMapsToItsIndexInTheCollection`, `DisplayIndexMapTests.ThePositionAfterTheLastShownItemMapsJustAfterItInTheCollection`, `DisplayIndexMapTests.AnEmptyViewMapsToNull`, `DisplayIndexMapTests.AShownItemTheCollectionDoesNotContainMapsToNull`, `DisplayIndexMapTests.EqualItemsAreMatchedByOccurrence`, `DisplayIndexMapTests.AnIndexOutsideTheViewMapsToNull`, `CollectionDropTests.ADropAfterTheLastShownItemInsertsAfterItInTheCollection`
 - **DD-COLLECTION-051** — When `ItemOrder` is `Sorted`, the drop operation shall track no hovered container, so it shows its drop adorner but no insertion adorner, sets no drop pseudo-classes on containers and uses a null location index; and it shall not be meant for drags from its own control.
   - Tests: `CollectionDropTests.ASortedTargetAppendsAndShowsNoInsertionLine`, `CollectionDropTests.ASortedTargetIsNotMeantForItsOwnDrags`
+- **DD-COLLECTION-053** — On the sample's Filtered & Sorted page, with a filter on, reordering within the backlog, moving and Ctrl-copying tasks to the sprint and back, and dragging a multiple selection out of the filtered view shall land and remove the items the underlying order shows; with Sort by priority on, drops shall append and re-sort with no insertion line, and reordering within the backlog shall be refused.
+  - Tests: manual — real OLE drags on `DragDropSample/FilteredCollectionPage`. Checked on Win32 2026-11-26.
 
 ### Auto-scroll
 

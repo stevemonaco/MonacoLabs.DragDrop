@@ -6,12 +6,7 @@ Small fixes that need no design skip the proposal: take the item from [`docs/BAC
 
 ## Current proposals
 
-| Proposal | Depends on |
-|---|---|
-| [filtered-sorted-collections.md](filtered-sorted-collections.md): map display indexes for filtered and sorted lists, `ItemOrder`, a new sample page | — |
-| [package-hygiene.md](package-hygiene.md): the public API baseline left from the release hygiene batch | filtered-sorted-collections |
-
-Suggested order: filtered-sorted-collections, then package-hygiene.
+None.
 
 ## Format
 

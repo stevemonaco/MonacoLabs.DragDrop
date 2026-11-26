@@ -4,8 +4,6 @@ The single list of work not done in MonacoLabs.DragDrop: known bugs, gaps, check
 Small items are taken straight from here and fixed with their spec updated. Larger ones become a change proposal in `docs/changes/` first (see [docs/changes/README.md](changes/README.md)).
 When an item is closed, its line is deleted.
 
-In progress elsewhere: filtered and sorted lists in [changes/filtered-sorted-collections.md](changes/filtered-sorted-collections.md), and packaging hygiene in [changes/package-hygiene.md](changes/package-hygiene.md).
-
 ## Bugs and gaps
 
 - [DD-COLLECTION] A drag source nested in another drag source's item (a `ListBox` inside an outer `ListBox`'s item) never drags its own items: the outer operation tunnels first and starts the drag. The innermost source that tracks the press should win. Found while probing `HandledEventsToo` on collection drags.

@@ -84,6 +84,7 @@ The library sets pseudo-classes for consumers to style:
 - Avalonia property registrations live in `*.props.cs` partial files next to the logic file (`DragDrop.props.cs`, `DragOperationBase.props.cs`, ...).
 - Most public types use the root `MonacoLabs.DragDrop` namespace regardless of folder. The exception is `MonacoLabs.DragDrop.Abstractions`. The `XmlnsDefinition` maps only the root namespace. The samples use `xmlns:dd="using:MonacoLabs.DragDrop"`.
 - Use `ThrowIf` (in `Internals/`) for guard clauses.
+- The public API is tracked in `MonacoLabs.DragDrop/PublicAPI.Unshipped.txt` (`PublicAPI.Shipped.txt` stays empty until 1.0.0). Adding, changing or removing a public or protected member means updating it in the same change: apply the RS0016/RS0017 code fix, or run `dotnet format analyzers MonacoLabs.DragDrop/MonacoLabs.DragDrop.csproj --diagnostics RS0016 --severity info`. Locally they are warnings; CI builds treat them as errors.
 - The library has `ImplicitUsings` enabled. The sample does not, so it uses explicit `using System;` etc.
 
 ## Demo app architecture (`DragDropSample`)
