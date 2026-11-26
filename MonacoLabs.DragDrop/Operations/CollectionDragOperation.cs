@@ -41,7 +41,6 @@ public class CollectionDragOperation : DragOperationBase
     public CollectionDragOperation()
     {
         Routing = RoutingStrategies.Tunnel;
-        HandledEventsToo = true;
     }
 
     protected override void OnPointerPressed(PointerPressedEventArgs e)

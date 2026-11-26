@@ -50,8 +50,8 @@ depends:
 
 ### Drag side
 
-- **DD-COLLECTION-001** — The collection drag operation shall handle pointer events with tunneling routing, including handled ones, so presses reach it before `ListBoxItem` handles them for selection.
-  - Tests: `CollectionDragTests.PressesOnAListBoxItemReachTheOperation`
+- **DD-COLLECTION-001** — The collection drag operation shall handle pointer events with tunneling routing, so presses reach it before `ListBoxItem` handles them for selection.
+  - Tests: `CollectionDragTests.PressesOnAListBoxItemReachTheOperation`, `CollectionDragTests.ByDefaultTheSourceTunnelsAndIgnoresHandledPresses`
 - **DD-COLLECTION-002** — When attached to an `ItemsControl`, the drag operation shall track only presses inside an item container of that control.
   - Tests: `CollectionDragTests.PressesOutsideAnItemContainerAreNotTracked`
 - **DD-COLLECTION-003** — When a press is inside an item container, the dragged payloads shall be items of the attached control (DD-COLLECTION-041, DD-COLLECTION-042), whatever `Payload` says.
@@ -155,6 +155,8 @@ depends:
   - Tests: `AutoScrollTests.TheMarginDefaultsTo28Dips`
 - **DD-COLLECTION-045** (inherited) — When `DraggedItems` is not set, it shall be `SelectedItems`.
   - Tests: `CollectionDragTests.DraggedItemsDefaultsToSelectedItems`
+- **DD-COLLECTION-046** (inherited) — When `HandledEventsToo` is not set on a collection drag operation, it shall be false, so an ancestor that marks a tunneling press or move handled keeps the gesture.
+  - Tests: `CollectionDragTests.ByDefaultTheSourceTunnelsAndIgnoresHandledPresses`, `CollectionDragTests.AnAncestorThatHandlesTunnelingPressesKeepsTheGesture`
 
 ## Invariants
 
@@ -194,6 +196,7 @@ depends:
 - **One insertion adorner is retargeted.** Reason: styles set on a custom `ItemDropAdorner` instance survive hover changes, and no adorner is created per container.
 - **Locations fall back to `ItemsSource`.** Reason: platform drops and command-only targets still need an insertion index to hand to `PayloadCommand`.
 - **Structural checks run before `CanDrop`.** See DD-COLLECTION-023. Reason: consumers override `CanDrop` for domain validation and should not have to remember to call the base for structural correctness.
+- **Respect handled events on collection drags.** Tunneling alone already reaches the operation before `ListBoxItem` selects, so `HandledEventsToo` (formerly true) only overrode an ancestor that marked a tunneling press or move handled: a pan-and-zoom canvas, a design surface or a custom gesture host that claimed the gesture. Reason: Avalonia's convention is that a handled event belongs to whoever handled it, every other drag source (DD-DRAG-003) follows it, and one default is easier to explain. An app that wants the list to drag anyway sets `HandledEventsToo` on the operation. Rejected: keeping it on and documenting why (it defends against no known control); removing the property (apps under a gesture-claiming ancestor still need the opt-in).
 - **No logical-descendant check.** The former DD-COLLECTION-024 rejected drags whose event source was not a logical descendant of the attached control. Probing found that every source that reaches the target's handlers is one (item containers, template parts such as the empty area's `ScrollContentPresenter`), except the attached control itself: Avalonia's `IsLogicalAncestorOf` is false for the control, so a target whose own surface is hit (a `Border` with a background) rejected drags over it and accepted them over its child. Rejected: moving the check into `CanDropAtLocation`, which keeps that bug for a case nobody found.
 
 ## Non-goals
@@ -204,4 +207,3 @@ depends:
 ## Open items
 
 - Indexes come from the item control's containers, so a filtered or sorted view over `PayloadTarget` inserts and removes at the wrong positions (Edge cases). Addressed by [changes/filtered-sorted-collections.md](../../changes/filtered-sorted-collections.md).
-- DD-COLLECTION-001 also receives handled pointer events, which only overrides ancestors that claim the gesture. Addressed by [changes/collection-drag-handled-events.md](../../changes/collection-drag-handled-events.md).

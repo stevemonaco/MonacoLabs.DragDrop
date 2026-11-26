@@ -8,11 +8,10 @@ Small fixes that need no design skip the proposal: take the item from [`docs/BAC
 
 | Proposal | Depends on |
 |---|---|
-| [collection-drag-handled-events.md](collection-drag-handled-events.md): collection drags stop receiving handled pointer events | — |
 | [filtered-sorted-collections.md](filtered-sorted-collections.md): map display indexes for filtered and sorted lists, `ItemOrder`, a new sample page | — |
-| [package-hygiene.md](package-hygiene.md): docs, package metadata, API baseline, formatting and coverage before the first release | the other two, for its last task (API baseline) |
+| [package-hygiene.md](package-hygiene.md): docs, package metadata, API baseline, formatting and coverage before the first release | filtered-sorted-collections, for its last task (API baseline) |
 
-Suggested order: collection-drag-handled-events (small), then filtered-sorted-collections, then package-hygiene.
+Suggested order: filtered-sorted-collections, then package-hygiene.
 
 ## Format
 

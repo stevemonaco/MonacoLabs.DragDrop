@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Xunit;
@@ -215,6 +216,47 @@ public class CollectionDragTests
 
     [AvaloniaFact]
     public void DraggedItemsDefaultsToSelectedItems() => Assert.Equal(DraggedItems.SelectedItems, new CollectionDragOperation().DraggedItems);
+
+    [AvaloniaFact]
+    public void ByDefaultTheSourceTunnelsAndIgnoresHandledPresses()
+    {
+        var operation = new CollectionDragOperation();
+
+        Assert.Equal(RoutingStrategies.Tunnel, operation.Routing);
+        Assert.False(operation.HandledEventsToo);
+    }
+
+    [AvaloniaTheory]
+    [InlineData(null, null)]
+    [InlineData(true, "b")]
+    public void AnAncestorThatHandlesTunnelingPressesKeepsTheGesture(bool? handledEventsToo, string? expected)
+    {
+        var operation = new CollectionDragOperation();
+        if (handledEventsToo is { } value)
+            operation.HandledEventsToo = value;
+        var items = new List<string> { "a", "b", "c" };
+        var list = new ListBox
+        {
+            ItemsSource = items,
+            Width = 150,
+            Height = 250,
+            ItemTemplate = new FuncDataTemplate<string>((_, _) => new TextBlock { Height = 30 })
+        };
+        operation.PayloadCollection = items;
+        DragDrop.SetDragOperation(list, operation);
+        var gestureHost = new Border { Child = list };
+        gestureHost.AddHandler(InputElement.PointerPressedEvent, (_, e) => e.Handled = true, RoutingStrategies.Tunnel);
+
+        var target = new Border { Background = Brushes.Blue, Width = 100, Height = 100 };
+        var drop = new RecordingDropOperation();
+        DragDrop.SetDropOperation(target, drop);
+        var panel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 50, VerticalAlignment = VerticalAlignment.Top, Children = { gestureHost, target } };
+        var window = TestWindow.Show(panel);
+
+        window.MouseDrag(window.PointIn(list.ContainerFromIndex(1)!), window.PointIn(target));
+
+        Assert.Equal(expected, drop.PayloadTarget);
+    }
 
     private static (Window, ListBox, Border, PayloadsRecordingDropOperation) ShowSelection(List<string> items, params int[] selected)
     {
