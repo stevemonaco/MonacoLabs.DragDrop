@@ -2,6 +2,7 @@
 using System.Linq;
 
 namespace DragDropSample.Converters;
+
 public static class AppConverters
 {
     public static IValueConverter DislikedWorkers { get; } = new DislikedWorkersConverter();

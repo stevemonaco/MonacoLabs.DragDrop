@@ -2,6 +2,7 @@
 using Avalonia.Input;
 
 namespace MonacoLabs.DragDrop.Abstractions;
+
 public interface IDragOperation
 {
     IList<string> InteractionIds { get; set; }

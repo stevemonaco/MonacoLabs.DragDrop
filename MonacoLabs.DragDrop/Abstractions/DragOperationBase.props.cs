@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 
 namespace MonacoLabs.DragDrop.Abstractions;
+
 public abstract partial class DragOperationBase
 {
     private Control? _attachedControl;

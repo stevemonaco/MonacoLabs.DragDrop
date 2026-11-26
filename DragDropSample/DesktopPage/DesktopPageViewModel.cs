@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading.Tasks;
 
 namespace DragDropSample.ViewModels;
+
 public partial class DesktopPageViewModel : PageViewModel
 {
     public ObservableCollection<DroppedFileViewModel> Files { get; } = [];

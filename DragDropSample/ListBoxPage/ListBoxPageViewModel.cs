@@ -5,6 +5,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 
 namespace DragDropSample.ViewModels;
+
 public partial class ListBoxPageViewModel : PageViewModel
 {
     [ObservableProperty]
@@ -14,13 +15,13 @@ public partial class ListBoxPageViewModel : PageViewModel
     public ObservableCollection<WorkerViewModel> CombatTeam { get; } = [];
 
     [ObservableProperty]
-    public partial int MiningBudgetRemaining { get; set; } = _maxBudget;
+    public partial int MiningBudgetRemaining { get; set; } = MaxBudget;
 
     [ObservableProperty]
-    public partial int CraftingBudgetRemaining { get; set; } = _maxBudget;
+    public partial int CraftingBudgetRemaining { get; set; } = MaxBudget;
 
     [ObservableProperty]
-    public partial int CombatBudgetRemaining { get; set; } = _maxBudget;
+    public partial int CombatBudgetRemaining { get; set; } = MaxBudget;
 
     [ObservableProperty]
     public partial int MiningTeamProficiency { get; set; }
@@ -31,7 +32,7 @@ public partial class ListBoxPageViewModel : PageViewModel
     [ObservableProperty]
     public partial int CombatTeamProficiency { get; set; }
 
-    private const int _maxBudget = 20000;
+    private const int MaxBudget = 20000;
 
     public ListBoxPageViewModel()
     {
@@ -41,19 +42,19 @@ public partial class ListBoxPageViewModel : PageViewModel
 
         MiningTeam.CollectionChanged += (s, e) =>
         {
-            MiningBudgetRemaining = _maxBudget - MiningTeam.Sum(x => x.Salary);
+            MiningBudgetRemaining = MaxBudget - MiningTeam.Sum(x => x.Salary);
             MiningTeamProficiency = MiningTeam.Select(x => x.MiningProficiency).OfType<int>().Sum();
         };
 
         CraftingTeam.CollectionChanged += (s, e) =>
         {
-            CraftingBudgetRemaining = _maxBudget - CraftingTeam.Sum(x => x.Salary);
+            CraftingBudgetRemaining = MaxBudget - CraftingTeam.Sum(x => x.Salary);
             CraftingTeamProficiency = CraftingTeam.Select(x => x.CraftingProficiency).OfType<int>().Sum();
         };
 
         CombatTeam.CollectionChanged += (s, e) =>
         {
-            CombatBudgetRemaining = _maxBudget - CombatTeam.Sum(x => x.Salary);
+            CombatBudgetRemaining = MaxBudget - CombatTeam.Sum(x => x.Salary);
             CombatTeamProficiency = CombatTeam.Select(x => x.CombatProficiency).OfType<int>().Sum();
         };
     }
@@ -88,7 +89,7 @@ public partial class ListBoxPageViewModel : PageViewModel
 
             if (dislikedCount == 0)
                 continue;
-            
+
             worker.DislikedWorkers = new(workerIndices.OrderBy(x => Random.Shared.Next()).Take(dislikedCount).Select(x => workers[x]));
         }
 

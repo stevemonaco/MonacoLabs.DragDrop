@@ -1,6 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 
 namespace DragDropSample.ViewModels.Nodes;
+
 public partial class ProjectNodeViewModel : NodeViewModel, IParentNode
 {
     public ObservableCollection<NodeViewModel> Children { get; init; } = [];

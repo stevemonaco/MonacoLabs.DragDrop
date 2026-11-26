@@ -1,6 +1,7 @@
 ﻿using Avalonia.Input;
 
 namespace MonacoLabs.DragDrop;
+
 internal static class DragDropIds
 {
     public static string DefaultOperation { get; } = "app:default";

@@ -7,6 +7,7 @@ using System.Globalization;
 using System.Linq;
 
 namespace DragDropSample.Converters;
+
 public class DislikedWorkersConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)

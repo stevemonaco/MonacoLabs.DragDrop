@@ -1,6 +1,7 @@
 ﻿using Avalonia.Controls;
 
 namespace MonacoLabs.DragDrop.Abstractions;
+
 public interface IDropOperation
 {
     IList<string> InteractionIds { get; set; }

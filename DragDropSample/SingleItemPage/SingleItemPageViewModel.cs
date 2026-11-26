@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Linq;
 
 namespace DragDropSample.ViewModels;
+
 public partial class SingleItemPageViewModel : PageViewModel
 {
     public IReadOnlyList<MenuItemViewModel> Meals { get; } =

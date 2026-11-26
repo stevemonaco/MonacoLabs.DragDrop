@@ -2,6 +2,7 @@
 using System.Collections.ObjectModel;
 
 namespace DragDropSample.ViewModels;
+
 public partial class WorkerViewModel : ObservableObject
 {
     public int PersonId { get; init; }

@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 namespace DragDropSample.ViewModels;
+
 public partial class GuestOrderViewModel : ObservableObject
 {
     public string Name { get; }

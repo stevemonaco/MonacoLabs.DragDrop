@@ -2,6 +2,7 @@
 using System.Collections;
 
 namespace MonacoLabs.DragDrop;
+
 public class CollectionDropInfo : DropInfo
 {
     /// <summary>

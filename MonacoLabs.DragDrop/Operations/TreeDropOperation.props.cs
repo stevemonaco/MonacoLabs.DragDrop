@@ -1,6 +1,7 @@
 using Avalonia;
 
 namespace MonacoLabs.DragDrop;
+
 public partial class TreeDropOperation
 {
     public static readonly StyledProperty<TimeSpan> HoverExpandDelayProperty =

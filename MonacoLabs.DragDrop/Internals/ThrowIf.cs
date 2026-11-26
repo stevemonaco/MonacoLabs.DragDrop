@@ -1,6 +1,7 @@
 ﻿using System.Runtime.CompilerServices;
 
 namespace MonacoLabs.DragDrop;
+
 internal static class ThrowIf
 {
     [MethodImpl(MethodImplOptions.NoInlining)]

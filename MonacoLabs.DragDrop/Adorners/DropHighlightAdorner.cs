@@ -1,10 +1,10 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
-using Path = Avalonia.Controls.Shapes.Path;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Styling;
+using Path = Avalonia.Controls.Shapes.Path;
 
 namespace MonacoLabs.DragDrop;
 

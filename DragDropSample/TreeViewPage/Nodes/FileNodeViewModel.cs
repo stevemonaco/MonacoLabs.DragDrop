@@ -1,4 +1,5 @@
 ﻿namespace DragDropSample.ViewModels.Nodes;
+
 public partial class FileNodeViewModel : NodeViewModel
 {
     public override string Icon => "📄";

@@ -1,6 +1,7 @@
 using Avalonia;
 
 namespace MonacoLabs.DragDrop;
+
 public partial class ItemDragOperation
 {
     public static readonly StyledProperty<bool> SwapOnDropProperty =

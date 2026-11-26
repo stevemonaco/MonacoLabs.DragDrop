@@ -5,6 +5,7 @@ using DragDropSample.ViewModels;
 using DragDropSample.Views;
 
 namespace DragDropSample;
+
 public partial class App : Application
 {
     public override void Initialize()

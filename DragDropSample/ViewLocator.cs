@@ -5,6 +5,7 @@ using DragDropSample.ViewModels;
 using System;
 
 namespace DragDropSample;
+
 public class ViewLocator : IDataTemplate
 {
     public Control? Build(object? data)

@@ -2,6 +2,7 @@ using Avalonia.Media;
 using Avalonia.Media.Immutable;
 
 namespace MonacoLabs.DragDrop;
+
 internal static class AdornerBrushes
 {
     public static IImmutableSolidColorBrush Accent { get; } = new ImmutableSolidColorBrush(Color.FromRgb(0x00, 0x78, 0xD4));

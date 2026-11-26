@@ -1,10 +1,10 @@
-using System.Collections;
-using System.Collections.ObjectModel;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using System.Collections;
+using System.Collections.ObjectModel;
 
 namespace MonacoLabs.DragDrop.Tests;
 

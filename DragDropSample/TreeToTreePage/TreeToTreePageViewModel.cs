@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 
 namespace DragDropSample.ViewModels;
+
 public class TreeToTreePageViewModel : PageViewModel
 {
     public ObservableCollection<NodeViewModel> Workspace { get; }

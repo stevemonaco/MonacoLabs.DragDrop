@@ -1,10 +1,10 @@
-using System.Reflection;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Data;
 using Avalonia.Headless.XUnit;
 using Avalonia.Metadata;
 using MonacoLabs.DragDrop.Abstractions;
+using System.Reflection;
 using Xunit;
 
 namespace MonacoLabs.DragDrop.Tests;

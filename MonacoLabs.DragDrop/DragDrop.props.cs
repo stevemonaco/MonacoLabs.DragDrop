@@ -4,6 +4,7 @@ using Avalonia.Data;
 using MonacoLabs.DragDrop.Abstractions;
 
 namespace MonacoLabs.DragDrop;
+
 public static partial class DragDrop
 {
     /// <summary>

@@ -1,6 +1,6 @@
+using Avalonia.Threading;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using Avalonia.Threading;
 
 namespace MonacoLabs.DragDrop.Tests;
 

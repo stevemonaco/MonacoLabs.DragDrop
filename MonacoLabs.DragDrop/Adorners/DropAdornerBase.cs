@@ -8,6 +8,7 @@ using Avalonia.Styling;
 using AvaDragDrop = Avalonia.Input.DragDrop;
 
 namespace MonacoLabs.DragDrop;
+
 public abstract class DropAdornerBase : Border
 {
     public static readonly StyledProperty<Control?> TargetControlProperty =

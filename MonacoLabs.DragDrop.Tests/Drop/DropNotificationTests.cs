@@ -1,10 +1,10 @@
-using System.Collections.ObjectModel;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Media;
+using System.Collections.ObjectModel;
 using Xunit;
 
 namespace MonacoLabs.DragDrop.Tests;

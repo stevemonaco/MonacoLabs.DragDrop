@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 
 namespace MonacoLabs.DragDrop;
+
 public class DropInfo
 {
     /// <summary>

@@ -10,6 +10,7 @@ using System.Runtime.CompilerServices;
 using AvaDragDrop = Avalonia.Input.DragDrop;
 
 namespace MonacoLabs.DragDrop.Abstractions;
+
 public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
 {
     private const string LogArea = "DragDrop";

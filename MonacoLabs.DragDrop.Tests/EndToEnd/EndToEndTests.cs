@@ -1,4 +1,3 @@
-using System.Collections.ObjectModel;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
@@ -8,6 +7,7 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using MonacoLabs.DragDrop.Abstractions;
+using System.Collections.ObjectModel;
 using Xunit;
 
 namespace MonacoLabs.DragDrop.Tests;

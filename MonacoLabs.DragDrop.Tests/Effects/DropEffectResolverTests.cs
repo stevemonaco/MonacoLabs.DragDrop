@@ -69,15 +69,15 @@ public class DropEffectResolverTests
     public void TheEffectIsAlwaysOneAllowedEffectOrNone()
     {
         foreach (var allowed in Enumerable.Range(0, 8).Select(x => (DragDropEffects)x))
-        foreach (var modifiers in Enumerable.Range(0, 16).Select(x => (KeyModifiers)x))
-        foreach (var hasInProcessPayload in new[] { true, false })
-        foreach (var isMacOS in new[] { true, false })
-        {
-            var effect = DropEffectResolver.Resolve(allowed, modifiers, hasInProcessPayload, isMacOS);
+            foreach (var modifiers in Enumerable.Range(0, 16).Select(x => (KeyModifiers)x))
+                foreach (var hasInProcessPayload in new[] { true, false })
+                    foreach (var isMacOS in new[] { true, false })
+                    {
+                        var effect = DropEffectResolver.Resolve(allowed, modifiers, hasInProcessPayload, isMacOS);
 
-            Assert.Contains(effect, new[] { DragDropEffects.None, DragDropEffects.Copy, DragDropEffects.Move, DragDropEffects.Link });
-            Assert.True(effect == DragDropEffects.None || allowed.HasFlag(effect), $"{effect} not in {allowed}");
-            Assert.False(!hasInProcessPayload && effect == DragDropEffects.Move, "a platform drop reported Move");
-        }
+                        Assert.Contains(effect, new[] { DragDropEffects.None, DragDropEffects.Copy, DragDropEffects.Move, DragDropEffects.Link });
+                        Assert.True(effect == DragDropEffects.None || allowed.HasFlag(effect), $"{effect} not in {allowed}");
+                        Assert.False(!hasInProcessPayload && effect == DragDropEffects.Move, "a platform drop reported Move");
+                    }
     }
 }

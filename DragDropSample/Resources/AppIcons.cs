@@ -1,6 +1,7 @@
 ﻿using Avalonia.Media;
 
 namespace DragDropSample.Resources;
+
 public static class AppIcons
 {
 

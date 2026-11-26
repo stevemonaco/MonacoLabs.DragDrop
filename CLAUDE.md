@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-MonacoLabs.DragDrop is a WIP/prototype MVVM-friendly drag-and-drop library for Avalonia 12, plus a demo app (`DragDropSample`) that exercises it, and a headless xUnit v3 test project (`MonacoLabs.DragDrop.Tests`). CI (`.github/workflows/ci.yml`) builds the solution and runs the tests on Windows and Linux for every push and pull request. There is no lint/format config yet.
+MonacoLabs.DragDrop is a WIP/prototype MVVM-friendly drag-and-drop library for Avalonia 12, plus a demo app (`DragDropSample`) that exercises it, and a headless xUnit v3 test project (`MonacoLabs.DragDrop.Tests`). CI (`.github/workflows/ci.yml`) builds the solution and runs the tests on Windows and Linux for every push and pull request, and checks formatting against `.editorconfig` on the Windows leg.
 
 ## Docs
 
@@ -23,6 +23,7 @@ MonacoLabs.DragDrop is a WIP/prototype MVVM-friendly drag-and-drop library for A
 dotnet build MonacoLabs.DragDrop.slnx
 dotnet run --project DragDropSample
 dotnet test --project MonacoLabs.DragDrop.Tests
+dotnet format MonacoLabs.DragDrop.slnx   # CI runs it with --verify-no-changes
 ```
 
 - Targets `net10.0`; the solution is a `.slnx` file. `global.json` pins SDK 10.0 with `rollForward: latestMajor` and selects the Microsoft Testing Platform runner for `dotnet test`.

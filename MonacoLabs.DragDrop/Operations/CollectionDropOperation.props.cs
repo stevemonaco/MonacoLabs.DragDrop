@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Data;
 
 namespace MonacoLabs.DragDrop;
+
 public partial class CollectionDropOperation
 {
     public static readonly StyledProperty<DropInsertionAdorner?> ItemDropAdornerProperty =

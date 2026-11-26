@@ -1,6 +1,7 @@
 using Avalonia.Platform.Storage;
 
 namespace DragDropSample.ViewModels;
+
 public record DroppedFileViewModel(IStorageItem StorageItem, string? LocalPath, ulong? Size)
 {
     public string Name => StorageItem.Name;

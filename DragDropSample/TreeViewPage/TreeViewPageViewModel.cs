@@ -2,6 +2,7 @@
 using System.Collections.ObjectModel;
 
 namespace DragDropSample.ViewModels;
+
 public partial class TreeViewPageViewModel : PageViewModel
 {
     public ObservableCollection<NodeViewModel> Solutions { get; }
