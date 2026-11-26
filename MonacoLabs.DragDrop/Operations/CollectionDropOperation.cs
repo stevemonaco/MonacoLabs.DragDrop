@@ -22,9 +22,9 @@ public partial class CollectionDropOperation : DropOperationBase
     private Vector _autoScrollStep;
 
     /// <summary>
-    /// True, so items can be reordered within the attached control.
+    /// True, so items can be reordered within the attached control, unless <see cref="ItemOrder"/> is <c>Sorted</c>.
     /// </summary>
-    protected override bool AllowsSelfDrop => true;
+    protected override bool AllowsSelfDrop => ItemOrder == ItemOrder.Positional;
 
     /// <summary>
     /// Item container under the pointer, or null when the pointer isn't over an item.
@@ -84,7 +84,8 @@ public partial class CollectionDropOperation : DropOperationBase
 
     private void UpdateHoveredContainer(DragEventArgs e)
     {
-        var container = LocateTargetContainer(e);
+        // A sorted collection places the drop itself, so no container is a meaningful position
+        var container = ItemOrder == ItemOrder.Sorted ? null : LocateTargetContainer(e);
         if (!ReferenceEquals(container, HoveredContainer))
         {
             ClearHoveredContainer();
@@ -218,8 +219,20 @@ public partial class CollectionDropOperation : DropOperationBase
         if (HoveredContainer is null || LocateTargetContainerIndex(HoveredContainer) is not int index || index < 0)
             return new CollectionDropLocation(collection, null, null, AttachedControl);
 
-        return new CollectionDropLocation(collection, HoveredOffset == DropTargetOffset.AfterTarget ? index + 1 : index, null, AttachedControl);
+        var displayIndex = HoveredOffset == DropTargetOffset.AfterTarget ? index + 1 : index;
+        var targetIndex = AttachedControl is ItemsControl items && !ReferenceEquals(items.ItemsSource, collection)
+            ? ResolveTargetIndex(collection, displayIndex)
+            : displayIndex;
+        return new CollectionDropLocation(collection, targetIndex, null, AttachedControl);
     }
+
+    /// <summary>
+    /// Maps a position in the attached control's items to an index in <paramref name="collection"/>, when the control shows a filtered or sorted
+    /// view of it rather than the collection itself. By default, the index of the item shown at <paramref name="displayIndex"/> (equal items
+    /// matched by occurrence), or just after the last shown item at the end of the view. Return null to append.
+    /// </summary>
+    protected virtual int? ResolveTargetIndex(IList collection, int displayIndex) =>
+        AttachedControl is ItemsControl items ? DisplayIndexMap.ToCollectionIndex(items.ItemsView, collection, displayIndex) : displayIndex;
 
     /// <summary>
     /// Decides where the payload lands relative to the hovered container from the pointer position over its insertion target.

@@ -98,6 +98,7 @@ Drop adorners are the drop target's visual feedback, placed in the `AdornerLayer
 
 - A newly created adorner has `IsDropValid` false, so it starts with `:error` until a drop operation sets it.
 - Retargeting an attached insertion adorner leaves it the adorner of the old control until the drop operation detaches it (DD-COLLECTION does so before retargeting).
+- A collection target whose `ItemOrder` is `Sorted` shows only its drop adorner: its insertion adorner is never attached (DD-COLLECTION-051).
 - `GetAdornerRect` throws when the adorner has no target control or the target is not in a `TopLevel`.
 - The fade animates to the opacity at the moment `Attach` is called. A fade started during another fade targets the partly faded value only if that value is the base value, which it is after `Detach` cancels the previous fade.
 

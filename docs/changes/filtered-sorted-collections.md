@@ -74,6 +74,8 @@ ARCHITECTURE §5 and CLAUDE.md: add the new page and describe display-index mapp
 
 Each task first writes the listed tests and confirms they fail, then changes the code, updates the spec and cites the tests.
 
+Tasks 1-5 landed on 2026-11-26, with DD-COLLECTION-049 to 052 and the decisions already moved into the spec. `EndToEndTests.ReorderingWithinAFilteredListRemovesTheOriginalNotTheCopy` passed once the drop side mapped its index: removal's equality fallback already recovered the original. What remains is the manual check (task 6) and closing.
+
 1. **The mapping.** A pure helper in `Internals/` with plain `[Theory]` tests.
    - `DisplayIndexMapTests`: identity; before a shown item; after the last shown item; empty view; item missing from the collection; duplicates by occurrence.
 2. **Drop side.** `ResolveTargetIndex`, used by `ResolveDropLocation`.
@@ -94,7 +96,7 @@ Each task first writes the listed tests and confirms they fail, then changes the
 
 ## Open questions
 
-- **The property's final name.** Deferred 2026-11-26: build with `ItemOrder` (`Positional`/`Sorted`), which reads as what the list is, and settle the name once the API and the sample are together, before task 7. The alternative is `InsertionMode` (`AtPosition`/`Append`), which reads as what the drop does.
-- **How the sample keeps its view in sync.** Deferred 2026-11-26, to be settled while building the sample (task 5). What each option implies:
+- **The property's final name.** Settled 2026-11-26: `ItemOrder` (`Positional`/`Sorted`), which reads as what the list is. Rejected: `InsertionMode` (`AtPosition`/`Append`).
+- **How the sample keeps its view in sync.** Settled 2026-11-26 while building task 5: *incremental sync*, through a small `FilteredView<T>` in the page folder that diffs the source into the shown collection with inserts, removals and moves (a filter or sort change included), so selection and containers survive drops. The options considered:
   - *Rebuild* (clear and refill the shown collection on every source or filter change). Little sample code. Every change is a `Reset`, so the `ListBox` drops its selection and re-realizes its containers after each drop and on each keystroke in the search box: items selected but not dragged lose their selection. A drop's insertion also triggers a `Reset` while the drop handler is still running, so the page exercises the library with its hovered container recycled mid-drop, which no page does today. That is useful coverage, but any bug it finds lands in this change.
   - *Incremental sync* (mirror each source insert and removal into the view when the item passes the filter, at its mapped position, and recompute only on filter or sort changes). Selection survives drops, and the page behaves like an app built on DynamicData or a collection view. It costs more sample code, roughly a small helper class, and that code has to be right for the page to be trustworthy.

@@ -119,14 +119,32 @@ public class CollectionDragOperation : DragOperationBase
             .Select(x =>
             {
                 var container = list.ContainerFromIndex(x.First);
-                return new CollectionDragItem(x.Second!, ResolvePayloadCollection(container), x.First, container);
+                var collection = ResolvePayloadCollection(container);
+                return new CollectionDragItem(x.Second!, collection, MapPayloadIndex(list, collection, x.First, x.Second!), container);
             })];
     }
 
-    private protected CollectionDragItem? ToDragItem(Control container) =>
-        ItemsControl.ItemsControlFromItemContainer(container)?.ItemFromContainer(container) is { } item
-            ? new CollectionDragItem(item, ResolvePayloadCollection(container), LocatePayloadContainerIndex(container), container)
-            : null;
+    private protected CollectionDragItem? ToDragItem(Control container)
+    {
+        if (ItemsControl.ItemsControlFromItemContainer(container) is not { } owner || owner.ItemFromContainer(container) is not { } item)
+            return null;
+
+        var collection = ResolvePayloadCollection(container);
+        return new CollectionDragItem(item, collection, MapPayloadIndex(owner, collection, LocatePayloadContainerIndex(container), item), container);
+    }
+
+    private int? MapPayloadIndex(ItemsControl owner, IList? collection, int? displayIndex, object item) =>
+        collection is null || displayIndex is not int index || index < 0 || ReferenceEquals(owner.ItemsSource, collection)
+            ? displayIndex
+            : ResolvePayloadIndex(collection, index, item);
+
+    /// <summary>
+    /// Maps the position of a dragged <paramref name="item"/> in the attached control's items to its index in <paramref name="collection"/>, when
+    /// the control shows a filtered or sorted view of the collection rather than the collection itself. By default, the index of the item shown at
+    /// <paramref name="displayIndex"/>, equal items matched by occurrence. Null leaves the item to be found by equality when it is removed.
+    /// </summary>
+    protected virtual int? ResolvePayloadIndex(IList collection, int displayIndex, object item) =>
+        AttachedControl is ItemsControl items ? DisplayIndexMap.ToCollectionIndex(items.ItemsView, collection, displayIndex) : displayIndex;
 
     /// <summary>
     /// Resolves the collection a dragged item is removed from after a Move, given its item container, or null when it isn't realized.

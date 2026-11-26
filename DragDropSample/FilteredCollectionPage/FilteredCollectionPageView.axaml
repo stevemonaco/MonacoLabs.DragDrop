@@ -1,0 +1,134 @@
+<UserControl
+    x:Class="DragDropSample.Views.FilteredCollectionPageView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:cdd="using:DragDropSample.CustomDragDrop"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:dd="using:MonacoLabs.DragDrop"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:DragDropSample.ViewModels"
+    d:DesignHeight="600"
+    d:DesignWidth="1000"
+    x:DataType="vm:FilteredCollectionPageViewModel"
+    mc:Ignorable="d">
+    <UserControl.Styles>
+        <Style Selector="TextBlock.done">
+            <Setter Property="Opacity" Value="0.5" />
+            <Setter Property="TextDecorations" Value="Strikethrough" />
+        </Style>
+    </UserControl.Styles>
+
+    <UserControl.DataTemplates>
+        <DataTemplate x:DataType="vm:TaskItemViewModel">
+            <Grid ColumnDefinitions="64,*" ColumnSpacing="8">
+                <Border HorizontalAlignment="Left" Classes="pill">
+                    <TextBlock Text="{Binding Priority}" />
+                </Border>
+                <TextBlock
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    Classes.done="{Binding IsDone}"
+                    Text="{Binding Title}" />
+            </Grid>
+        </DataTemplate>
+    </UserControl.DataTemplates>
+
+    <Grid ColumnDefinitions="*,20,*">
+        <Grid RowDefinitions="3*,20,2*">
+            <!--  Backlog  -->
+            <Border Classes="card">
+                <Grid RowDefinitions="Auto,Auto,*" RowSpacing="12">
+                    <StackPanel Spacing="2">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Classes="card-title" Text="Backlog" />
+                            <Border Classes="pill">
+                                <TextBlock Text="{Binding ShownBacklog.Count, StringFormat='{}{0} shown'}" />
+                            </Border>
+                        </StackPanel>
+                        <TextBlock Classes="subtle" Text="A filtered view of the backlog. Reorder within it, move or Ctrl-copy tasks to the sprint and back, or select several and drag them together." />
+                    </StackPanel>
+                    <WrapPanel Grid.Row="1" ItemSpacing="12" LineSpacing="8">
+                        <TextBox
+                            Width="200"
+                            Text="{Binding SearchText}"
+                            PlaceholderText="Search titles" />
+                        <CheckBox Content="Hide done" IsChecked="{Binding HideDone}" />
+                        <CheckBox Content="Sort by priority" IsChecked="{Binding SortByPriority}" />
+                    </WrapPanel>
+                    <ListBox
+                        Grid.Row="2"
+                        ItemsSource="{Binding ShownBacklog}"
+                        SelectionMode="Multiple">
+                        <dd:DragDrop.DragOperation>
+                            <dd:CollectionDragOperation
+                                AllowedEffects="Move,Copy"
+                                InteractionIds="app:task"
+                                PayloadCollection="{Binding Backlog}" />
+                        </dd:DragDrop.DragOperation>
+                        <dd:DragDrop.DropOperation>
+                            <cdd:TaskDropOperation
+                                InteractionIds="app:task"
+                                ItemOrder="{Binding BacklogOrder}"
+                                PayloadTarget="{Binding Backlog}" />
+                        </dd:DragDrop.DropOperation>
+                    </ListBox>
+                </Grid>
+            </Border>
+
+            <!--  Underlying order  -->
+            <Border Grid.Row="2" Classes="card">
+                <Grid RowDefinitions="Auto,*" RowSpacing="8">
+                    <StackPanel Spacing="2">
+                        <TextBlock Classes="card-title" Text="Underlying order" />
+                        <TextBlock Classes="subtle" Text="The backlog list itself, unfiltered and unsorted, so you can see where each drop landed and which item a move removed." />
+                    </StackPanel>
+                    <ScrollViewer Grid.Row="1">
+                        <ItemsControl ItemsSource="{Binding Backlog}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel ItemSpacing="6" LineSpacing="6" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:TaskItemViewModel">
+                                    <Border Classes="pill">
+                                        <TextBlock Classes.done="{Binding IsDone}" Text="{Binding Title}" />
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!--  Sprint  -->
+        <Border Grid.Column="2" Classes="card">
+            <Grid RowDefinitions="Auto,*" RowSpacing="12">
+                <StackPanel Spacing="2">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Classes="card-title" Text="Sprint" />
+                        <Border Classes="pill">
+                            <TextBlock Text="{Binding Sprint.Count}" />
+                        </Border>
+                    </StackPanel>
+                    <TextBlock Classes="subtle" Text="A plain list bound directly, on the other side of moves and copies." />
+                </StackPanel>
+                <ListBox
+                    Grid.Row="1"
+                    ItemsSource="{Binding Sprint}"
+                    SelectionMode="Multiple">
+                    <dd:DragDrop.DragOperation>
+                        <dd:CollectionDragOperation
+                            AllowedEffects="Move,Copy"
+                            InteractionIds="app:task"
+                            PayloadCollection="{Binding Sprint}" />
+                    </dd:DragDrop.DragOperation>
+                    <dd:DragDrop.DropOperation>
+                        <cdd:TaskDropOperation InteractionIds="app:task" PayloadTarget="{Binding Sprint}" />
+                    </dd:DragDrop.DropOperation>
+                </ListBox>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

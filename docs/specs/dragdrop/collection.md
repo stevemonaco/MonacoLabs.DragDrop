@@ -11,17 +11,20 @@ sources:
   - MonacoLabs.DragDrop/Info/CollectionDragInfo.cs
   - MonacoLabs.DragDrop/Info/CollectionDragItem.cs
   - MonacoLabs.DragDrop/Operations/DraggedItems.cs
+  - MonacoLabs.DragDrop/Operations/ItemOrder.cs
   - MonacoLabs.DragDrop/Info/CollectionDropInfo.cs
   - MonacoLabs.DragDrop/Info/CollectionDropLocation.cs
   - MonacoLabs.DragDrop/Info/DropTargetOffset.cs
   - MonacoLabs.DragDrop/Internals/CollectionRemoval.cs
   - MonacoLabs.DragDrop/Internals/AutoScroll.cs
+  - MonacoLabs.DragDrop/Internals/DisplayIndexMap.cs
 types:
   - CollectionDragOperation
   - CollectionDropOperation
   - CollectionDragInfo
   - CollectionDragItem
   - DraggedItems
+  - ItemOrder
   - CollectionDropInfo
   - CollectionDropLocation
   - DropTargetOffset
@@ -30,6 +33,7 @@ tests:
   - CollectionDropTests
   - CollectionRemovalTests
   - AutoScrollStepTests
+  - DisplayIndexMapTests
   - EndToEndTests
   - AutoScrollTests
   - TreeDropTests
@@ -60,14 +64,14 @@ depends:
   - Tests: `CollectionDragTests.DraggingASelectedItemCarriesTheWholeSelectionInIndexOrder`, `EndToEndTests.MovingASelectionWithinOneListKeepsItsOrder`
 - **DD-COLLECTION-042** — Otherwise the drag shall carry only the pressed container's item.
   - Tests: `CollectionDragTests.DraggingAnUnselectedItemCarriesOnlyIt`, `CollectionDragTests.DraggedItemsPressedItemCarriesOnlyThePressedItem`, `CollectionDragTests.ThePayloadIsThePressedItemWhateverPayloadAndSelectionSay`
-- **DD-COLLECTION-043** — Selected items without a realized container shall be carried, with their index from the selection and no container.
-  - Tests: `CollectionDragTests.SelectedItemsScrolledOutOfViewAreCarried`
+- **DD-COLLECTION-043** — Selected items without a realized container shall be carried, with their index from the selection mapped into their collection (DD-COLLECTION-049) and no container.
+  - Tests: `CollectionDragTests.SelectedItemsScrolledOutOfViewAreCarried`, `EndToEndTests.MovingASelectionOutOfAFilteredListRemovesEveryOriginal`
 - **DD-COLLECTION-004** — When a press is not inside an item container (the operation is attached to a non-items control), the drag operation shall resolve the payload as DD-DRAG-016 does.
   - Tests: `CollectionDragTests.OnAControlThatIsNotAnItemsControlThePayloadResolvesAsUsual`
 - **DD-COLLECTION-005** — The drag visual (DD-SESSION) shall be the pressed item container when there is one, and the attached control otherwise. The realized container of every other dragged item shall also have `:dragging` while the drag runs.
   - Tests: `CollectionDragTests.TheDragVisualIsThePressedContainer`, `CollectionDragTests.OnAControlThatIsNotAnItemsControlTheDragVisualIsTheControl`, `CollectionDragTests.EveryRealizedDraggedContainerIsDragging`
-- **DD-COLLECTION-006** — The drag's `CollectionDragInfo` shall carry the pressed container and, per payload and in payload order, a `CollectionDragItem` with the item, its collection (`PayloadCollection`), its index in the attached control and its container when realized.
-  - Tests: `CollectionDragTests.TheDragInfoCarriesTheItemItsCollectionIndexAndContainer`, `CollectionDragTests.DraggingASelectedItemCarriesTheWholeSelectionInIndexOrder`
+- **DD-COLLECTION-006** — The drag's `CollectionDragInfo` shall carry the pressed container and, per payload and in payload order, a `CollectionDragItem` with the item, its collection (`PayloadCollection`), its index in that collection (DD-COLLECTION-049) and its container when realized.
+  - Tests: `CollectionDragTests.TheDragInfoCarriesTheItemItsCollectionIndexAndContainer`, `CollectionDragTests.DraggingASelectedItemCarriesTheWholeSelectionInIndexOrder`, `CollectionDragTests.ADragFromAFilteredViewRecordsCollectionIndexes`
 
 ### Drag-side completion
 
@@ -109,8 +113,8 @@ depends:
 
 - **DD-COLLECTION-021** — The drop location's collection shall be `PayloadTarget` when it is an `IList`, and otherwise the attached control's `ItemsSource` when that is an `IList`; with neither, there shall be no location.
   - Tests: `CollectionDropTests.TheLocationIsInPayloadTargetWhenItIsAList`, `CollectionDropTests.WithoutAListPayloadTargetTheLocationIsInTheItemsSource`, `CollectionDropTests.WithoutAnyListThereIsNoLocation`
-- **DD-COLLECTION-022** — While an item container at index *i* is hovered, the location's index shall be *i* for `BeforeTarget` and *i* + 1 for `AfterTarget`; while none is hovered, the index shall be null, meaning append.
-  - Tests: `CollectionDropTests.TheLocationIndexIsTheContainersIndexOrTheNextOne`, `CollectionDropTests.WithoutAHoveredContainerTheDropAppendsAfterTheItems`
+- **DD-COLLECTION-022** — While an item container at index *i* is hovered, the location's index shall be the mapping (DD-COLLECTION-049) of *i* for `BeforeTarget` and of *i* + 1 for `AfterTarget`; while none is hovered, the index shall be null, meaning append.
+  - Tests: `CollectionDropTests.TheLocationIndexIsTheContainersIndexOrTheNextOne`, `CollectionDropTests.WithoutAHoveredContainerTheDropAppendsAfterTheItems`, `CollectionDropTests.ADropOnAFilteredViewInsertsBeforeTheShownItemInTheCollection`, `CollectionDropTests.ADropAfterTheLastShownItemInsertsAfterItInTheCollection`
 - **DD-COLLECTION-023** — The drop operation shall evaluate `CanDropAtLocation` before `CanDrop`, inside the same validation (DD-DROP-007), and reject the drop when either is false, so overrides of `CanDrop` cannot skip the structural check and a message passed to `Reject` by either reaches `ErrorMessage`.
   - Tests: `TreeDropTests.DroppingANodeIntoItselfShowsTheSelfDropMessage`, `CollectionDropTests.TheStructuralCheckRunsFirstAndItsMessageWins`
 - ~~**DD-COLLECTION-024**~~ — Removed by api-design: see the decision "No logical-descendant check".
@@ -142,6 +146,15 @@ depends:
 - **DD-COLLECTION-047** — While an accepted drop transfers, reports to the drag source and runs `PayloadCommand`, a drop operation attached to a `SelectingItemsControl` shall hold its `AutoScrollToSelectedItem` false, then restore the value it had before.
   - Tests: `CollectionDropTests.InsertingBeforeTheSelectedItemKeepsTheContainersInStep`, `CollectionDropTests.ADropLeavesAutoScrollToSelectedItemAsItWas`
 
+### Filtered and sorted lists
+
+- **DD-COLLECTION-049** — Whenever the drag or drop operation reads an index from the attached control (a hovered, pressed or selected item), it shall map that display index into the collection it applies to: unchanged when that collection is the `ItemsSource` of the items control showing the item, and otherwise through `ResolvePayloadIndex` (drag) or `ResolveTargetIndex` (drop).
+  - Tests: `CollectionDropTests.AListBoundToItsTargetKeepsDisplayIndexes`, `CollectionDropTests.ADropOnAFilteredViewInsertsBeforeTheShownItemInTheCollection`, `CollectionDragTests.ADragFromAFilteredViewRecordsCollectionIndexes`, `EndToEndTests.ReorderingWithinAFilteredListRemovesTheOriginalNotTheCopy`, `EndToEndTests.MovingASelectionOutOfAFilteredListRemovesEveryOriginal`
+- **DD-COLLECTION-050** — By default, display index *i* below the view's count shall map to the collection index of the item shown at *i*, matched by occurrence among equal items (the *k*-th equal item shown maps to the *k*-th equal item in the collection); *i* equal to the view's count shall map to one past the last shown item's index; an empty view, an index outside the view, or an item the collection does not contain shall map to null (append on the drop side, removal by equality on the drag side).
+  - Tests: `DisplayIndexMapTests.AViewOfTheWholeCollectionMapsEachIndexToItself`, `DisplayIndexMapTests.AShownItemMapsToItsIndexInTheCollection`, `DisplayIndexMapTests.ThePositionAfterTheLastShownItemMapsJustAfterItInTheCollection`, `DisplayIndexMapTests.AnEmptyViewMapsToNull`, `DisplayIndexMapTests.AShownItemTheCollectionDoesNotContainMapsToNull`, `DisplayIndexMapTests.EqualItemsAreMatchedByOccurrence`, `DisplayIndexMapTests.AnIndexOutsideTheViewMapsToNull`, `CollectionDropTests.ADropAfterTheLastShownItemInsertsAfterItInTheCollection`
+- **DD-COLLECTION-051** — When `ItemOrder` is `Sorted`, the drop operation shall track no hovered container, so it shows its drop adorner but no insertion adorner, sets no drop pseudo-classes on containers and uses a null location index; and it shall not be meant for drags from its own control.
+  - Tests: `CollectionDropTests.ASortedTargetAppendsAndShowsNoInsertionLine`, `CollectionDropTests.ASortedTargetIsNotMeantForItsOwnDrags`
+
 ### Auto-scroll
 
 - **DD-COLLECTION-032** — While a drag meant for the target is within `AutoScrollMargin` of an edge of the scroll viewer (the attached control itself, or its first descendant `ScrollViewer`, looked up once per hover), the drop operation shall scroll that viewer towards the edge on a 16 ms timer.
@@ -161,6 +174,8 @@ depends:
   - Tests: `CollectionDragTests.DraggedItemsDefaultsToSelectedItems`
 - **DD-COLLECTION-046** (inherited) — When `HandledEventsToo` is not set on a collection drag operation, it shall be false, so an ancestor that marks a tunneling press or move handled keeps the gesture.
   - Tests: `CollectionDragTests.ByDefaultTheSourceTunnelsAndIgnoresHandledPresses`, `CollectionDragTests.AnAncestorThatHandlesTunnelingPressesKeepsTheGesture`
+- **DD-COLLECTION-052** (inherited) — When `ItemOrder` is not set, it shall be `Positional`.
+  - Tests: `CollectionDropTests.ItemOrderDefaultsToPositional`
 
 ## Invariants
 
@@ -172,7 +187,8 @@ depends:
 ## Edge cases
 
 - Dropping an item before or after itself inserts a duplicate next to it and removes the original: the list is unchanged (DD-COLLECTION-008). Dropping a selection inside itself gathers it at the location, in index order.
-- Indexes come from the item control's containers. When `PayloadTarget` is not the collection shown (for example a filtered or sorted view over it), insertion and removal indexes refer to different orders.
+- In a sorted view with equal items, the occurrence rule (DD-COLLECTION-050) picks one of the equal items in the collection, not necessarily the one shown; equal items are interchangeable by `Equals`, so removal and insertion still land next to an equal item.
+- A view whose items are not the collection's instances (a projection to view models) maps every index to null: drops append, and moves find nothing to remove unless the payloads are equal to the collection's items.
 - Only a `ListBox` exposes its selection model, so other selecting controls drag the pressed item even with several items selected.
 - The selection is read when the drag starts, after the press has updated it: a plain press on an unselected item makes it the only selection (DD-DRAG-009), so it drags alone, and a Ctrl-press adds it to the selection, which then drags as a whole.
 - The library does not change selection on drop: the target does not select the dropped items, and the source keeps whatever selection survives the removal.
@@ -203,13 +219,21 @@ depends:
 - **Structural checks run before `CanDrop`.** See DD-COLLECTION-023. Reason: consumers override `CanDrop` for domain validation and should not have to remember to call the base for structural correctness.
 - **Respect handled events on collection drags.** Tunneling alone already reaches the operation before `ListBoxItem` selects, so `HandledEventsToo` (formerly true) only overrode an ancestor that marked a tunneling press or move handled: a pan-and-zoom canvas, a design surface or a custom gesture host that claimed the gesture. Reason: Avalonia's convention is that a handled event belongs to whoever handled it, every other drag source (DD-DRAG-003) follows it, and one default is easier to explain. An app that wants the list to drag anyway sets `HandledEventsToo` on the operation. Rejected: keeping it on and documenting why (it defends against no known control); removing the property (apps under a gesture-claiming ancestor still need the opt-in).
 - **Work around Avalonia's stale container on drop.** In Avalonia 12.2, inserting an item before the selected item of a `ListBox`, while `AutoScrollToSelectedItem` is on and the panel is a `VirtualizingStackPanel` (the defaults), leaves a stale container: the list shows an extra row and wrong contents until it re-realizes. The insert shifts the selection anchor, and since Avalonia #22002 the auto-scroll that follows runs synchronously, before the panel has handled the insert (regressed between 12.1.6 and 12.2.0, still present on master nightlies on 2026-11-26). Pressing an item selects it, so dropping a copy before it hit this every time. The drop operation holds `AutoScrollToSelectedItem` false at animation priority for the drop's duration (DD-COLLECTION-047), which outranks local values and styles and leaves no value behind. Reason: every consumer with a `ListBox` target is affected, and turning off either setting avoids it. Rejected: fixing only the sample (consumers would still hit it); documenting it without a workaround. Remove once Avalonia fixes the bug (backlog).
+- **Map display indexes through the shown neighbor.** A filtered or sorted control shows a collection derived from `PayloadTarget` or `PayloadCollection`, so its container indexes are positions in the view. The operations map them to the collection through the item shown at that position (DD-COLLECTION-049, 050). Reason: it needs nothing from the app, works with any derived collection that holds the same item instances (an `ObservableCollection` the app re-filters, DynamicData, `DataGridCollectionView`), and keeps relative order for filters. Avalonia 12 has no built-in filtered or sorted view to ask. Rejected: requiring an app-supplied mapping (every app would write the same code); inserting at the display index (the bug this fixed).
+- **The identity case is detected by reference.** When the collection is the showing control's `ItemsSource`, indexes pass through unchanged. Reason: zero cost and zero behavior change for lists bound directly.
+- **Equal items are matched by occurrence.** Reason: value payloads (the sample's Guids, strings) can repeat, and matching the *k*-th occurrence keeps the mapping exact for filters, which preserve order. Rejected: the first equal item, which collapses duplicates onto one index.
+- **Indexes are always in their own collection.** `CollectionDragItem.Index`, `CollectionDropLocation.Index` and `CollectionDropInfo.TargetIndex` refer to the collection next to them. Reason: removal and commands then need no knowledge of views, and `CollectionRemoval` is unchanged. Rejected: carrying both a display index and a collection index (twice the surface, and commands would pick the wrong one).
+- **Overridable mappings.** `ResolveTargetIndex` and `ResolvePayloadIndex` are protected virtuals. Reason: a view that knows its source indexes (a `DataGridCollectionView`) can answer directly and handle projections. Rejected: an interface the view must implement.
+- **Sorted lists are declared, not detected.** `ItemOrder` says who orders the list (DD-COLLECTION-051). Reason: nothing in an `IList` says it is sorted, and an insertion line in a sorted list lies about where the item lands. Rejected: inferring from the view's type (works only for types the library knows). The name reads as what the list is; `InsertionMode` (`AtPosition`/`Append`), which reads as what the drop does, was the alternative.
+- **Sorted targets refuse self-drops.** Reason: a self-drop in a sorted list inserts a copy and removes the original, a no-op that would still flash the item.
 - **No logical-descendant check.** The former DD-COLLECTION-024 rejected drags whose event source was not a logical descendant of the attached control. Probing found that every source that reaches the target's handlers is one (item containers, template parts such as the empty area's `ScrollContentPresenter`), except the attached control itself: Avalonia's `IsLogicalAncestorOf` is false for the control, so a target whose own surface is hit (a `Border` with a background) rejected drags over it and accepted them over its child. Rejected: moving the check into `CanDropAtLocation`, which keeps that bug for a case nobody found.
 
 ## Non-goals
 
 - Cloning payloads automatically on Copy. `CreateCopy` is the hook (DD-COLLECTION-030).
 - Horizontal insertion zones for wrap or horizontal panels. `GetDropOffset` is virtual for that.
+- Filtered or sorted trees. Trees read every collection from the tree (DD-TREE), so `TreeDragOperation` keeps display indexes.
 
 ## Open items
 
-- Indexes come from the item control's containers, so a filtered or sorted view over `PayloadTarget` inserts and removes at the wrong positions (Edge cases). Addressed by [changes/filtered-sorted-collections.md](../../changes/filtered-sorted-collections.md).
+- None.

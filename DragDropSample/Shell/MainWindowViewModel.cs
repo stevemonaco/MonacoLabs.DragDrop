@@ -11,6 +11,7 @@ public partial class MainWindowViewModel : ObservableObject
         new SingleItemPageViewModel(),
         new SimpleCollectionPageViewModel(),
         new ListBoxPageViewModel(),
+        new FilteredCollectionPageViewModel(),
         new TreeViewPageViewModel(),
         new TreeToTreePageViewModel(),
         new DesktopPageViewModel()

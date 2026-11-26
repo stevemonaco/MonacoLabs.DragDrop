@@ -30,6 +30,73 @@ public class CollectionDropTests
     }
 
     [AvaloniaFact]
+    public void ADropOnAFilteredViewInsertsBeforeTheShownItemInTheCollection()
+    {
+        var items = new List<string> { "a", "b", "c", "d", "e" };
+        var (window, list) = ShowList(new CollectionDropOperation { PayloadTarget = items }, new List<string> { "b", "d" });
+
+        DropOn(window, Top(window, Container(list, 1)));
+
+        Assert.Equal(["a", "b", "c", "x", "d", "e"], items);
+    }
+
+    [AvaloniaFact]
+    public void ADropAfterTheLastShownItemInsertsAfterItInTheCollection()
+    {
+        var items = new List<string> { "a", "b", "c", "d", "e" };
+        var (window, list) = ShowList(new CollectionDropOperation { PayloadTarget = items }, new List<string> { "b", "d" });
+
+        DropOn(window, Bottom(window, Container(list, 1)));
+
+        Assert.Equal(["a", "b", "c", "d", "x", "e"], items);
+    }
+
+    [AvaloniaFact]
+    public void AListBoundToItsTargetKeepsDisplayIndexes()
+    {
+        var items = new List<string> { "a", "b", "c" };
+        var (window, list) = ShowList(new IndexMappingSpyDropOperation { PayloadTarget = items }, items);
+
+        DropOn(window, Top(window, Container(list, 2)));
+
+        Assert.Equal(["a", "b", "x", "c"], items);
+        Assert.False(((IndexMappingSpyDropOperation)DragDrop.GetDropOperation(list)!).Mapped);
+    }
+
+    [AvaloniaFact]
+    public void ASortedTargetAppendsAndShowsNoInsertionLine()
+    {
+        var items = new List<string> { "a", "b", "c" };
+        var operation = new CollectionDropOperation { PayloadTarget = items, ItemOrder = ItemOrder.Sorted };
+        var (window, list) = ShowList(operation, items);
+        using var drag = window.SimulateDrag(DragData.For(new CollectionDragOperation(), "x"));
+
+        drag.Enter(Top(window, Container(list, 1)));
+
+        Assert.True(operation.DropAdorner!.IsAttached);
+        Assert.False(operation.ItemDropAdorner!.IsAttached);
+        Assert.All(Containers(list), c => Assert.DoesNotContain(c.Classes, x => x.StartsWith(":drop")));
+
+        drag.Drop(Top(window, Container(list, 1)));
+        Assert.Equal(["a", "b", "c", "x"], items);
+    }
+
+    [AvaloniaFact]
+    public void ASortedTargetIsNotMeantForItsOwnDrags()
+    {
+        var items = new ObservableCollection<string> { "a", "b", "c" };
+        var (window, list) = ShowList(new CollectionDropOperation { PayloadTarget = items, ItemOrder = ItemOrder.Sorted }, items);
+        DragDrop.SetDragOperation(list, new CollectionDragOperation { PayloadCollection = items });
+
+        window.MouseDrag(window.PointIn(Container(list, 0)), Bottom(window, Container(list, 2)));
+
+        Assert.Equal(["a", "b", "c"], items);
+    }
+
+    [AvaloniaFact]
+    public void ItemOrderDefaultsToPositional() => Assert.Equal(ItemOrder.Positional, new CollectionDropOperation().ItemOrder);
+
+    [AvaloniaFact]
     public void InsertingBeforeTheSelectedItemKeepsTheContainersInStep()
     {
         var items = new ObservableCollection<string> { "a", "b", "c" };
@@ -650,6 +717,17 @@ public class CollectionDropTests
     private sealed class TransferringCollectionDropOperation : CollectionDropOperation
     {
         protected override bool TransfersPayload => true;
+    }
+
+    private sealed class IndexMappingSpyDropOperation : CollectionDropOperation
+    {
+        public bool Mapped { get; private set; }
+
+        protected override int? ResolveTargetIndex(IList collection, int displayIndex)
+        {
+            Mapped = true;
+            return base.ResolveTargetIndex(collection, displayIndex);
+        }
     }
 
     private sealed class ProbingCollectionDropOperation : CollectionDropOperation

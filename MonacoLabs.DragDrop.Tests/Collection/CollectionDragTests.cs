@@ -218,6 +218,31 @@ public class CollectionDragTests
     public void DraggedItemsDefaultsToSelectedItems() => Assert.Equal(DraggedItems.SelectedItems, new CollectionDragOperation().DraggedItems);
 
     [AvaloniaFact]
+    public void ADragFromAFilteredViewRecordsCollectionIndexes()
+    {
+        var items = new List<string> { "a", "b", "c", "d", "e" };
+        var list = new ListBox
+        {
+            ItemsSource = new List<string> { "b", "d" },
+            Width = 150,
+            Height = 250,
+            ItemTemplate = new FuncDataTemplate<string>((_, _) => new TextBlock { Height = 30 })
+        };
+        DragDrop.SetDragOperation(list, new CollectionDragOperation { PayloadCollection = items });
+        var target = new Border { Background = Brushes.Blue, Width = 100, Height = 100 };
+        var drop = new RecordingDropOperation();
+        DragDrop.SetDropOperation(target, drop);
+        var window = TestWindow.Show(new StackPanel { Orientation = Orientation.Horizontal, Spacing = 50, VerticalAlignment = VerticalAlignment.Top, Children = { list, target } });
+
+        window.MouseDrag(window.PointIn(list.ContainerFromIndex(1)!), window.PointIn(target));
+
+        var item = Assert.Single(Assert.IsType<CollectionDragInfo>(drop.LastDragInfo).Items);
+        Assert.Equal("d", item.Item);
+        Assert.Same(items, item.Collection);
+        Assert.Equal(3, item.Index);
+    }
+
+    [AvaloniaFact]
     public void ByDefaultTheSourceTunnelsAndIgnoresHandledPresses()
     {
         var operation = new CollectionDragOperation();

@@ -28,4 +28,17 @@ public partial class CollectionDropOperation
         get => GetValue(AutoScrollMarginProperty);
         set => SetValue(AutoScrollMarginProperty, value);
     }
+
+    public static readonly StyledProperty<ItemOrder> ItemOrderProperty =
+        AvaloniaProperty.Register<CollectionDropOperation, ItemOrder>(nameof(ItemOrder), defaultValue: ItemOrder.Positional);
+
+    /// <summary>
+    /// Whether drops insert where the user points (<c>Positional</c>) or append to a collection that sorts itself (<c>Sorted</c>),
+    /// with no insertion line and no reordering within the control.
+    /// </summary>
+    public ItemOrder ItemOrder
+    {
+        get => GetValue(ItemOrderProperty);
+        set => SetValue(ItemOrderProperty, value);
+    }
 }

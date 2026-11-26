@@ -120,6 +120,43 @@ public class EndToEndTests
         Assert.Equal(["x", "a", "c"], targetItems.Select(x => x.Name));
     }
 
+    [AvaloniaTheory]
+    [InlineData(1, 0, false, "a,d,b,c,e")]
+    [InlineData(0, 1, true, "a,c,d,b,e")]
+    public void ReorderingWithinAFilteredListRemovesTheOriginalNotTheCopy(int from, int onto, bool after, string expected)
+    {
+        var items = new ObservableCollection<Card> { new("a"), new("b"), new("c"), new("d"), new("e") };
+        var list = CardList(new ObservableCollection<Card> { items[1], items[3] });
+        DragDrop.SetDragOperation(list, new CollectionDragOperation { PayloadCollection = items });
+        DragDrop.SetDropOperation(list, new CollectionDropOperation { PayloadTarget = items });
+        var window = TestWindow.Show(list);
+        var target = list.ContainerFromIndex(onto)!;
+
+        window.MouseDrag(window.PointIn(list.ContainerFromIndex(from)!), window.PointIn(target, new Point(10, target.Bounds.Height * (after ? 0.75 : 0.25))));
+
+        Assert.Equal(expected, string.Join(",", items.Select(x => x.Name)));
+    }
+
+    [AvaloniaFact]
+    public void MovingASelectionOutOfAFilteredListRemovesEveryOriginal()
+    {
+        var items = new ObservableCollection<Card> { new("x"), new("a"), new("x"), new("b"), new("x") };
+        var targetItems = new ObservableCollection<Card>();
+        var source = CardList(new ObservableCollection<Card> { items[0], items[2], items[4] });
+        source.SelectionMode = SelectionMode.Multiple;
+        var target = CardList(targetItems);
+        DragDrop.SetDragOperation(source, new CollectionDragOperation { PayloadCollection = items });
+        DragDrop.SetDropOperation(target, new CollectionDropOperation { PayloadTarget = targetItems });
+        var window = TestWindow.Show(new StackPanel { Orientation = Orientation.Horizontal, Spacing = 50, Children = { source, target } });
+        source.Selection.Select(1);
+        source.Selection.Select(2);
+
+        window.MouseDrag(window.PointIn(source.ContainerFromIndex(2)!), window.PointIn(target, new Point(10, 150)));
+
+        Assert.Equal(["x", "a", "b"], items.Select(x => x.Name));
+        Assert.Equal(["x", "x"], targetItems.Select(x => x.Name));
+    }
+
     [AvaloniaFact]
     public void MovingNodesFromSeveralParentsRemovesEachFromItsParent()
     {

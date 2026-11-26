@@ -115,6 +115,7 @@ All derive from `DragOperationBase` / `DropOperationBase` in `MonacoLabs.DragDro
 | `SingleItemPage` | DD-ITEM: menu (Copy only) → order slots, slot ↔ slot with `SwapOnDrop`, drag handles, `RemoveOnDropOutside`, validation messages |
 | `SimpleCollectionPage` | DD-COLLECTION: two lists with Move and Copy, selection drags |
 | `ListBoxPage` | DD-COLLECTION: one source feeding three targets through interaction ids, domain validation of every dragged worker (`WorkerDropOperation`) |
+| `FilteredCollectionPage` | DD-COLLECTION: a filtered, optionally sorted view over a backing list (display-index mapping, `ItemOrder="Sorted"`), a plain list on the other side, `CreateCopy` (`TaskDropOperation`) |
 | `TreeViewPage` | DD-TREE: tree ↔ flat list, node rules (`NodeDropOperation`), selection drags |
 | `TreeToTreePage` | DD-TREE: two trees, selection drags |
 | `DesktopPage` | DD-PLATFORM: files and text with other applications (several at once from a selection), image validation (`ImageDropOperation`) |

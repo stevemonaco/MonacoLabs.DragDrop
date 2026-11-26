@@ -60,6 +60,11 @@ public class TreeDragOperation : CollectionDragOperation
     }
 
     /// <summary>
+    /// <paramref name="displayIndex"/> unchanged: trees read each node's collection from the tree, and filtered trees aren't supported.
+    /// </summary>
+    protected override int? ResolvePayloadIndex(IList collection, int displayIndex, object item) => displayIndex;
+
+    /// <summary>
     /// Gets the node's index among its siblings.
     /// </summary>
     protected override int? LocatePayloadContainerIndex(Control? container)
