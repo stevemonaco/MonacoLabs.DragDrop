@@ -1,5 +1,7 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
+using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.LogicalTree;
@@ -73,6 +75,12 @@ public partial class CollectionDropOperation : DropOperationBase
         DropLocation = null;
         base.ClearFeedback();
     }
+
+    // Avalonia 12.2: inserting before a focused, selected item while AutoScrollToSelectedItem is on leaves a stale container behind
+    private protected override IDisposable? BeginCompleteDrop() =>
+        AttachedControl is SelectingItemsControl { AutoScrollToSelectedItem: true } control
+            ? control.SetValue(SelectingItemsControl.AutoScrollToSelectedItemProperty, false, BindingPriority.Animation)
+            : null;
 
     private void UpdateHoveredContainer(DragEventArgs e)
     {

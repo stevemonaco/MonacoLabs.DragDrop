@@ -1,9 +1,11 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Templates;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Media;
+using Avalonia.VisualTree;
 using System.Collections;
 using System.Collections.ObjectModel;
 using Xunit;
@@ -25,6 +27,33 @@ public class CollectionDropTests
         window.MouseDrag(window.PointIn(Container(list, 2)), Top(window, Container(list, 0)));
 
         Assert.Equal(["c", "a", "b"], items);
+    }
+
+    [AvaloniaFact]
+    public void InsertingBeforeTheFocusedSelectedItemKeepsTheContainersInStep()
+    {
+        var items = new ObservableCollection<string> { "a", "b", "c" };
+        var (window, list) = ShowList(new CollectionDropOperation { PayloadTarget = items }, items);
+        DragDrop.SetDragOperation(list, new CollectionDragOperation { PayloadCollection = items, AllowedEffects = DragDropEffects.Move | DragDropEffects.Copy });
+
+        window.MouseDrag(window.PointIn(Container(list, 2)), Top(window, Container(list, 0)), RawInputModifiers.Control);
+        window.UpdateLayout();
+
+        Assert.Equal(["c", "a", "b", "c"], items);
+        Assert.Equal(items, ShownItems(list));
+    }
+
+    [AvaloniaFact]
+    public void ADropLeavesAutoScrollToSelectedItemAsItWas()
+    {
+        var items = new ObservableCollection<string> { "a", "b", "c" };
+        var (window, list) = ShowList(new CollectionDropOperation { PayloadTarget = items }, items);
+        DragDrop.SetDragOperation(list, new CollectionDragOperation { PayloadCollection = items });
+
+        window.MouseDrag(window.PointIn(Container(list, 2)), Top(window, Container(list, 0)));
+
+        Assert.True(list.AutoScrollToSelectedItem);
+        Assert.False(list.IsSet(SelectingItemsControl.AutoScrollToSelectedItemProperty));
     }
 
     [AvaloniaFact]
@@ -546,6 +575,11 @@ public class CollectionDropTests
     private static Control Container(ListBox list, int index) => list.ContainerFromIndex(index)!;
 
     private static IEnumerable<Control> Containers(ListBox list) => list.GetRealizedContainers();
+
+    // Reads the panel's visible children rather than the realized containers, so a container the panel lost track of still shows up
+    private static IEnumerable<object?> ShownItems(ListBox list) =>
+        list.GetVisualDescendants().OfType<VirtualizingStackPanel>().Single().Children
+            .OfType<ListBoxItem>().Where(x => x.IsVisible).OrderBy(x => x.Bounds.Y).Select(x => x.Content);
 
     private static Point Top(Window window, Control container) => window.PointIn(container, new Point(10, container.Bounds.Height / 4));
 

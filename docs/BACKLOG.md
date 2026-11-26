@@ -15,6 +15,8 @@ In progress elsewhere: filtered and sorted lists in [changes/filtered-sorted-col
 
 ## Docs and hygiene
 
+- [DD-COLLECTION] Report Avalonia's stale container upstream (repro: select and focus item 2 of `["a", "b", "c"]` in a `ListBox`, then `Insert(0, "c")`; it shows `c, c, a, b, c`), and remove DD-COLLECTION-047's `AutoScrollToSelectedItem` workaround once a fixed Avalonia ships. Its two tests should keep passing without it.
+
 - [DD-EFFECTS] Add a macOS leg to CI, so the Option-copy modifier (DD-EFFECTS-005) runs through `OperatingSystem.IsMacOS()` rather than only through the resolver's macOS parameter.
 
 ## Manual and platform checks

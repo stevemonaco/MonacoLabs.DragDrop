@@ -137,6 +137,8 @@ depends:
   - Tests: `CollectionDropTests.ADropClearsTheHoverAndTheAdorners`, `CollectionDropTests.ALeaveClearsTheHoverAndTheAdorners`, `CollectionDropTests.ADragThatStopsBeingMeantForTheTargetClearsTheHover`, `AutoScrollTests.LeavingStopsTheScrolling`
 - **DD-COLLECTION-039** — When detached, the collection drop operation shall clear its hovered container's pseudo-classes and hide its insertion adorner.
   - Tests: `CollectionDropTests.DetachingMidDragClearsTheHoveredContainer`
+- **DD-COLLECTION-047** — While an accepted drop transfers, reports to the drag source and runs `PayloadCommand`, a drop operation attached to a `SelectingItemsControl` shall hold its `AutoScrollToSelectedItem` false, then restore the value it had before.
+  - Tests: `CollectionDropTests.InsertingBeforeTheFocusedSelectedItemKeepsTheContainersInStep`, `CollectionDropTests.ADropLeavesAutoScrollToSelectedItemAsItWas`
 
 ### Auto-scroll
 
@@ -173,6 +175,7 @@ depends:
 - The selection is read when the drag starts, after the press has updated it: a plain press on an unselected item makes it the only selection (DD-DRAG-009), so it drags alone, and a Ctrl-press adds it to the selection, which then drags as a whole.
 - The library does not change selection on drop: the target does not select the dropped items, and the source keeps whatever selection survives the removal.
 - The scroll viewer is looked up when a hover starts and kept until it ends, so a control re-templated in the middle of a hover keeps scrolling the old viewer until the drag leaves.
+- DD-COLLECTION-047 covers only what runs inside the drop handler. A `PayloadCommand` that inserts after an `await`, or app code that inserts before a focused, selected item at any other time, still hits the Avalonia bug it works around.
 
 ## Threading and lifetime
 
@@ -197,6 +200,7 @@ depends:
 - **Locations fall back to `ItemsSource`.** Reason: platform drops and command-only targets still need an insertion index to hand to `PayloadCommand`.
 - **Structural checks run before `CanDrop`.** See DD-COLLECTION-023. Reason: consumers override `CanDrop` for domain validation and should not have to remember to call the base for structural correctness.
 - **Respect handled events on collection drags.** Tunneling alone already reaches the operation before `ListBoxItem` selects, so `HandledEventsToo` (formerly true) only overrode an ancestor that marked a tunneling press or move handled: a pan-and-zoom canvas, a design surface or a custom gesture host that claimed the gesture. Reason: Avalonia's convention is that a handled event belongs to whoever handled it, every other drag source (DD-DRAG-003) follows it, and one default is easier to explain. An app that wants the list to drag anyway sets `HandledEventsToo` on the operation. Rejected: keeping it on and documenting why (it defends against no known control); removing the property (apps under a gesture-claiming ancestor still need the opt-in).
+- **Work around Avalonia's stale container on drop.** In Avalonia 12.2, inserting an item before a `ListBoxItem` that is both focused and selected, while `AutoScrollToSelectedItem` is on and the panel is a `VirtualizingStackPanel` (the defaults), leaves a stale container: the list shows an extra row and wrong contents until it re-realizes. Pressing an item focuses and selects it, so dropping a copy before it hit this every time. The drop operation holds `AutoScrollToSelectedItem` false at animation priority for the drop's duration (DD-COLLECTION-047), which outranks local values and styles and leaves no value behind. Reason: every consumer with a `ListBox` target is affected, and turning off either setting avoids it. Rejected: fixing only the sample (consumers would still hit it); documenting it without a workaround. Remove once Avalonia fixes the bug (backlog).
 - **No logical-descendant check.** The former DD-COLLECTION-024 rejected drags whose event source was not a logical descendant of the attached control. Probing found that every source that reaches the target's handlers is one (item containers, template parts such as the empty area's `ScrollContentPresenter`), except the attached control itself: Avalonia's `IsLogicalAncestorOf` is false for the control, so a target whose own surface is hit (a `Border` with a background) rejected drags over it and accepted them over its child. Rejected: moving the check into `CanDropAtLocation`, which keeps that bug for a case nobody found.
 
 ## Non-goals

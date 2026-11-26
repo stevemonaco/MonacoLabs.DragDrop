@@ -133,7 +133,8 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
 
         e.DragEffects = GetDropEffect(e);
         e.Handled = true;
-        CompleteDrop(e);
+        using (BeginCompleteDrop())
+            CompleteDrop(e);
 
         OnDrop(e);
         EndHover(null);
@@ -219,6 +220,9 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
         ErrorMessage = null;
         MirrorErrorMessage();
     }
+
+    // Scopes the transfer, the source's DropCompleted and PayloadCommand
+    private protected virtual IDisposable? BeginCompleteDrop() => null;
 
     private void CompleteDrop(DragEventArgs e)
     {
