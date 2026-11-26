@@ -82,8 +82,8 @@ depends:
 
 - **DD-DRAG-016** — The drag source shall resolve its payloads through `ResolvePayloads`. By default, when `Payload` is set or bound, it shall drag its value as the one payload, even when that value is null; otherwise it shall drag the attached control's `DataContext`.
   - Tests: `DragGestureTests.WithoutAPayloadTheDataContextIsDragged`, `DragGestureTests.ASetPayloadIsDraggedInsteadOfTheDataContext`, `DragGestureTests.ANullPayloadStartsNoDrag`
-- **DD-DRAG-017** — When `ResolvePayloads` returns no payloads (by default, when the payload is null), the drag source shall not start a drag.
-  - Tests: `DragGestureTests.ANullPayloadStartsNoDrag`
+- **DD-DRAG-017** — When `ResolvePayloads` returns no payloads (by default, when the payload is null), the drag source shall stop tracking the press and not start a drag.
+  - Tests: `DragGestureTests.ANullPayloadStartsNoDrag`, `DragGestureTests.APressWithoutPayloadsEndsAtTheThreshold`
 - **DD-DRAG-018** — When `PlatformInteractionIds.Text` is among `InteractionIds`, the drag source shall add, once and to the first item, the text `ResolvePlatformText` returns for the payload list. By default that is each payload's text (the payload itself when it is a string, otherwise its `ToString()`), joined by newlines.
   - Tests: `DragGestureTests.PlatformTextIsAStringPayloadOrThePayloadsText`, `DragGestureTests.SeveralPayloadsOfferTheirTextsJoinedByNewlinesOnce`
 - **DD-DRAG-019** — When `PlatformInteractionIds.Files` is among `InteractionIds`, the drag source shall add to each payload's item the storage item `ResolvePlatformFile` returns for that payload, which by default is the payload when it is an `IStorageItem` and nothing otherwise.
@@ -114,7 +114,7 @@ depends:
 
 ## Edge cases
 
-- A press whose payloads resolve to none stays tracked: every later move past the threshold resolves them again and returns, until the pointer is released.
+- Payloads are resolved once, when the press first crosses the threshold. A payload set later in the same press (a slot filled while the button is held) does not start a drag until the next press.
 - The press position and the threshold are measured relative to the attached control, so a control that moves under the pointer (for example during scrolling) changes the measured distance.
 - An explicit `DragDrop.IgnoresPress` of false does not reach past a nearer element that decides: a `Button` inside an element set to false still keeps its presses.
 - The ignore check runs before the drag-handle check, so a drag handle inside an ignored control (a handle placed in a `Button`) never starts a drag.
@@ -154,3 +154,4 @@ depends:
 
 ## Open items
 
+- None.

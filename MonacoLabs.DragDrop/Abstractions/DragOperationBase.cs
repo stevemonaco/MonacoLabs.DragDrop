@@ -217,14 +217,14 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
         if (_dragOrigin is not { } origin || pressedEventArgs is null)
             return;
 
+        StopTrackingPress();
+
         var payloads = ResolvePayloads(pressedEventArgs);
         if (payloads.Count == 0)
             return;
 
         var dragInfo = CreateMetadata(pressedEventArgs, origin);
         dragInfo.Payloads = payloads;
-
-        StopTrackingPress();
 
         await DoDragDrop(pressedEventArgs, dragInfo);
     }

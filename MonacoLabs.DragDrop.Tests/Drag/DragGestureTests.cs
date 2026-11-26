@@ -456,6 +456,24 @@ public class DragGestureTests
     }
 
     [AvaloniaFact]
+    public void APressWithoutPayloadsEndsAtTheThreshold()
+    {
+        var operation = new CountingDragOperation { Payload = null };
+        var (window, source, target, _, drop) = Show(operation);
+
+        using (var drag = HeldMouseDrag.Start(window, window.PointIn(source), window.PointIn(target)))
+        {
+            Assert.Equal(1, operation.Starts);
+            operation.Payload = "A";
+            drag.MoveTo(window.PointIn(target) + new Point(5, 5));
+            drag.MoveTo(window.PointIn(target));
+        }
+
+        Assert.Equal(1, operation.Starts);
+        Assert.Null(drop.LastDragInfo);
+    }
+
+    [AvaloniaFact]
     public void PlatformTextIsAStringPayloadOrThePayloadsText()
     {
         var operation = new ItemDragOperation { InteractionIds = [PlatformInteractionIds.Text] };
