@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Data;
 using Avalonia.Headless.XUnit;
@@ -473,6 +474,26 @@ public class DropTargetTests
         drag.Drop(window.PointIn(target), modifiers);
 
         Assert.Equal(expected, args?.Effect);
+    }
+
+    [AvaloniaFact]
+    public void DropEventArgsCarriesThePointerPositionInTheTarget()
+    {
+        var target = new Border { Background = Brushes.Blue, Width = 100, Height = 100, Margin = new Thickness(40, 20, 0, 0) };
+        var checkedPositions = new List<Point>();
+        DropEventArgs? args = null;
+        DragDrop.SetDropOperation(target, new ItemDropOperation
+        {
+            PayloadCommand = new RelayCommand(a => args = (DropEventArgs?)a, a => { checkedPositions.Add(((DropEventArgs)a!).Position); return true; })
+        });
+        var window = TestWindow.Show(new StackPanel { Children = { target } });
+        using var drag = window.SimulateDrag(DragData.For(new ItemDragOperation(), "A"));
+
+        drag.Enter(window.PointIn(target, new Point(10, 15)));
+        drag.Drop(window.PointIn(target, new Point(30, 45)));
+
+        Assert.Equal(new Point(10, 15), checkedPositions[0]);
+        Assert.Equal(new Point(30, 45), args?.Position);
     }
 
     [AvaloniaFact]

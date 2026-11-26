@@ -46,7 +46,7 @@ Reorder a list, or move items between two lists that share an interaction id:
 ```
 
 - `SourceCollection` is where the drag side removes a moved item from. `TargetCollection` is where the drop side inserts it.
-- To handle drops in your view model instead, leave `TargetCollection` unset and bind `PayloadCommand`. It receives a `DropEventArgs` with the payloads, the insertion location and the effect.
+- To handle drops in your view model instead, leave `TargetCollection` unset and bind `PayloadCommand`. It receives a `DropEventArgs` with the payloads, the insertion location, the effect and the pointer position.
 - For a single slot, use `ItemDragOperation` with a TwoWay `Payload` binding and `ItemDropOperation` with `PayloadTarget`. A move clears the source slot, or swaps the two values with `SwapOnDrop`.
 
 ![A single-value slot](Assets/singleitem.gif)

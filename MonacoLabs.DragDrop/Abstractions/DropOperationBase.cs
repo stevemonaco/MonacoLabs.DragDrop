@@ -304,7 +304,7 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
         PayloadCommand?.CanExecute(CreateCommandArgs(e, items, isPlatformDrop, effect)) ?? false;
 
     private DropEventArgs CreateCommandArgs(DragEventArgs e, IReadOnlyList<object> items, bool isPlatformDrop, DragDropEffects effect) =>
-        new(e.Source, (e.Source as StyledElement)?.DataContext, items, CommandOffset, CommandLocation, isPlatformDrop, effect);
+        new(e.Source, (e.Source as StyledElement)?.DataContext, items, CommandOffset, e.GetPosition(AttachedControl!), isPlatformDrop, effect, CommandLocation);
 
     /// <summary>
     /// Called when a drag meant for this target first arrives, after its feedback and effect are updated.

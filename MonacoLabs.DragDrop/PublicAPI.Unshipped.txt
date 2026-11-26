@@ -170,9 +170,9 @@ MonacoLabs.DragDrop.DropAdornerKind.Border = 2 -> MonacoLabs.DragDrop.DropAdorne
 MonacoLabs.DragDrop.DropAdornerKind.None = 0 -> MonacoLabs.DragDrop.DropAdornerKind
 MonacoLabs.DragDrop.DropAdornerKind.Solid = 1 -> MonacoLabs.DragDrop.DropAdornerKind
 MonacoLabs.DragDrop.DropEventArgs
-MonacoLabs.DragDrop.DropEventArgs.Deconstruct(out object? Target, out object? TargetContext, out System.Collections.Generic.IReadOnlyList<object!>! Items, out MonacoLabs.DragDrop.DropTargetOffset Offset, out MonacoLabs.DragDrop.CollectionDropLocation? Location, out bool IsPlatformDrop, out Avalonia.Input.DragDropEffects Effect) -> void
+MonacoLabs.DragDrop.DropEventArgs.Deconstruct(out object? Target, out object? TargetContext, out System.Collections.Generic.IReadOnlyList<object!>! Items, out MonacoLabs.DragDrop.DropTargetOffset Offset, out Avalonia.Point Position, out bool IsPlatformDrop, out Avalonia.Input.DragDropEffects Effect, out MonacoLabs.DragDrop.CollectionDropLocation? Location) -> void
 MonacoLabs.DragDrop.DropEventArgs.DropEventArgs(MonacoLabs.DragDrop.DropEventArgs! original) -> void
-MonacoLabs.DragDrop.DropEventArgs.DropEventArgs(object? Target, object? TargetContext, System.Collections.Generic.IReadOnlyList<object!>! Items, MonacoLabs.DragDrop.DropTargetOffset Offset, MonacoLabs.DragDrop.CollectionDropLocation? Location = null, bool IsPlatformDrop = false, Avalonia.Input.DragDropEffects Effect = Avalonia.Input.DragDropEffects.None) -> void
+MonacoLabs.DragDrop.DropEventArgs.DropEventArgs(object? Target, object? TargetContext, System.Collections.Generic.IReadOnlyList<object!>! Items, MonacoLabs.DragDrop.DropTargetOffset Offset, Avalonia.Point Position, bool IsPlatformDrop, Avalonia.Input.DragDropEffects Effect, MonacoLabs.DragDrop.CollectionDropLocation? Location = null) -> void
 MonacoLabs.DragDrop.DropEventArgs.Effect.get -> Avalonia.Input.DragDropEffects
 MonacoLabs.DragDrop.DropEventArgs.Effect.init -> void
 MonacoLabs.DragDrop.DropEventArgs.IsPlatformDrop.get -> bool
@@ -183,6 +183,8 @@ MonacoLabs.DragDrop.DropEventArgs.Location.get -> MonacoLabs.DragDrop.Collection
 MonacoLabs.DragDrop.DropEventArgs.Location.init -> void
 MonacoLabs.DragDrop.DropEventArgs.Offset.get -> MonacoLabs.DragDrop.DropTargetOffset
 MonacoLabs.DragDrop.DropEventArgs.Offset.init -> void
+MonacoLabs.DragDrop.DropEventArgs.Position.get -> Avalonia.Point
+MonacoLabs.DragDrop.DropEventArgs.Position.init -> void
 MonacoLabs.DragDrop.DropEventArgs.Target.get -> object?
 MonacoLabs.DragDrop.DropEventArgs.Target.init -> void
 MonacoLabs.DragDrop.DropEventArgs.TargetContext.get -> object?

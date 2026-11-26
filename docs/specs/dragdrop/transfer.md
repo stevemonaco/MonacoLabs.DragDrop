@@ -74,6 +74,8 @@ Defines what a drag carries and how a drop target recognizes it. Interaction ids
   - Tests: `EndToEndTests.ASingleValueTargetDropsOnTargetWithNoLocation`, `CollectionDropTests.ATransferringDropAlsoRunsTheCommandWithThePayloadOffsetAndLocation`
 - **DD-TRANSFER-015** — `DropEventArgs.Effect` shall be the effect computed on Drop (DD-EFFECTS-009), which for a platform drop is Copy or Link (DD-PLATFORM).
   - Tests: `DropTargetTests.DropEventArgsCarriesTheDropEffect`
+- **DD-TRANSFER-016** — `DropEventArgs.Position` shall be the pointer position relative to the drop target's attached control, at the drop or, for `CanExecute` while hovering, at that event.
+  - Tests: `DropTargetTests.DropEventArgsCarriesThePointerPositionInTheTarget`
 
 ## Invariants
 
