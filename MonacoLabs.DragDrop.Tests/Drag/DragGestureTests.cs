@@ -171,6 +171,34 @@ public class DragGestureTests
     }
 
     [AvaloniaFact]
+    public void AFailedDragRaisesDragFailedWithTheException()
+    {
+        var (window, source, target, operation, _) = Show(new ThrowingDragOperation { Payload = "A" });
+        var failures = new List<(object? Sender, Exception Exception)>();
+        operation.DragFailed += (sender, e) => failures.Add((sender, e.Exception));
+
+        window.MouseDrag(window.PointIn(source), window.PointIn(target));
+
+        var failure = Assert.Single(failures);
+        Assert.Same(operation, failure.Sender);
+        Assert.IsType<InvalidOperationException>(failure.Exception);
+        Assert.Equal("platform drag failed", failure.Exception.Message);
+    }
+
+    [AvaloniaFact]
+    public void ASuccessfulDragDoesNotRaiseDragFailed()
+    {
+        var (window, source, target, operation, drop) = Show(new ItemDragOperation { Payload = "A" });
+        var raised = false;
+        operation.DragFailed += (_, _) => raised = true;
+
+        window.MouseDrag(window.PointIn(source), window.PointIn(target));
+
+        Assert.Equal("A", drop.PayloadTarget);
+        Assert.False(raised);
+    }
+
+    [AvaloniaFact]
     public void TheThresholdDefaultsToSixDips()
     {
         object threshold = new ItemDragOperation().DragThreshold;

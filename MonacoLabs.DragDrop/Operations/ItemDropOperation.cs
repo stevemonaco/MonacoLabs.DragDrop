@@ -31,4 +31,9 @@ public class ItemDropOperation : DropOperationBase
             ReplacedPayload = replaced
         };
     }
+
+    /// <summary>
+    /// True: every accepted in-process drop replaces <see cref="DropOperationBase.PayloadTarget"/>.
+    /// </summary>
+    protected override bool CanTransfer(DragEventArgs e) => true;
 }

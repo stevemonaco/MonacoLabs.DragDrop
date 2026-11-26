@@ -26,8 +26,8 @@ depends:
 
 - **DD-PLATFORM-001** — `PlatformInteractionIds.Files` (`platform:files`) shall map to the platform file format, and `PlatformInteractionIds.Text` (`platform:text`) to the platform text format; every other id shall map to an in-process format.
   - Tests: `InteractionIdTests.TheFilesIdMapsToThePlatformFileFormat`, `InteractionIdTests.TheTextIdMapsToThePlatformTextFormat`, `InteractionIdTests.OtherIdsMapToAnInProcessFormat`
-- **DD-PLATFORM-002** — A drop target listing a platform id shall accept that platform data from any source, including other applications and drags from this app that advertise the same platform id.
-  - Tests: `PlatformDropTests.ATargetListingThePlatformTextIdAcceptsTextFromAnotherApp`, `PlatformDropTests.ADragFromThisAppAdvertisingOnlyAPlatformIdTheTargetListsIsAPlatformDrop`
+- **DD-PLATFORM-002** — A drop target listing a platform id shall accept that platform data from any source, including other applications and drags from this app that advertise the same platform id, while its `PayloadCommand` can execute it (DD-DROP-038), since a platform drop does nothing else.
+  - Tests: `PlatformDropTests.ATargetListingThePlatformTextIdAcceptsTextFromAnotherApp`, `PlatformDropTests.ADragFromThisAppAdvertisingOnlyAPlatformIdTheTargetListsIsAPlatformDrop`, `PlatformDropTests.APlatformDropWithoutACommandThatCanExecuteShowsNone`
 - **DD-PLATFORM-003** — A drop shall be a platform drop when the drag carries no in-process payload for the target's non-platform ids.
   - Tests: `PlatformDropTests.ADragFromThisAppAdvertisingOnlyAPlatformIdTheTargetListsIsAPlatformDrop`, `PlatformDropTests.AMatchingInProcessIdMakesTheDropInProcess`
 - **DD-PLATFORM-004** — When a platform drop carries files and the target lists `platform:files`, `DropEventArgs.Items` shall hold the dropped `IStorageItem`s; otherwise, when it carries text and the target lists `platform:text`, `Items` shall hold that one string.

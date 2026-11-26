@@ -116,8 +116,14 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
         {
             StopTrackingPress();
             Logger.TryGet(LogEventLevel.Error, LogArea)?.Log(this, "Drag failed: {Exception}", ex);
+            DragFailed?.Invoke(this, new DragFailedEventArgs(ex));
         }
     }
+
+    /// <summary>
+    /// Occurs when a drag fails with an exception, after it is logged. The exception does not reach the application otherwise.
+    /// </summary>
+    public event EventHandler<DragFailedEventArgs>? DragFailed;
 
     /// <summary>
     /// Called when a pointer is pressed on the attached control. Tracks the press as a possible drag unless it is filtered out.

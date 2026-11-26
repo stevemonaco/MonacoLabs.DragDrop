@@ -587,18 +587,70 @@ public class DropTargetTests
     }
 
     [AvaloniaFact]
-    public void ABaseSubclassWithoutACommandReportsNone()
+    public void ABaseSubclassWithoutACommandShowsAndReportsNone()
     {
         var source = new RecordingDragOperation();
         var operation = new CommandOnlyDropOperation();
         var (window, target) = Show(operation);
         using var drag = window.SimulateDrag(DragData.For(source, "A"));
 
-        Assert.Equal(DragDropEffects.Move, drag.Enter(window.PointIn(target)));
+        Assert.Equal(DragDropEffects.None, drag.Enter(window.PointIn(target)));
         Assert.Equal(DragDropEffects.None, drag.Drop(window.PointIn(target)));
 
         Assert.Empty(source.Completions);
         Assert.Null(operation.PayloadTarget);
+    }
+
+    [AvaloniaFact]
+    public void ACommandOnlyTargetShowsNoneWhileItsCommandCannotExecute()
+    {
+        var allow = false;
+        var executed = false;
+        var operation = new CommandOnlyDropOperation { PayloadCommand = new RelayCommand(_ => executed = true, _ => allow) };
+        var (window, target) = Show(operation);
+        using var drag = window.SimulateDrag(DragData.For(new RecordingDragOperation(), "A"));
+
+        Assert.Equal(DragDropEffects.None, drag.Enter(window.PointIn(target)));
+        Assert.False(operation.DropAdorner!.IsDropValid);
+
+        allow = true;
+        Assert.Equal(DragDropEffects.Move, drag.Over(window.PointIn(target)));
+        Assert.True(operation.DropAdorner.IsDropValid);
+
+        allow = false;
+        Assert.Equal(DragDropEffects.None, drag.Drop(window.PointIn(target)));
+        Assert.False(executed);
+    }
+
+    [AvaloniaFact]
+    public void WhileHoveringCanExecuteSeesThePayloadsAndTheEffect()
+    {
+        var checkedArgs = new List<DropEventArgs>();
+        var operation = new CommandOnlyDropOperation
+        {
+            PayloadCommand = new RelayCommand(_ => { }, a => { checkedArgs.Add((DropEventArgs)a!); return true; })
+        };
+        var (window, target) = Show(operation);
+        using var drag = window.SimulateDrag(DragData.For(new RecordingDragOperation(), "A"), DragDropEffects.Copy);
+
+        drag.Enter(window.PointIn(target));
+
+        var args = Assert.Single(checkedArgs);
+        Assert.Equal(["A"], args.Items);
+        Assert.Equal(DragDropEffects.Copy, args.Effect);
+        Assert.False(args.IsPlatformDrop);
+    }
+
+    [AvaloniaFact]
+    public void ATransferringTargetAcceptsDragsItsCommandCannotExecute()
+    {
+        var operation = new ItemDropOperation { PayloadCommand = new RelayCommand(_ => { }, _ => false) };
+        var (window, target) = Show(operation);
+        using var drag = window.SimulateDrag(DragData.For(new ItemDragOperation(), "A"));
+
+        Assert.Equal(DragDropEffects.Move, drag.Enter(window.PointIn(target)));
+        Assert.Equal(DragDropEffects.Move, drag.Drop(window.PointIn(target)));
+        Assert.Equal("A", operation.PayloadTarget);
     }
 
     [AvaloniaTheory]

@@ -12,12 +12,27 @@ public class PlatformDropTests
     [AvaloniaFact]
     public void ATargetListingThePlatformTextIdAcceptsTextFromAnotherApp()
     {
-        var operation = new ItemDropOperation { InteractionIds = [PlatformInteractionIds.Text] };
+        var operation = new ItemDropOperation { InteractionIds = [PlatformInteractionIds.Text], PayloadCommand = Record(_ => { }) };
         var (window, target) = Show(operation);
         using var drag = window.SimulateDrag(PlatformData(text: "hello"));
 
         Assert.Equal(DragDropEffects.Copy, drag.Enter(window.PointIn(target)));
         Assert.Equal(DragDropEffects.Copy, drag.Drop(window.PointIn(target)));
+    }
+
+    [AvaloniaTheory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void APlatformDropWithoutACommandThatCanExecuteShowsNone(bool hasCommand)
+    {
+        var operation = new ItemDropOperation { InteractionIds = [PlatformInteractionIds.Text] };
+        if (hasCommand)
+            operation.PayloadCommand = new RelayCommand(_ => { }, _ => false);
+        var (window, target) = Show(operation);
+        using var drag = window.SimulateDrag(PlatformData(text: "hello"));
+
+        Assert.Equal(DragDropEffects.None, drag.Enter(window.PointIn(target)));
+        Assert.Equal(DragDropEffects.None, drag.Drop(window.PointIn(target)));
     }
 
     [AvaloniaFact]

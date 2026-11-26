@@ -512,16 +512,29 @@ public class CollectionDropTests
     }
 
     [AvaloniaFact]
-    public void ADropThatNeitherTransfersNorRunsACommandReportsNone()
+    public void ADropThatNeitherTransfersNorRunsACommandShowsAndReportsNone()
     {
         var source = new List<string> { "A", "B" };
         var (window, target) = ShowTarget(new CollectionDropOperation());
         using var drag = window.SimulateDrag(DragData.For(new CollectionDragOperation { PayloadCollection = source }, "A"));
 
-        Assert.Equal(DragDropEffects.Move, drag.Enter(window.PointIn(target)));
+        Assert.Equal(DragDropEffects.None, drag.Enter(window.PointIn(target)));
         Assert.Equal(DragDropEffects.None, drag.Drop(window.PointIn(target)));
 
         Assert.Equal(["A", "B"], source);
+    }
+
+    [AvaloniaFact]
+    public void ACommandOnlyListShowsNoneWhereItsCommandCannotExecuteTheLocation()
+    {
+        var items = new List<string> { "a", "b", "c" };
+        var operation = new CollectionDropOperation { PayloadCommand = new RelayCommand(_ => { }, a => (a as DropEventArgs)?.Location?.Index == 0) };
+        var (window, list) = ShowList(operation, items);
+        using var drag = window.SimulateDrag(DragData.For(new CollectionDragOperation(), "x"));
+
+        Assert.Equal(DragDropEffects.Move, drag.Enter(Top(window, Container(list, 0))));
+        Assert.Equal(DragDropEffects.None, drag.Over(Top(window, Container(list, 2))));
+        Assert.Contains(":error", operation.ItemDropAdorner!.Classes);
     }
 
     [AvaloniaFact]

@@ -123,6 +123,8 @@ depends:
   - Tests: `CollectionDropTests.AnAcceptedDropInsertsThenCompletesWithWhereItLanded`, `CollectionDropTests.SeveralPayloadsAreInsertedTogetherInOrder`
 - **DD-COLLECTION-026** — `TransfersPayload` shall be true exactly when `PayloadTarget` is an `IList`, unless a subclass overrides it.
   - Tests: `CollectionDropTests.AnAcceptedDropInsertsThenCompletesWithWhereItLanded`, `CollectionDropTests.ANonListPayloadTargetDoesNotTransfer`, `CollectionDropTests.ASubclassCanTransferWithoutAPayloadTarget`
+- **DD-COLLECTION-048** — `CanTransfer` (DD-DROP-038) shall be true exactly when `TransfersPayload` is true and there is a location, so a target that doesn't transfer accepts a drag only where its `PayloadCommand` can execute the hovered offset and location.
+  - Tests: `CollectionDropTests.ACommandOnlyListShowsNoneWhereItsCommandCannotExecuteTheLocation`, `CollectionDropTests.ADropThatNeitherTransfersNorRunsACommandShowsAndReportsNone`
 - ~~**DD-COLLECTION-027**~~ — Removed by drop-side-redesign: completing after a command-only drop is DD-DROP-029, for every target.
 - **DD-COLLECTION-040** — When an accepted in-process drop transfers nothing but `PayloadCommand` ran, the `DropInfo` passed to `DropCompleted` (DD-DROP-029) shall be a `CollectionDropInfo` whose target collection and index are the location's, and whose count is the number of payloads.
   - Tests: `CollectionDropTests.ACommandOnlyTargetCompletesAMove`, `EndToEndTests.ReorderingThroughACommandRemovesTheOriginal`

@@ -183,9 +183,18 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
         ResolveHover(e);
 
         ErrorMessage = null;
-        IsDropValid = CanDropStructurally(e) && CanDrop(e);
+        IsDropValid = CanDropStructurally(e) && CanDrop(e) && WouldDoSomething(e);
         MirrorErrorMessage();
         return IsDropValid;
+    }
+
+    // Checks the payloads rather than their copies, so CreateCopy doesn't run on every DragOver
+    private bool WouldDoSomething(DragEventArgs e)
+    {
+        if (TryGetPayloads<object>(e, out var payloads))
+            return CanTransfer(e) || CanExecutePayloadCommand(e, payloads, isPlatformDrop: false, GetDropEffect(e));
+
+        return TryGetPlatformItems(e, out var items) && CanExecutePayloadCommand(e, items, isPlatformDrop: true, GetDropEffect(e));
     }
 
     private protected virtual void ResolveHover(DragEventArgs e)
@@ -260,6 +269,12 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
     /// <param name="values">The payloads in order, or their <see cref="CreateCopy"/> on a Copy drop.</param>
     protected virtual DropInfo? Transfer(DragEventArgs e, DragInfo dragInfo, IReadOnlyList<object> values) => null;
 
+    /// <summary>
+    /// Whether <see cref="Transfer"/> would transfer the in-process payloads of the drag in <paramref name="e"/>. When false, a drag is valid only
+    /// while <see cref="PayloadCommand"/> can execute it, so override this alongside <see cref="Transfer"/>. False by default.
+    /// </summary>
+    protected virtual bool CanTransfer(DragEventArgs e) => false;
+
     private protected virtual DropInfo CreateUntransferredDropInfo(DragEventArgs e, IReadOnlyList<object> values) => new()
     {
         DragEventArgs = e,
@@ -277,15 +292,19 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
         if (PayloadCommand is null)
             return false;
 
-        var targetContext = (e.Source as StyledElement)?.DataContext;
-        DropEventArgs args = new(e.Source, targetContext, items, CommandOffset, CommandLocation, isPlatformDrop, e.DragEffects);
-
+        var args = CreateCommandArgs(e, items, isPlatformDrop, e.DragEffects);
         if (!PayloadCommand.CanExecute(args))
             return false;
 
         PayloadCommand.Execute(args);
         return true;
     }
+
+    private bool CanExecutePayloadCommand(DragEventArgs e, IReadOnlyList<object> items, bool isPlatformDrop, DragDropEffects effect) =>
+        PayloadCommand?.CanExecute(CreateCommandArgs(e, items, isPlatformDrop, effect)) ?? false;
+
+    private DropEventArgs CreateCommandArgs(DragEventArgs e, IReadOnlyList<object> items, bool isPlatformDrop, DragDropEffects effect) =>
+        new(e.Source, (e.Source as StyledElement)?.DataContext, items, CommandOffset, CommandLocation, isPlatformDrop, effect);
 
     /// <summary>
     /// Called when a drag meant for this target first arrives, after its feedback and effect are updated.

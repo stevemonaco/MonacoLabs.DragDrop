@@ -154,6 +154,11 @@ public partial class CollectionDropOperation : DropOperationBase
         return CreateDropInfo(e, firstIndex, values.Count);
     }
 
+    /// <summary>
+    /// True when <see cref="TransfersPayload"/> is true and there is a <see cref="DropLocation"/>.
+    /// </summary>
+    protected override bool CanTransfer(DragEventArgs e) => TransfersPayload && DropLocation is not null;
+
     private protected override DropInfo CreateUntransferredDropInfo(DragEventArgs e, IReadOnlyList<object> values) =>
         CreateDropInfo(e, DropLocation?.Index, values.Count);
 
