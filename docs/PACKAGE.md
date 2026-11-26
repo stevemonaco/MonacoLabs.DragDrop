@@ -26,16 +26,16 @@ Move items between two lists, or reorder them within one:
 <UserControl xmlns:dd="https://github.com/stevemonaco/MonacoLabs.DragDrop" ...>
     <ListBox ItemsSource="{Binding Inbox}" SelectionMode="Multiple">
         <dd:DragDrop.DragOperation>
-            <dd:CollectionDragOperation InteractionIds="message" PayloadCollection="{Binding Inbox}" />
+            <dd:CollectionDragOperation InteractionIds="message" SourceCollection="{Binding Inbox}" />
         </dd:DragDrop.DragOperation>
         <dd:DragDrop.DropOperation>
-            <dd:CollectionDropOperation InteractionIds="message" PayloadTarget="{Binding Inbox}" />
+            <dd:CollectionDropOperation InteractionIds="message" TargetCollection="{Binding Inbox}" />
         </dd:DragDrop.DropOperation>
     </ListBox>
 </UserControl>
 ```
 
-Give a second `ListBox` the same operations, bound to another collection, and items move between the two. Hold Ctrl (Option on macOS) to copy instead, when the drag operation's `AllowedEffects` includes `Copy`. To handle drops in your view model instead, leave `PayloadTarget` unset and bind `PayloadCommand`: it receives the payloads and the insertion index.
+Give a second `ListBox` the same operations, bound to another collection, and items move between the two. Hold Ctrl (Option on macOS) to copy instead, when the drag operation's `AllowedEffects` includes `Copy`. To handle drops in your view model instead, leave `TargetCollection` unset and bind `PayloadCommand`: it receives the payloads and the insertion index.
 
 ## Learn more
 

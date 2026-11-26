@@ -5,7 +5,7 @@ namespace MonacoLabs.DragDrop;
 /// </summary>
 /// <remarks>
 /// On a drag operation, these ids add the payload as platform data (see <c>ResolvePlatformFile</c> and <c>ResolvePlatformText</c>).
-/// On a drop operation, they accept that data from any source. Platform drops never assign <c>PayloadTarget</c>:
+/// On a drop operation, they accept that data from any source. Platform drops never transfer (they assign no <c>PayloadTarget</c> and insert into no <c>TargetCollection</c>):
 /// <c>PayloadCommand</c> receives the dropped <see cref="Avalonia.Platform.Storage.IStorageItem"/>s or text in <see cref="DropEventArgs.Items"/>.
 /// </remarks>
 public static class PlatformInteractionIds

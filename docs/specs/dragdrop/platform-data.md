@@ -32,7 +32,7 @@ depends:
   - Tests: `PlatformDropTests.ADragFromThisAppAdvertisingOnlyAPlatformIdTheTargetListsIsAPlatformDrop`, `PlatformDropTests.AMatchingInProcessIdMakesTheDropInProcess`
 - **DD-PLATFORM-004** — When a platform drop carries files and the target lists `platform:files`, `DropEventArgs.Items` shall hold the dropped `IStorageItem`s; otherwise, when it carries text and the target lists `platform:text`, `Items` shall hold that one string.
   - Tests: `PlatformDropTests.APlatformDropOfFilesPassesTheStorageItems`, `PlatformDropTests.APlatformDropOfTextPassesTheTextAsTheOnlyItem`, `PlatformDropTests.ADragOfSeveralFilesFromThisAppPassesEveryFile`
-- **DD-PLATFORM-005** — A platform drop shall never change `PayloadTarget`, never call `DropCompleted` and always set `DropEventArgs.IsPlatformDrop`.
+- **DD-PLATFORM-005** — A platform drop shall never transfer (never change an item target's `PayloadTarget` or insert into a collection target's `TargetCollection`), never call `DropCompleted` and always set `DropEventArgs.IsPlatformDrop`.
   - Tests: `PlatformDropTests.APlatformDropLeavesPayloadTargetAndNeverCompletesTheDrag`
 - **DD-PLATFORM-006** — When a drag carries both files and text and the target lists both ids, `Items` shall hold the files.
   - Tests: `PlatformDropTests.FilesWinOverTextWhenTheTargetListsBoth`
@@ -67,7 +67,7 @@ depends:
 
 ## Decisions
 
-- **Platform data goes to `PayloadCommand`, not `PayloadTarget`.** Reason: files and text rarely have the payload's type, so they need a view-model decision (copy the file, create an item from the text). Assigning them to a typed `PayloadTarget` would fail or silently store the wrong type.
+- **Platform data goes to `PayloadCommand`, not the transfer target.** Reason: files and text rarely have the payload's type, so they need a view-model decision (copy the file, create an item from the text). Assigning them to a typed `PayloadTarget` would fail or silently store the wrong type.
 - **Platform ids are plain interaction ids.** Reason: one mechanism selects both in-process and platform data, so a source opts into exporting text the same way it opts into a channel. Rejected: separate `ExportsText`/`AcceptsFiles` flags.
 
 ## Non-goals

@@ -13,17 +13,17 @@ namespace MonacoLabs.DragDrop;
 /// </summary>
 public class CollectionDragOperation : DragOperationBase
 {
-    public static readonly StyledProperty<IList?> PayloadCollectionProperty =
-        AvaloniaProperty.Register<CollectionDragOperation, IList?>(nameof(PayloadCollection));
+    public static readonly StyledProperty<IList?> SourceCollectionProperty =
+        AvaloniaProperty.Register<CollectionDragOperation, IList?>(nameof(SourceCollection));
 
     /// <summary>
     /// Specifies the collection the Payload is inside of so it can be removed when
     /// the Drop transfer occurs
     /// </summary>
-    public IList? PayloadCollection
+    public IList? SourceCollection
     {
-        get => GetValue(PayloadCollectionProperty);
-        set => SetValue(PayloadCollectionProperty, value);
+        get => GetValue(SourceCollectionProperty);
+        set => SetValue(SourceCollectionProperty, value);
     }
 
     public static readonly StyledProperty<DraggedItems> DraggedItemsProperty =
@@ -95,7 +95,7 @@ public class CollectionDragOperation : DragOperationBase
     private IReadOnlyList<CollectionDragItem> ResolveDragItems(RoutedEventArgs e)
     {
         if (LocatePayloadContainer(e) is not { } pressed || ItemsControl.ItemsControlFromItemContainer(pressed) is null)
-            return ResolveDefaultPayload() is { } payload ? [new CollectionDragItem(payload, ResolvePayloadCollection(null), null, null)] : [];
+            return ResolveDefaultPayload() is { } payload ? [new CollectionDragItem(payload, ResolveSourceCollection(null), null, null)] : [];
 
         if (DraggedItems == DraggedItems.SelectedItems && ResolveSelectedItems(pressed) is { Count: > 0 } selected)
             return selected;
@@ -119,8 +119,8 @@ public class CollectionDragOperation : DragOperationBase
             .Select(x =>
             {
                 var container = list.ContainerFromIndex(x.First);
-                var collection = ResolvePayloadCollection(container);
-                return new CollectionDragItem(x.Second!, collection, MapPayloadIndex(list, collection, x.First, x.Second!), container);
+                var collection = ResolveSourceCollection(container);
+                return new CollectionDragItem(x.Second!, collection, MapSourceIndex(list, collection, x.First, x.Second!), container);
             })];
     }
 
@@ -129,27 +129,27 @@ public class CollectionDragOperation : DragOperationBase
         if (ItemsControl.ItemsControlFromItemContainer(container) is not { } owner || owner.ItemFromContainer(container) is not { } item)
             return null;
 
-        var collection = ResolvePayloadCollection(container);
-        return new CollectionDragItem(item, collection, MapPayloadIndex(owner, collection, LocatePayloadContainerIndex(container), item), container);
+        var collection = ResolveSourceCollection(container);
+        return new CollectionDragItem(item, collection, MapSourceIndex(owner, collection, LocatePayloadContainerIndex(container), item), container);
     }
 
-    private int? MapPayloadIndex(ItemsControl owner, IList? collection, int? displayIndex, object item) =>
+    private int? MapSourceIndex(ItemsControl owner, IList? collection, int? displayIndex, object item) =>
         collection is null || displayIndex is not int index || index < 0 || ReferenceEquals(owner.ItemsSource, collection)
             ? displayIndex
-            : ResolvePayloadIndex(collection, index, item);
+            : ResolveSourceIndex(collection, index, item);
 
     /// <summary>
     /// Maps the position of a dragged <paramref name="item"/> in the attached control's items to its index in <paramref name="collection"/>, when
     /// the control shows a filtered or sorted view of the collection rather than the collection itself. By default, the index of the item shown at
     /// <paramref name="displayIndex"/>, equal items matched by occurrence. Null leaves the item to be found by equality when it is removed.
     /// </summary>
-    protected virtual int? ResolvePayloadIndex(IList collection, int displayIndex, object item) =>
+    protected virtual int? ResolveSourceIndex(IList collection, int displayIndex, object item) =>
         AttachedControl is ItemsControl items ? DisplayIndexMap.ToCollectionIndex(items.ItemsView, collection, displayIndex) : displayIndex;
 
     /// <summary>
     /// Resolves the collection a dragged item is removed from after a Move, given its item container, or null when it isn't realized.
     /// </summary>
-    protected virtual IList? ResolvePayloadCollection(Control? container) => PayloadCollection;
+    protected virtual IList? ResolveSourceCollection(Control? container) => SourceCollection;
 
     /// <summary>
     /// Finds the item container under the event's source: its topmost logical ancestor below the attached control, or null when the

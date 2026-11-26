@@ -24,8 +24,8 @@ public class EndToEndTests
         var targetItems = new ObservableCollection<Card>();
         var source = CardList(sourceItems);
         var target = CardList(targetItems);
-        DragDrop.SetDragOperation(source, new CollectionDragOperation { PayloadCollection = sourceItems, AllowedEffects = DragDropEffects.Copy | DragDropEffects.Move });
-        DragDrop.SetDropOperation(target, new CardCopyingDropOperation { PayloadTarget = targetItems });
+        DragDrop.SetDragOperation(source, new CollectionDragOperation { SourceCollection = sourceItems, AllowedEffects = DragDropEffects.Copy | DragDropEffects.Move });
+        DragDrop.SetDropOperation(target, new CardCopyingDropOperation { TargetCollection = targetItems });
         var window = TestWindow.Show(new StackPanel { Orientation = Orientation.Horizontal, Spacing = 50, Children = { source, target } });
 
         window.MouseDrag(window.PointIn(source.ContainerFromIndex(0)!), window.PointIn(target), RawInputModifiers.Control);
@@ -42,7 +42,7 @@ public class EndToEndTests
         var moved = new Card("second");
         var items = new ObservableCollection<Card> { new("first"), moved, new("third") };
         var source = CardList(items);
-        DragDrop.SetDragOperation(source, new CollectionDragOperation { PayloadCollection = items });
+        DragDrop.SetDragOperation(source, new CollectionDragOperation { SourceCollection = items });
         var target = new Border { Width = 100, Height = 100, Background = Brushes.Blue };
         var drop = new ItemDropOperation();
         DragDrop.SetDropOperation(target, drop);
@@ -61,7 +61,7 @@ public class EndToEndTests
         var first = new Card("first");
         var items = new ObservableCollection<Card> { first, new("second"), new("third") };
         var list = CardList(items);
-        DragDrop.SetDragOperation(list, new CollectionDragOperation { PayloadCollection = items });
+        DragDrop.SetDragOperation(list, new CollectionDragOperation { SourceCollection = items });
         DragDrop.SetDropOperation(list, new CollectionDropOperation
         {
             PayloadCommand = new RelayCommand(a =>
@@ -87,8 +87,8 @@ public class EndToEndTests
         var list = CardList(items);
         list.SelectionMode = SelectionMode.Multiple;
         list.Height = 300;
-        DragDrop.SetDragOperation(list, new CollectionDragOperation { PayloadCollection = items });
-        DragDrop.SetDropOperation(list, new CollectionDropOperation { PayloadTarget = items });
+        DragDrop.SetDragOperation(list, new CollectionDragOperation { SourceCollection = items });
+        DragDrop.SetDropOperation(list, new CollectionDropOperation { TargetCollection = items });
         var window = TestWindow.Show(list);
         list.Selection.Select(3);
         list.Selection.Select(1);
@@ -108,8 +108,8 @@ public class EndToEndTests
         var source = CardList(sourceItems);
         source.SelectionMode = SelectionMode.Multiple;
         var target = CardList(targetItems);
-        DragDrop.SetDragOperation(source, new CollectionDragOperation { PayloadCollection = sourceItems });
-        DragDrop.SetDropOperation(target, new CollectionDropOperation { PayloadTarget = targetItems });
+        DragDrop.SetDragOperation(source, new CollectionDragOperation { SourceCollection = sourceItems });
+        DragDrop.SetDropOperation(target, new CollectionDropOperation { TargetCollection = targetItems });
         var window = TestWindow.Show(new StackPanel { Orientation = Orientation.Horizontal, Spacing = 50, Children = { source, target } });
         source.Selection.Select(0);
         source.Selection.Select(2);
@@ -127,8 +127,8 @@ public class EndToEndTests
     {
         var items = new ObservableCollection<Card> { new("a"), new("b"), new("c"), new("d"), new("e") };
         var list = CardList(new ObservableCollection<Card> { items[1], items[3] });
-        DragDrop.SetDragOperation(list, new CollectionDragOperation { PayloadCollection = items });
-        DragDrop.SetDropOperation(list, new CollectionDropOperation { PayloadTarget = items });
+        DragDrop.SetDragOperation(list, new CollectionDragOperation { SourceCollection = items });
+        DragDrop.SetDropOperation(list, new CollectionDropOperation { TargetCollection = items });
         var window = TestWindow.Show(list);
         var target = list.ContainerFromIndex(onto)!;
 
@@ -145,8 +145,8 @@ public class EndToEndTests
         var source = CardList(new ObservableCollection<Card> { items[0], items[2], items[4] });
         source.SelectionMode = SelectionMode.Multiple;
         var target = CardList(targetItems);
-        DragDrop.SetDragOperation(source, new CollectionDragOperation { PayloadCollection = items });
-        DragDrop.SetDropOperation(target, new CollectionDropOperation { PayloadTarget = targetItems });
+        DragDrop.SetDragOperation(source, new CollectionDragOperation { SourceCollection = items });
+        DragDrop.SetDropOperation(target, new CollectionDropOperation { TargetCollection = targetItems });
         var window = TestWindow.Show(new StackPanel { Orientation = Orientation.Horizontal, Spacing = 50, Children = { source, target } });
         source.Selection.Select(1);
         source.Selection.Select(2);
@@ -181,7 +181,7 @@ public class EndToEndTests
         var dropped = new Card("second");
         var items = new ObservableCollection<Card> { new("first"), dropped, new("third") };
         var list = CardList(items);
-        DragDrop.SetDragOperation(list, new CollectionDragOperation { PayloadCollection = items, RemoveOnDropOutside = true });
+        DragDrop.SetDragOperation(list, new CollectionDragOperation { SourceCollection = items, RemoveOnDropOutside = true });
         var window = TestWindow.Show(new StackPanel { VerticalAlignment = VerticalAlignment.Top, HorizontalAlignment = HorizontalAlignment.Left, Children = { list } });
 
         window.MouseDrag(window.PointIn(list.ContainerFromIndex(1)!), OnBackground);

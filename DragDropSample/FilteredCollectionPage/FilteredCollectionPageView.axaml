@@ -63,13 +63,13 @@
                             <dd:CollectionDragOperation
                                 AllowedEffects="Move,Copy"
                                 InteractionIds="app:task"
-                                PayloadCollection="{Binding Backlog}" />
+                                SourceCollection="{Binding Backlog}" />
                         </dd:DragDrop.DragOperation>
                         <dd:DragDrop.DropOperation>
                             <cdd:TaskDropOperation
                                 InteractionIds="app:task"
                                 ItemOrder="{Binding BacklogOrder}"
-                                PayloadTarget="{Binding Backlog}" />
+                                TargetCollection="{Binding Backlog}" />
                         </dd:DragDrop.DropOperation>
                     </ListBox>
                 </Grid>
@@ -122,10 +122,10 @@
                         <dd:CollectionDragOperation
                             AllowedEffects="Move,Copy"
                             InteractionIds="app:task"
-                            PayloadCollection="{Binding Sprint}" />
+                            SourceCollection="{Binding Sprint}" />
                     </dd:DragDrop.DragOperation>
                     <dd:DragDrop.DropOperation>
-                        <cdd:TaskDropOperation InteractionIds="app:task" PayloadTarget="{Binding Sprint}" />
+                        <cdd:TaskDropOperation InteractionIds="app:task" TargetCollection="{Binding Sprint}" />
                     </dd:DragDrop.DropOperation>
                 </ListBox>
             </Grid>

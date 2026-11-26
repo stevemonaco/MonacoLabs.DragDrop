@@ -84,7 +84,7 @@
                     ItemsSource="{Binding AvailableWorkers}"
                     SelectionMode="Multiple">
                     <dd:DragDrop.DragOperation>
-                        <dd:CollectionDragOperation InteractionIds="app:mining, app:crafting, app:combat" PayloadCollection="{Binding AvailableWorkers}" />
+                        <dd:CollectionDragOperation InteractionIds="app:mining, app:crafting, app:combat" SourceCollection="{Binding AvailableWorkers}" />
                     </dd:DragDrop.DragOperation>
                 </ListBox>
 
@@ -128,7 +128,7 @@
                         Grid.Row="1"
                         ItemsSource="{Binding MiningTeam}">
                         <dd:DragDrop.DropOperation>
-                            <cdd:WorkerDropOperation InteractionIds="app:mining" PayloadTarget="{Binding MiningTeam}" />
+                            <cdd:WorkerDropOperation InteractionIds="app:mining" TargetCollection="{Binding MiningTeam}" />
                         </dd:DragDrop.DropOperation>
                     </ListBox>
                 </Grid>
@@ -152,7 +152,7 @@
                         Grid.Row="1"
                         ItemsSource="{Binding CraftingTeam}">
                         <dd:DragDrop.DropOperation>
-                            <cdd:WorkerDropOperation InteractionIds="app:crafting" PayloadTarget="{Binding CraftingTeam}" />
+                            <cdd:WorkerDropOperation InteractionIds="app:crafting" TargetCollection="{Binding CraftingTeam}" />
                         </dd:DragDrop.DropOperation>
                     </ListBox>
                 </Grid>
@@ -176,7 +176,7 @@
                         Grid.Row="1"
                         ItemsSource="{Binding CombatTeam}">
                         <dd:DragDrop.DropOperation>
-                            <cdd:WorkerDropOperation InteractionIds="app:combat" PayloadTarget="{Binding CombatTeam}" />
+                            <cdd:WorkerDropOperation InteractionIds="app:combat" TargetCollection="{Binding CombatTeam}" />
                         </dd:DragDrop.DropOperation>
                     </ListBox>
                 </Grid>

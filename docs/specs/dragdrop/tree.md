@@ -24,7 +24,7 @@ depends:
 
 ## Purpose
 
-`TreeDragOperation` and `TreeDropOperation` move nodes within and between `TreeView`s, and between trees and flat lists. They derive from the collection operations (DD-COLLECTION) and keep their completion, hover and adorner behavior. What changes: the drag side finds each node's own collection and drags the selected nodes shown in the tree, and the drop side uses three hover zones per node, reads every collection from the tree instead of `PayloadTarget`, refuses drops into the subtree of any dragged node and expands collapsed nodes on hover.
+`TreeDragOperation` and `TreeDropOperation` move nodes within and between `TreeView`s, and between trees and flat lists. They derive from the collection operations (DD-COLLECTION) and keep their completion, hover and adorner behavior. What changes: the drag side finds each node's own collection and drags the selected nodes shown in the tree, and the drop side uses three hover zones per node, reads every collection from the tree instead of `TargetCollection`, refuses drops into the subtree of any dragged node and expands collapsed nodes on hover.
 
 ## Requirements
 
@@ -33,9 +33,9 @@ depends:
 - **DD-TREE-001** — When attached to a `TreeView`, the drag operation's pressed container shall be the nearest `TreeViewItem` at or above the pressed element, at any depth.
   - Tests: `TreeDragTests.ThePressedContainerIsTheNearestTreeViewItemAtAnyDepth`
 - **DD-TREE-002** — The pressed index shall be the container's index within its parent items control (the parent `TreeViewItem` or the `TreeView`).
-  - Tests: `TreeDragTests.ThePayloadCollectionIsTheParentsItemsSource`
-- **DD-TREE-003** — When `PayloadCollection` is not set, the drag's payload collection shall be the parent items control's `ItemsSource` when that is an `IList`.
-  - Tests: `TreeDragTests.ThePayloadCollectionIsTheParentsItemsSource`
+  - Tests: `TreeDragTests.TheSourceCollectionIsTheParentsItemsSource`
+- **DD-TREE-003** — When `SourceCollection` is not set, the drag's payload collection shall be the parent items control's `ItemsSource` when that is an `IList`.
+  - Tests: `TreeDragTests.TheSourceCollectionIsTheParentsItemsSource`
 - **DD-TREE-004** — The drag visual shall be the node's `PART_Header` when its template has one, and the whole `TreeViewItem` otherwise. The same part of every other dragged node shall have `:dragging` (DD-COLLECTION-005).
   - Tests: `TreeDragTests.TheDragVisualIsTheNodesHeaderRow`, `TreeDragTests.WithoutAHeaderPartTheDragVisualIsTheWholeItem`
 - **DD-TREE-022** — When the pressed node is selected, `DraggedItems` is `SelectedItems` and the `TreeView` has more than one selected item, the drag shall carry the selected nodes that are shown (every ancestor expanded), in top-to-bottom order, leaving out any node whose ancestor is also selected, each with its own parent's collection and index.
@@ -62,8 +62,8 @@ depends:
   - Tests: `TreeDropTests.DroppingBeforeAChildInsertsAmongItsSiblings`, `TreeDropTests.DroppingAfterACollapsedRootInsertsAmongTheRoots`
 - **DD-TREE-012** — While no node is hovered, the location shall append to the `TreeView`'s `ItemsSource` with no parent, or there shall be no location when that is not an `IList`.
   - Tests: `TreeDropTests.DroppingBelowTheNodesAppendsToTheRoots`, `TreeDropTests.WithoutALocationTheDropIsRejected`
-- **DD-TREE-013** — The tree drop operation shall always transfer the payload, ignoring `PayloadTarget`.
-  - Tests: `TreeDropTests.TheTreeAlwaysTransfersAndIgnoresPayloadTarget`
+- **DD-TREE-013** — The tree drop operation shall always transfer the payload, ignoring `TargetCollection`.
+  - Tests: `TreeDropTests.TheTreeAlwaysTransfersAndIgnoresTargetCollection`
 
 ### Drop side: validation
 
@@ -118,7 +118,7 @@ depends:
 
 - **Zones use the header row.** Reason: a `TreeViewItem`'s bounds include its expanded children, so halves and quarters of the whole item would put "before" and "after" far from the row under the pointer.
 - **"After" an expanded node means its first child.** Reason: the gap below an expanded header is visually the gap above its first child. Inserting after the node in the sibling list would land the item below the whole subtree, far from where the line was drawn.
-- **Collections come from the tree.** Reason: every node has its own collection, so one `PayloadTarget` cannot describe a tree. The tree's `ItemsSource` bindings already name each collection.
+- **Collections come from the tree.** Reason: every node has its own collection, so one `TargetCollection` cannot describe a tree. The tree's `ItemsSource` bindings already name each collection.
 - **Selected descendants of selected nodes are not dragged separately.** Reason: they move with their ancestor; dragging them too would insert them twice and detach them from the moved subtree.
 - **Trees drag only shown nodes.** A selected node is dragged only when every ancestor is expanded. Reason: a tree's selection gives only items, and a node's collection and index are known only through its container; a node under a collapsed ancestor is also not visible to the user, who would not expect it to move. Rejected: dragging every realized selected container, which includes hidden ones whose ancestors were expanded once.
 - **Nodes can't be moved into themselves, structurally.** Reason: inserting a node into its own subtree detaches the subtree from the tree and creates a cycle in the view model. No domain rule should be able to allow it.

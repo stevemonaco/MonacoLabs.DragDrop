@@ -388,7 +388,7 @@ public class DragSessionTests
             HorizontalAlignment = HorizontalAlignment.Left,
             ItemTemplate = new FuncDataTemplate<string>((_, _) => new TextBlock { Height = 30 })
         };
-        DragDrop.SetDragOperation(list, new CollectionDragOperation { PayloadCollection = items });
+        DragDrop.SetDragOperation(list, new CollectionDragOperation { SourceCollection = items });
         var window = TestWindow.Show(list);
         list.Selection.Select(0);
         list.Selection.Select(2);

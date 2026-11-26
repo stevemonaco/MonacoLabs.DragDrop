@@ -1,5 +1,8 @@
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Data;
+using MonacoLabs.DragDrop.Abstractions;
+using System.Collections;
 
 namespace MonacoLabs.DragDrop;
 
@@ -15,6 +18,19 @@ public partial class CollectionDropOperation
     {
         get => GetValue(ItemDropAdornerProperty);
         set => SetValue(ItemDropAdornerProperty, value);
+    }
+
+    public static readonly StyledProperty<IList?> TargetCollectionProperty =
+        AvaloniaProperty.Register<CollectionDropOperation, IList?>(nameof(TargetCollection));
+
+    /// <summary>
+    /// The collection an accepted in-process drop inserts the payloads into. Without it, drops only run <see cref="DropOperationBase.PayloadCommand"/>,
+    /// with locations in the control's <see cref="ItemsControl.ItemsSource"/>.
+    /// </summary>
+    public IList? TargetCollection
+    {
+        get => GetValue(TargetCollectionProperty);
+        set => SetValue(TargetCollectionProperty, value);
     }
 
     public static readonly StyledProperty<double> AutoScrollMarginProperty =

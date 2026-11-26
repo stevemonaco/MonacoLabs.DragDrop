@@ -7,16 +7,16 @@ using System.Collections;
 namespace MonacoLabs.DragDrop;
 
 /// <summary>
-/// Drags nodes out of a <see cref="TreeView"/>. Unless <see cref="CollectionDragOperation.PayloadCollection"/> is set,
+/// Drags nodes out of a <see cref="TreeView"/>. Unless <see cref="CollectionDragOperation.SourceCollection"/> is set,
 /// the collection to remove from is the dragged node's parent <see cref="ItemsControl.ItemsSource"/>.
 /// </summary>
 public class TreeDragOperation : CollectionDragOperation
 {
     /// <summary>
-    /// <see cref="CollectionDragOperation.PayloadCollection"/> when set, otherwise the <see cref="ItemsControl.ItemsSource"/> of the node's parent.
+    /// <see cref="CollectionDragOperation.SourceCollection"/> when set, otherwise the <see cref="ItemsControl.ItemsSource"/> of the node's parent.
     /// </summary>
-    protected override IList? ResolvePayloadCollection(Control? container) =>
-        PayloadCollection ?? (container is null ? null : ItemsControl.ItemsControlFromItemContainer(container)?.ItemsSource as IList);
+    protected override IList? ResolveSourceCollection(Control? container) =>
+        SourceCollection ?? (container is null ? null : ItemsControl.ItemsControlFromItemContainer(container)?.ItemsSource as IList);
 
     // A TreeViewItem's bounds include its expanded children, so only the header row is snapshotted and marked dragging
     private protected override Control DragVisualOf(Control container) => container is TreeViewItem item ? FindHeader(item) : container;
@@ -62,7 +62,7 @@ public class TreeDragOperation : CollectionDragOperation
     /// <summary>
     /// <paramref name="displayIndex"/> unchanged: trees read each node's collection from the tree, and filtered trees aren't supported.
     /// </summary>
-    protected override int? ResolvePayloadIndex(IList collection, int displayIndex, object item) => displayIndex;
+    protected override int? ResolveSourceIndex(IList collection, int displayIndex, object item) => displayIndex;
 
     /// <summary>
     /// Gets the node's index among its siblings.

@@ -53,7 +53,7 @@ Copy [`_template.md`](_template.md).
 **Decisions** record why the feature behaves as it does: one bullet per decision, led by a bold title, then the decision, its reason and, when known, the alternatives rejected. Requirements refer to a decision by its title, never by a number. A decision governing several features lives in the spec it most constrains; the others name that spec. Project-wide decisions are in [ARCHITECTURE.md](../ARCHITECTURE.md) §4.
 
 ```markdown
-- **The drag side removes the item.** The drop side inserts and then calls `DropCompleted`, and the drag side removes its original. Reason: only the source knows where the payload lives. Rejected: having the drop side remove from `PayloadCollection`, which couples targets to every source type.
+- **The drag side removes the item.** The drop side inserts and then calls `DropCompleted`, and the drag side removes its original. Reason: only the source knows where the payload lives. Rejected: having the drop side remove from `SourceCollection`, which couples targets to every source type.
 ```
 
 **Inherited requirements** are marked `(inherited)` after the id:

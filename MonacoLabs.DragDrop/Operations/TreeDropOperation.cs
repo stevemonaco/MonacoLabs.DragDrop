@@ -11,7 +11,7 @@ namespace MonacoLabs.DragDrop;
 /// <summary>
 /// Drops into a <see cref="TreeView"/>. Payloads are inserted before or after the hovered node, or into it when the pointer is over
 /// the middle of a node whose container has an <see cref="ItemsControl.ItemsSource"/>. The target collection is read from the tree,
-/// so <see cref="Abstractions.DropOperationBase.PayloadTarget"/> isn't used. Use <see cref="CollectionDropOperation.DropLocation"/> in
+/// so <see cref="CollectionDropOperation.TargetCollection"/> isn't used. Use <see cref="CollectionDropOperation.DropLocation"/> in
 /// <see cref="Abstractions.DropOperationBase.CanDrop"/> overrides to validate the destination.
 /// </summary>
 public partial class TreeDropOperation : CollectionDropOperation
@@ -20,7 +20,7 @@ public partial class TreeDropOperation : CollectionDropOperation
     private TreeViewItem? _expandCandidate;
 
     /// <summary>
-    /// True: the target collection comes from the tree, not from <see cref="Abstractions.DropOperationBase.PayloadTarget"/>.
+    /// True: the target collection comes from the tree, not from <see cref="CollectionDropOperation.TargetCollection"/>.
     /// </summary>
     protected override bool TransfersPayload => true;
 

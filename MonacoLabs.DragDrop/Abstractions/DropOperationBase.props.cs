@@ -36,18 +36,6 @@ public abstract partial class DropOperationBase
         private set => SetAndRaise(ErrorMessageProperty, ref _errorMessage, value);
     }
 
-    public static readonly StyledProperty<object?> PayloadTargetProperty =
-        AvaloniaProperty.Register<DropOperationBase, object?>(nameof(PayloadTarget), defaultBindingMode: BindingMode.TwoWay);
-
-    /// <summary>
-    /// PayloadTarget will be assigned the Payload that was registered by the DragOperation when the Drop is applied
-    /// </summary>
-    public object? PayloadTarget
-    {
-        get => GetValue(PayloadTargetProperty);
-        set => SetValue(PayloadTargetProperty, value);
-    }
-
     private ICommand? _payloadCommand;
 
     public static readonly DirectProperty<DropOperationBase, ICommand?> PayloadCommandProperty =

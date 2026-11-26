@@ -42,9 +42,9 @@ public partial class CollectionDropOperation : DropOperationBase
     protected CollectionDropLocation? DropLocation { get; private set; }
 
     /// <summary>
-    /// Whether in-process payloads are inserted into <see cref="DropLocation"/> on drop. Requires <see cref="DropOperationBase.PayloadTarget"/> by default.
+    /// Whether in-process payloads are inserted into <see cref="DropLocation"/> on drop. Requires <see cref="TargetCollection"/> by default.
     /// </summary>
-    protected virtual bool TransfersPayload => PayloadTarget is IList;
+    protected virtual bool TransfersPayload => TargetCollection is not null;
 
     private protected override void OnAttached() => ItemDropAdorner ??= new DropInsertionAdorner();
 
@@ -183,7 +183,7 @@ public partial class CollectionDropOperation : DropOperationBase
     /// Appends the payload to the target collection
     /// </summary>
     /// <returns>Actual index where payload was stored</returns>
-    protected virtual int TransferPayload(object payload, IList targetCollection, IList? payloadCollection, int? payloadIndex)
+    protected virtual int TransferPayload(object payload, IList targetCollection, IList? sourceCollection, int? sourceIndex)
     {
         targetCollection.Add(payload);
         return targetCollection.Count - 1;
@@ -193,7 +193,7 @@ public partial class CollectionDropOperation : DropOperationBase
     /// Inserts the payload at <paramref name="targetIndex"/> in the target collection
     /// </summary>
     /// <returns>Actual index where payload was stored</returns>
-    protected virtual int TransferPayloadIndexed(object payload, IList targetCollection, int targetIndex, IList? payloadCollection, int? payloadIndex)
+    protected virtual int TransferPayloadIndexed(object payload, IList targetCollection, int targetIndex, IList? sourceCollection, int? sourceIndex)
     {
         targetCollection.Insert(targetIndex, payload);
         return targetIndex;
@@ -212,7 +212,7 @@ public partial class CollectionDropOperation : DropOperationBase
     /// </summary>
     protected virtual CollectionDropLocation? ResolveDropLocation()
     {
-        var collection = PayloadTarget as IList ?? (AttachedControl as ItemsControl)?.ItemsSource as IList;
+        var collection = TargetCollection ?? (AttachedControl as ItemsControl)?.ItemsSource as IList;
         if (collection is null)
             return null;
 

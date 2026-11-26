@@ -45,8 +45,6 @@ MonacoLabs.DragDrop.Abstractions.DropOperationBase.InteractionIds.set -> void
 MonacoLabs.DragDrop.Abstractions.DropOperationBase.IsDropValid.get -> bool
 MonacoLabs.DragDrop.Abstractions.DropOperationBase.PayloadCommand.get -> System.Windows.Input.ICommand?
 MonacoLabs.DragDrop.Abstractions.DropOperationBase.PayloadCommand.set -> void
-MonacoLabs.DragDrop.Abstractions.DropOperationBase.PayloadTarget.get -> object?
-MonacoLabs.DragDrop.Abstractions.DropOperationBase.PayloadTarget.set -> void
 MonacoLabs.DragDrop.Abstractions.DropOperationBase.Reject(string? message) -> bool
 MonacoLabs.DragDrop.Abstractions.DropOperationBase.TryGetDragInfo<TDragMetadata>(Avalonia.Input.DragEventArgs! e, out TDragMetadata! dragMetadata) -> bool
 MonacoLabs.DragDrop.Abstractions.DropOperationBase.TryGetFiles(Avalonia.Input.DragEventArgs! e, out System.Collections.Generic.IReadOnlyList<Avalonia.Platform.Storage.IStorageItem!>! files) -> bool
@@ -68,8 +66,6 @@ MonacoLabs.DragDrop.Abstractions.IDropOperation.AttachedControl.get -> Avalonia.
 MonacoLabs.DragDrop.Abstractions.IDropOperation.Detach(Avalonia.Controls.Control! control) -> void
 MonacoLabs.DragDrop.Abstractions.IDropOperation.InteractionIds.get -> System.Collections.Generic.IList<string!>!
 MonacoLabs.DragDrop.Abstractions.IDropOperation.InteractionIds.set -> void
-MonacoLabs.DragDrop.Abstractions.IDropOperation.PayloadTarget.get -> object?
-MonacoLabs.DragDrop.Abstractions.IDropOperation.PayloadTarget.set -> void
 MonacoLabs.DragDrop.CollectionDragInfo
 MonacoLabs.DragDrop.CollectionDragInfo.CollectionDragInfo() -> void
 MonacoLabs.DragDrop.CollectionDragInfo.Items.get -> System.Collections.Generic.IReadOnlyList<MonacoLabs.DragDrop.CollectionDragItem!>!
@@ -93,8 +89,8 @@ MonacoLabs.DragDrop.CollectionDragOperation
 MonacoLabs.DragDrop.CollectionDragOperation.CollectionDragOperation() -> void
 MonacoLabs.DragDrop.CollectionDragOperation.DraggedItems.get -> MonacoLabs.DragDrop.DraggedItems
 MonacoLabs.DragDrop.CollectionDragOperation.DraggedItems.set -> void
-MonacoLabs.DragDrop.CollectionDragOperation.PayloadCollection.get -> System.Collections.IList?
-MonacoLabs.DragDrop.CollectionDragOperation.PayloadCollection.set -> void
+MonacoLabs.DragDrop.CollectionDragOperation.SourceCollection.get -> System.Collections.IList?
+MonacoLabs.DragDrop.CollectionDragOperation.SourceCollection.set -> void
 MonacoLabs.DragDrop.CollectionDropInfo
 MonacoLabs.DragDrop.CollectionDropInfo.CollectionDropInfo() -> void
 MonacoLabs.DragDrop.CollectionDropInfo.TargetCollection.get -> System.Collections.IList?
@@ -131,6 +127,8 @@ MonacoLabs.DragDrop.CollectionDropOperation.ItemDropAdorner.get -> MonacoLabs.Dr
 MonacoLabs.DragDrop.CollectionDropOperation.ItemDropAdorner.set -> void
 MonacoLabs.DragDrop.CollectionDropOperation.ItemOrder.get -> MonacoLabs.DragDrop.ItemOrder
 MonacoLabs.DragDrop.CollectionDropOperation.ItemOrder.set -> void
+MonacoLabs.DragDrop.CollectionDropOperation.TargetCollection.get -> System.Collections.IList?
+MonacoLabs.DragDrop.CollectionDropOperation.TargetCollection.set -> void
 MonacoLabs.DragDrop.DragDrop
 MonacoLabs.DragDrop.DragFailedEventArgs
 MonacoLabs.DragDrop.DragFailedEventArgs.DragFailedEventArgs(System.Exception! exception) -> void
@@ -220,6 +218,8 @@ MonacoLabs.DragDrop.ItemDragOperation.SwapOnDrop.get -> bool
 MonacoLabs.DragDrop.ItemDragOperation.SwapOnDrop.set -> void
 MonacoLabs.DragDrop.ItemDropOperation
 MonacoLabs.DragDrop.ItemDropOperation.ItemDropOperation() -> void
+MonacoLabs.DragDrop.ItemDropOperation.PayloadTarget.get -> object?
+MonacoLabs.DragDrop.ItemDropOperation.PayloadTarget.set -> void
 MonacoLabs.DragDrop.ItemOrder
 MonacoLabs.DragDrop.ItemOrder.Positional = 0 -> MonacoLabs.DragDrop.ItemOrder
 MonacoLabs.DragDrop.ItemOrder.Sorted = 1 -> MonacoLabs.DragDrop.ItemOrder
@@ -260,8 +260,8 @@ override MonacoLabs.DragDrop.ItemDropOperation.CanTransfer(Avalonia.Input.DragEv
 override MonacoLabs.DragDrop.ItemDropOperation.Transfer(Avalonia.Input.DragEventArgs! e, MonacoLabs.DragDrop.DragInfo! dragInfo, System.Collections.Generic.IReadOnlyList<object!>! values) -> MonacoLabs.DragDrop.DropInfo?
 override MonacoLabs.DragDrop.TreeDragOperation.LocatePayloadContainer(Avalonia.Interactivity.RoutedEventArgs! triggerEvent) -> Avalonia.Controls.Control?
 override MonacoLabs.DragDrop.TreeDragOperation.LocatePayloadContainerIndex(Avalonia.Controls.Control? container) -> int?
-override MonacoLabs.DragDrop.TreeDragOperation.ResolvePayloadCollection(Avalonia.Controls.Control? container) -> System.Collections.IList?
-override MonacoLabs.DragDrop.TreeDragOperation.ResolvePayloadIndex(System.Collections.IList! collection, int displayIndex, object! item) -> int?
+override MonacoLabs.DragDrop.TreeDragOperation.ResolveSourceCollection(Avalonia.Controls.Control? container) -> System.Collections.IList?
+override MonacoLabs.DragDrop.TreeDragOperation.ResolveSourceIndex(System.Collections.IList! collection, int displayIndex, object! item) -> int?
 override MonacoLabs.DragDrop.TreeDropOperation.CanDropAtLocation(Avalonia.Input.DragEventArgs! e) -> bool
 override MonacoLabs.DragDrop.TreeDropOperation.GetDropOffset(Avalonia.Controls.Control! container, Avalonia.Point position, Avalonia.Size size) -> MonacoLabs.DragDrop.DropTargetOffset
 override MonacoLabs.DragDrop.TreeDropOperation.GetInsertionTarget(Avalonia.Controls.Control! container) -> Avalonia.Controls.Control!
@@ -297,12 +297,12 @@ static readonly MonacoLabs.DragDrop.Abstractions.DropOperationBase.AttachedContr
 static readonly MonacoLabs.DragDrop.Abstractions.DropOperationBase.DropAdornerProperty -> Avalonia.StyledProperty<MonacoLabs.DragDrop.DropAdornerBase?>!
 static readonly MonacoLabs.DragDrop.Abstractions.DropOperationBase.ErrorMessageProperty -> Avalonia.DirectProperty<MonacoLabs.DragDrop.Abstractions.DropOperationBase!, string?>!
 static readonly MonacoLabs.DragDrop.Abstractions.DropOperationBase.PayloadCommandProperty -> Avalonia.DirectProperty<MonacoLabs.DragDrop.Abstractions.DropOperationBase!, System.Windows.Input.ICommand?>!
-static readonly MonacoLabs.DragDrop.Abstractions.DropOperationBase.PayloadTargetProperty -> Avalonia.StyledProperty<object?>!
 static readonly MonacoLabs.DragDrop.CollectionDragOperation.DraggedItemsProperty -> Avalonia.StyledProperty<MonacoLabs.DragDrop.DraggedItems>!
-static readonly MonacoLabs.DragDrop.CollectionDragOperation.PayloadCollectionProperty -> Avalonia.StyledProperty<System.Collections.IList?>!
+static readonly MonacoLabs.DragDrop.CollectionDragOperation.SourceCollectionProperty -> Avalonia.StyledProperty<System.Collections.IList?>!
 static readonly MonacoLabs.DragDrop.CollectionDropOperation.AutoScrollMarginProperty -> Avalonia.StyledProperty<double>!
 static readonly MonacoLabs.DragDrop.CollectionDropOperation.ItemDropAdornerProperty -> Avalonia.StyledProperty<MonacoLabs.DragDrop.DropInsertionAdorner?>!
 static readonly MonacoLabs.DragDrop.CollectionDropOperation.ItemOrderProperty -> Avalonia.StyledProperty<MonacoLabs.DragDrop.ItemOrder>!
+static readonly MonacoLabs.DragDrop.CollectionDropOperation.TargetCollectionProperty -> Avalonia.StyledProperty<System.Collections.IList?>!
 static readonly MonacoLabs.DragDrop.DragDrop.DragOperationProperty -> Avalonia.AttachedProperty<MonacoLabs.DragDrop.Abstractions.IDragOperation?>!
 static readonly MonacoLabs.DragDrop.DragDrop.DropOperationProperty -> Avalonia.AttachedProperty<MonacoLabs.DragDrop.Abstractions.IDropOperation?>!
 static readonly MonacoLabs.DragDrop.DragDrop.IgnoresPressProperty -> Avalonia.AttachedProperty<bool?>!
@@ -316,6 +316,7 @@ static readonly MonacoLabs.DragDrop.DropHighlightAdorner.KindProperty -> Avaloni
 static readonly MonacoLabs.DragDrop.DropInsertionAdorner.LineBrushProperty -> Avalonia.StyledProperty<Avalonia.Media.IBrush?>!
 static readonly MonacoLabs.DragDrop.DropInsertionAdorner.OffsetProperty -> Avalonia.DirectProperty<MonacoLabs.DragDrop.DropInsertionAdorner!, MonacoLabs.DragDrop.DropTargetOffset>!
 static readonly MonacoLabs.DragDrop.ItemDragOperation.SwapOnDropProperty -> Avalonia.StyledProperty<bool>!
+static readonly MonacoLabs.DragDrop.ItemDropOperation.PayloadTargetProperty -> Avalonia.StyledProperty<object?>!
 static readonly MonacoLabs.DragDrop.TreeDropOperation.HoverExpandDelayProperty -> Avalonia.StyledProperty<System.TimeSpan>!
 static readonly MonacoLabs.DragDrop.TreeDropOperation.SelfDropMessageProperty -> Avalonia.StyledProperty<string?>!
 virtual MonacoLabs.DragDrop.Abstractions.DragOperationBase.CreateDataTransferItem(MonacoLabs.DragDrop.DragInfo! dragInfo, int index) -> Avalonia.Input.DataTransferItem!
@@ -350,8 +351,8 @@ virtual MonacoLabs.DragDrop.Abstractions.DropOperationBase.Transfer(Avalonia.Inp
 virtual MonacoLabs.DragDrop.Abstractions.DropOperationBase.TryGetPayloads<TPayload>(Avalonia.Input.DragEventArgs! e, out System.Collections.Generic.IReadOnlyList<TPayload!>! payloads) -> bool
 virtual MonacoLabs.DragDrop.CollectionDragOperation.LocatePayloadContainer(Avalonia.Interactivity.RoutedEventArgs! triggerEvent) -> Avalonia.Controls.Control?
 virtual MonacoLabs.DragDrop.CollectionDragOperation.LocatePayloadContainerIndex(Avalonia.Controls.Control? container) -> int?
-virtual MonacoLabs.DragDrop.CollectionDragOperation.ResolvePayloadCollection(Avalonia.Controls.Control? container) -> System.Collections.IList?
-virtual MonacoLabs.DragDrop.CollectionDragOperation.ResolvePayloadIndex(System.Collections.IList! collection, int displayIndex, object! item) -> int?
+virtual MonacoLabs.DragDrop.CollectionDragOperation.ResolveSourceCollection(Avalonia.Controls.Control? container) -> System.Collections.IList?
+virtual MonacoLabs.DragDrop.CollectionDragOperation.ResolveSourceIndex(System.Collections.IList! collection, int displayIndex, object! item) -> int?
 virtual MonacoLabs.DragDrop.CollectionDropOperation.CanDropAtLocation(Avalonia.Input.DragEventArgs! e) -> bool
 virtual MonacoLabs.DragDrop.CollectionDropOperation.GetDropOffset(Avalonia.Controls.Control! container, Avalonia.Point position, Avalonia.Size size) -> MonacoLabs.DragDrop.DropTargetOffset
 virtual MonacoLabs.DragDrop.CollectionDropOperation.GetInsertionTarget(Avalonia.Controls.Control! container) -> Avalonia.Controls.Control!
@@ -359,8 +360,8 @@ virtual MonacoLabs.DragDrop.CollectionDropOperation.LocateTargetContainer(Avalon
 virtual MonacoLabs.DragDrop.CollectionDropOperation.LocateTargetContainerIndex(Avalonia.Controls.Control? container) -> int?
 virtual MonacoLabs.DragDrop.CollectionDropOperation.ResolveDropLocation() -> MonacoLabs.DragDrop.CollectionDropLocation?
 virtual MonacoLabs.DragDrop.CollectionDropOperation.ResolveTargetIndex(System.Collections.IList! collection, int displayIndex) -> int?
-virtual MonacoLabs.DragDrop.CollectionDropOperation.TransferPayload(object! payload, System.Collections.IList! targetCollection, System.Collections.IList? payloadCollection, int? payloadIndex) -> int
-virtual MonacoLabs.DragDrop.CollectionDropOperation.TransferPayloadIndexed(object! payload, System.Collections.IList! targetCollection, int targetIndex, System.Collections.IList? payloadCollection, int? payloadIndex) -> int
+virtual MonacoLabs.DragDrop.CollectionDropOperation.TransferPayload(object! payload, System.Collections.IList! targetCollection, System.Collections.IList? sourceCollection, int? sourceIndex) -> int
+virtual MonacoLabs.DragDrop.CollectionDropOperation.TransferPayloadIndexed(object! payload, System.Collections.IList! targetCollection, int targetIndex, System.Collections.IList? sourceCollection, int? sourceIndex) -> int
 virtual MonacoLabs.DragDrop.CollectionDropOperation.TransfersPayload.get -> bool
 virtual MonacoLabs.DragDrop.DropAdornerBase.Attach() -> void
 virtual MonacoLabs.DragDrop.DropAdornerBase.Detach() -> void

@@ -9,7 +9,7 @@ public static class DragData
     /// Builds the <see cref="DataTransfer"/> <paramref name="operation"/> would start a drag of one payload with, through its own data transfer items.
     /// </summary>
     /// <param name="metadata">The drag's metadata. When omitted, a <see cref="CollectionDragInfo"/> whose items come from the operation's
-    /// <c>PayloadCollection</c> for collection operations, and a plain <see cref="DragInfo"/> otherwise, both without pressed indexes.</param>
+    /// <c>SourceCollection</c> for collection operations, and a plain <see cref="DragInfo"/> otherwise, both without pressed indexes.</param>
     public static DataTransfer For(DragOperationBase operation, object payload, DragInfo? metadata = null) =>
         For(operation, [payload], metadata);
 
@@ -29,7 +29,7 @@ public static class DragData
         {
             DragOperation = operation,
             DragIds = [.. operation.InteractionIds],
-            Items = [.. payloads.Select(x => new CollectionDragItem(x, collection.PayloadCollection, null, null))]
+            Items = [.. payloads.Select(x => new CollectionDragItem(x, collection.SourceCollection, null, null))]
         },
         _ => new DragInfo { DragOperation = operation, DragIds = [.. operation.InteractionIds] }
     };

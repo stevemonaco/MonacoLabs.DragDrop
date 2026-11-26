@@ -16,7 +16,7 @@ namespace MonacoLabs.DragDrop.Tests;
 public class TreeDragTests
 {
     [AvaloniaFact]
-    public void ThePayloadCollectionIsTheParentsItemsSource()
+    public void TheSourceCollectionIsTheParentsItemsSource()
     {
         var child = new Node("child");
         var parent = new Node("parent", new Node("first"), child);

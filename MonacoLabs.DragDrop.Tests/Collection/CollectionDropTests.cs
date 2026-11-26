@@ -21,8 +21,8 @@ public class CollectionDropTests
     public void ItemsCanBeReorderedWithinOneList()
     {
         var items = new ObservableCollection<string> { "a", "b", "c" };
-        var (window, list) = ShowList(new CollectionDropOperation { PayloadTarget = items }, items);
-        DragDrop.SetDragOperation(list, new CollectionDragOperation { PayloadCollection = items });
+        var (window, list) = ShowList(new CollectionDropOperation { TargetCollection = items }, items);
+        DragDrop.SetDragOperation(list, new CollectionDragOperation { SourceCollection = items });
 
         window.MouseDrag(window.PointIn(Container(list, 2)), Top(window, Container(list, 0)));
 
@@ -33,7 +33,7 @@ public class CollectionDropTests
     public void ADropOnAFilteredViewInsertsBeforeTheShownItemInTheCollection()
     {
         var items = new List<string> { "a", "b", "c", "d", "e" };
-        var (window, list) = ShowList(new CollectionDropOperation { PayloadTarget = items }, new List<string> { "b", "d" });
+        var (window, list) = ShowList(new CollectionDropOperation { TargetCollection = items }, new List<string> { "b", "d" });
 
         DropOn(window, Top(window, Container(list, 1)));
 
@@ -44,7 +44,7 @@ public class CollectionDropTests
     public void ADropAfterTheLastShownItemInsertsAfterItInTheCollection()
     {
         var items = new List<string> { "a", "b", "c", "d", "e" };
-        var (window, list) = ShowList(new CollectionDropOperation { PayloadTarget = items }, new List<string> { "b", "d" });
+        var (window, list) = ShowList(new CollectionDropOperation { TargetCollection = items }, new List<string> { "b", "d" });
 
         DropOn(window, Bottom(window, Container(list, 1)));
 
@@ -55,7 +55,7 @@ public class CollectionDropTests
     public void AListBoundToItsTargetKeepsDisplayIndexes()
     {
         var items = new List<string> { "a", "b", "c" };
-        var (window, list) = ShowList(new IndexMappingSpyDropOperation { PayloadTarget = items }, items);
+        var (window, list) = ShowList(new IndexMappingSpyDropOperation { TargetCollection = items }, items);
 
         DropOn(window, Top(window, Container(list, 2)));
 
@@ -67,7 +67,7 @@ public class CollectionDropTests
     public void ASortedTargetAppendsAndShowsNoInsertionLine()
     {
         var items = new List<string> { "a", "b", "c" };
-        var operation = new CollectionDropOperation { PayloadTarget = items, ItemOrder = ItemOrder.Sorted };
+        var operation = new CollectionDropOperation { TargetCollection = items, ItemOrder = ItemOrder.Sorted };
         var (window, list) = ShowList(operation, items);
         using var drag = window.SimulateDrag(DragData.For(new CollectionDragOperation(), "x"));
 
@@ -85,8 +85,8 @@ public class CollectionDropTests
     public void ASortedTargetIsNotMeantForItsOwnDrags()
     {
         var items = new ObservableCollection<string> { "a", "b", "c" };
-        var (window, list) = ShowList(new CollectionDropOperation { PayloadTarget = items, ItemOrder = ItemOrder.Sorted }, items);
-        DragDrop.SetDragOperation(list, new CollectionDragOperation { PayloadCollection = items });
+        var (window, list) = ShowList(new CollectionDropOperation { TargetCollection = items, ItemOrder = ItemOrder.Sorted }, items);
+        DragDrop.SetDragOperation(list, new CollectionDragOperation { SourceCollection = items });
 
         window.MouseDrag(window.PointIn(Container(list, 0)), Bottom(window, Container(list, 2)));
 
@@ -100,8 +100,8 @@ public class CollectionDropTests
     public void InsertingBeforeTheSelectedItemKeepsTheContainersInStep()
     {
         var items = new ObservableCollection<string> { "a", "b", "c" };
-        var (window, list) = ShowList(new CollectionDropOperation { PayloadTarget = items }, items);
-        DragDrop.SetDragOperation(list, new CollectionDragOperation { PayloadCollection = items, AllowedEffects = DragDropEffects.Move | DragDropEffects.Copy });
+        var (window, list) = ShowList(new CollectionDropOperation { TargetCollection = items }, items);
+        DragDrop.SetDragOperation(list, new CollectionDragOperation { SourceCollection = items, AllowedEffects = DragDropEffects.Move | DragDropEffects.Copy });
 
         window.MouseDrag(window.PointIn(Container(list, 2)), Top(window, Container(list, 0)), RawInputModifiers.Control);
         window.UpdateLayout();
@@ -114,8 +114,8 @@ public class CollectionDropTests
     public void ADropLeavesAutoScrollToSelectedItemAsItWas()
     {
         var items = new ObservableCollection<string> { "a", "b", "c" };
-        var (window, list) = ShowList(new CollectionDropOperation { PayloadTarget = items }, items);
-        DragDrop.SetDragOperation(list, new CollectionDragOperation { PayloadCollection = items });
+        var (window, list) = ShowList(new CollectionDropOperation { TargetCollection = items }, items);
+        DragDrop.SetDragOperation(list, new CollectionDragOperation { SourceCollection = items });
 
         window.MouseDrag(window.PointIn(Container(list, 2)), Top(window, Container(list, 0)));
 
@@ -127,7 +127,7 @@ public class CollectionDropTests
     public void TheHoveredContainerIsTheItemContainerUnderThePointer()
     {
         var items = new List<string> { "a", "b", "c" };
-        var (window, list) = ShowList(new CollectionDropOperation { PayloadTarget = items }, items);
+        var (window, list) = ShowList(new CollectionDropOperation { TargetCollection = items }, items);
         using var drag = window.SimulateDrag(DragData.For(new CollectionDragOperation(), "x"));
 
         drag.Enter(window.PointIn(Container(list, 1)));
@@ -142,7 +142,7 @@ public class CollectionDropTests
     public void TheTopHalfOfAContainerIsBeforeItAndTheBottomHalfAfterIt()
     {
         var items = new List<string> { "a", "b", "c" };
-        var (window, list) = ShowList(new CollectionDropOperation { PayloadTarget = items }, items);
+        var (window, list) = ShowList(new CollectionDropOperation { TargetCollection = items }, items);
         var container = Container(list, 1);
         using var drag = window.SimulateDrag(DragData.For(new CollectionDragOperation(), "x"));
 
@@ -159,7 +159,7 @@ public class CollectionDropTests
     {
         var items = new List<string> { "a", "b" };
         DropEventArgs? args = null;
-        var (window, list) = ShowList(new CollectionDropOperation { PayloadTarget = items, PayloadCommand = Record(a => args = a) }, items);
+        var (window, list) = ShowList(new CollectionDropOperation { TargetCollection = items, PayloadCommand = Record(a => args = a) }, items);
         using var drag = window.SimulateDrag(DragData.For(new CollectionDragOperation(), "x"));
 
         drag.Enter(Below(window, list));
@@ -174,7 +174,7 @@ public class CollectionDropTests
     public void TheHoveredContainerHasTheDropPseudoClassesOnlyWhileTheDropIsValid()
     {
         var items = new List<string> { "a", "b", "c" };
-        var operation = new ProbingCollectionDropOperation { PayloadTarget = items, Rejection = "No" };
+        var operation = new ProbingCollectionDropOperation { TargetCollection = items, Rejection = "No" };
         var (window, list) = ShowList(operation, items);
         var container = Container(list, 1);
         using var drag = window.SimulateDrag(DragData.For(new CollectionDragOperation(), "x"));
@@ -191,7 +191,7 @@ public class CollectionDropTests
     public void MovingToAnotherContainerClearsThePreviousOne()
     {
         var items = new List<string> { "a", "b", "c" };
-        var (window, list) = ShowList(new CollectionDropOperation { PayloadTarget = items }, items);
+        var (window, list) = ShowList(new CollectionDropOperation { TargetCollection = items }, items);
         using var drag = window.SimulateDrag(DragData.For(new CollectionDragOperation(), "x"));
 
         drag.Enter(Top(window, Container(list, 0)));
@@ -205,7 +205,7 @@ public class CollectionDropTests
     public void TheInsertionAdornerFollowsTheHoveredContainer()
     {
         var items = new List<string> { "a", "b", "c" };
-        var operation = new ProbingCollectionDropOperation { PayloadTarget = items };
+        var operation = new ProbingCollectionDropOperation { TargetCollection = items };
         var (window, list) = ShowList(operation, items);
         using var drag = window.SimulateDrag(DragData.For(new CollectionDragOperation(), "x"));
         var adorner = operation.ItemDropAdorner!;
@@ -242,7 +242,7 @@ public class CollectionDropTests
     public void EnterAndOverBothRunTheHoverAndAreHandledOnlyWhenValid()
     {
         var items = new List<string> { "a", "b", "c" };
-        var operation = new ProbingCollectionDropOperation { PayloadTarget = items };
+        var operation = new ProbingCollectionDropOperation { TargetCollection = items };
         var (window, list) = ShowList(operation, items);
         var handled = new List<bool>();
         foreach (var routedEvent in new[] { AvaDragDrop.DragEnterEvent, AvaDragDrop.DragOverEvent })
@@ -262,11 +262,11 @@ public class CollectionDropTests
     }
 
     [AvaloniaFact]
-    public void TheLocationIsInPayloadTargetWhenItIsAList()
+    public void TheLocationIsInTheTargetCollection()
     {
         var target = new List<string>();
         DropEventArgs? args = null;
-        var (window, list) = ShowList(new CollectionDropOperation { PayloadTarget = target, PayloadCommand = Record(a => args = a) }, new List<string> { "a" });
+        var (window, list) = ShowList(new CollectionDropOperation { TargetCollection = target, PayloadCommand = Record(a => args = a) }, new List<string> { "a" });
 
         DropOn(window, Top(window, Container(list, 0)));
 
@@ -274,7 +274,7 @@ public class CollectionDropTests
     }
 
     [AvaloniaFact]
-    public void WithoutAListPayloadTargetTheLocationIsInTheItemsSource()
+    public void WithoutATargetCollectionNothingIsInsertedAndTheLocationIsInTheItemsSource()
     {
         var items = new List<string> { "a" };
         DropEventArgs? args = null;
@@ -282,6 +282,7 @@ public class CollectionDropTests
 
         DropOn(window, Top(window, Container(list, 0)));
 
+        Assert.Equal(["a"], items);
         Assert.Same(items, args?.Location?.Collection);
     }
 
@@ -316,7 +317,7 @@ public class CollectionDropTests
     public void TheStructuralCheckRunsFirstAndItsMessageWins()
     {
         var items = new List<string> { "a" };
-        var operation = new ProbingCollectionDropOperation { PayloadTarget = items, StructuralRejection = "Not at this spot", AcceptsAll = true };
+        var operation = new ProbingCollectionDropOperation { TargetCollection = items, StructuralRejection = "Not at this spot", AcceptsAll = true };
         var (window, list) = ShowList(operation, items);
         using var drag = window.SimulateDrag(DragData.For(new CollectionDragOperation(), "x"));
 
@@ -337,7 +338,7 @@ public class CollectionDropTests
     public void AnAcceptedDropInsertsThenCompletesWithWhereItLanded(double height, string[] expected, int index)
     {
         var items = new ObservableCollection<string> { "a", "b" };
-        var (window, list) = ShowList(new CollectionDropOperation { PayloadTarget = items }, items);
+        var (window, list) = ShowList(new CollectionDropOperation { TargetCollection = items }, items);
         var container = Container(list, 1);
         var source = new InsertionCheckingDragOperation(items);
         var point = height < 0 ? Below(window, list) : window.PointIn(container, new Point(10, container.Bounds.Height * height));
@@ -356,20 +357,7 @@ public class CollectionDropTests
     }
 
     [AvaloniaFact]
-    public void ANonListPayloadTargetDoesNotTransfer()
-    {
-        var items = new List<string> { "a" };
-        DropEventArgs? args = null;
-        var (window, list) = ShowList(new CollectionDropOperation { PayloadTarget = "not a list", PayloadCommand = Record(a => args = a) }, items);
-
-        DropOn(window, Top(window, Container(list, 0)));
-
-        Assert.Equal(["a"], items);
-        Assert.Same(items, args?.Location?.Collection);
-    }
-
-    [AvaloniaFact]
-    public void ASubclassCanTransferWithoutAPayloadTarget()
+    public void ASubclassCanTransferWithoutATargetCollection()
     {
         var items = new List<string> { "a" };
         var (window, list) = ShowList(new TransferringCollectionDropOperation(), items);
@@ -384,7 +372,7 @@ public class CollectionDropTests
     {
         var items = new List<string> { "a", "b" };
         DropEventArgs? args = null;
-        var (window, list) = ShowList(new CollectionDropOperation { PayloadTarget = items, PayloadCommand = Record(a => args = a) }, items);
+        var (window, list) = ShowList(new CollectionDropOperation { TargetCollection = items, PayloadCommand = Record(a => args = a) }, items);
 
         DropOn(window, Top(window, Container(list, 1)));
 
@@ -423,7 +411,7 @@ public class CollectionDropTests
     public void ADropClearsTheHoverAndTheAdorners()
     {
         var items = new List<string> { "a", "b" };
-        var operation = new ProbingCollectionDropOperation { PayloadTarget = items };
+        var operation = new ProbingCollectionDropOperation { TargetCollection = items };
         var (window, list) = ShowList(operation, items);
         using var drag = window.SimulateDrag(DragData.For(new CollectionDragOperation(), "x"));
         drag.Enter(Top(window, Container(list, 1)));
@@ -437,7 +425,7 @@ public class CollectionDropTests
     public void ALeaveClearsTheHoverAndTheAdorners()
     {
         var items = new List<string> { "a", "b" };
-        var operation = new ProbingCollectionDropOperation { PayloadTarget = items };
+        var operation = new ProbingCollectionDropOperation { TargetCollection = items };
         var (window, list) = ShowList(operation, items);
         using var drag = window.SimulateDrag(DragData.For(new CollectionDragOperation(), "x"));
         drag.Enter(Top(window, Container(list, 1)));
@@ -452,7 +440,7 @@ public class CollectionDropTests
     public void ADragThatStopsBeingMeantForTheTargetClearsTheHover()
     {
         var items = new List<string> { "a", "b" };
-        var operation = new ProbingCollectionDropOperation { PayloadTarget = items };
+        var operation = new ProbingCollectionDropOperation { TargetCollection = items };
         var (window, list) = ShowList(operation, items);
         using var drag = window.SimulateDrag(DragData.For(new CollectionDragOperation(), "x"));
         drag.Enter(Top(window, Container(list, 1)));
@@ -468,7 +456,7 @@ public class CollectionDropTests
     {
         var items = new List<string>();
         var target = new Border { Width = 200, Height = 200, Background = Brushes.Blue, Child = new Border { Width = 40, Height = 40 } };
-        DragDrop.SetDropOperation(target, new CollectionDropOperation { PayloadTarget = items });
+        DragDrop.SetDropOperation(target, new CollectionDropOperation { TargetCollection = items });
         var window = TestWindow.Show(target);
         using var drag = window.SimulateDrag(DragData.For(new CollectionDragOperation(), "A"));
         var background = window.PointIn(target, new Point(10, 10));
@@ -511,7 +499,7 @@ public class CollectionDropTests
     {
         var items = new ObservableCollection<string> { "a", "b" };
         DropEventArgs? args = null;
-        var (window, list) = ShowList(new CollectionDropOperation { PayloadTarget = items, PayloadCommand = Record(a => args = a) }, items);
+        var (window, list) = ShowList(new CollectionDropOperation { TargetCollection = items, PayloadCommand = Record(a => args = a) }, items);
         var container = Container(list, 1);
         var source = new RecordingDragOperation();
         var point = height < 0 ? Below(window, list) : window.PointIn(container, new Point(10, container.Bounds.Height * height));
@@ -531,7 +519,7 @@ public class CollectionDropTests
     public void ATargetThatRefusesSeveralPayloadsIsNotMeantForTheirDrag()
     {
         var items = new List<string> { "a" };
-        var operation = new CollectionDropOperation { PayloadTarget = items, AcceptsMultiplePayloads = false };
+        var operation = new CollectionDropOperation { TargetCollection = items, AcceptsMultiplePayloads = false };
         var (window, target) = ShowTarget(operation);
 
         using (var several = window.SimulateDrag(DragData.For(new CollectionDragOperation(), ["x", "y"])))
@@ -569,7 +557,7 @@ public class CollectionDropTests
         var source = new List<string> { "A", "B" };
         DropEventArgs? args = null;
         var (window, target) = ShowTarget(new CollectionDropOperation { PayloadCommand = new RelayCommand(a => args = (DropEventArgs?)a) });
-        using var drag = window.SimulateDrag(DragData.For(new CollectionDragOperation { PayloadCollection = source }, "A"));
+        using var drag = window.SimulateDrag(DragData.For(new CollectionDragOperation { SourceCollection = source }, "A"));
 
         drag.Enter(window.PointIn(target));
         Assert.Equal(DragDropEffects.Move, drag.Drop(window.PointIn(target)));
@@ -583,7 +571,7 @@ public class CollectionDropTests
     {
         var source = new List<string> { "A", "B" };
         var (window, target) = ShowTarget(new CollectionDropOperation());
-        using var drag = window.SimulateDrag(DragData.For(new CollectionDragOperation { PayloadCollection = source }, "A"));
+        using var drag = window.SimulateDrag(DragData.For(new CollectionDragOperation { SourceCollection = source }, "A"));
 
         Assert.Equal(DragDropEffects.None, drag.Enter(window.PointIn(target)));
         Assert.Equal(DragDropEffects.None, drag.Drop(window.PointIn(target)));
@@ -610,7 +598,7 @@ public class CollectionDropTests
         var source = new List<string> { "A", "B" };
         var executed = false;
         var (window, target) = ShowTarget(new CollectionDropOperation { PayloadCommand = new RelayCommand(_ => executed = true, _ => false) });
-        using var drag = window.SimulateDrag(DragData.For(new CollectionDragOperation { PayloadCollection = source }, "A"));
+        using var drag = window.SimulateDrag(DragData.For(new CollectionDragOperation { SourceCollection = source }, "A"));
 
         drag.Enter(window.PointIn(target));
         Assert.Equal(DragDropEffects.None, drag.Drop(window.PointIn(target)));
@@ -623,7 +611,7 @@ public class CollectionDropTests
     public void DetachingMidDragClearsTheHoveredContainer()
     {
         var items = new List<string> { "a", "b", "c" };
-        var operation = new CollectionDropOperation { PayloadTarget = items };
+        var operation = new CollectionDropOperation { TargetCollection = items };
         var (window, list) = ShowList(operation, items);
         var container = list.ContainerFromIndex(1)!;
         using var drag = window.SimulateDrag(DragData.For(new CollectionDragOperation(), "x"));
@@ -704,7 +692,7 @@ public class CollectionDropTests
         var items = new List<string>();
         DropEventArgs? args = null;
         var target = new Border { Width = 200, Height = 200, Background = Brushes.Blue };
-        var operation = new CopyingCollectionDropOperation { PayloadTarget = items, PayloadCommand = new RelayCommand(a => args = (DropEventArgs?)a) };
+        var operation = new CopyingCollectionDropOperation { TargetCollection = items, PayloadCommand = new RelayCommand(a => args = (DropEventArgs?)a) };
         DragDrop.SetDropOperation(target, operation);
         return (TestWindow.Show(target), target, items, () => args?.Items);
     }

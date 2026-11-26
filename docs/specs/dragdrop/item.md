@@ -8,6 +8,7 @@ sources:
   - MonacoLabs.DragDrop/Operations/ItemDragOperation.cs
   - MonacoLabs.DragDrop/Operations/ItemDragOperation.props.cs
   - MonacoLabs.DragDrop/Operations/ItemDropOperation.cs
+  - MonacoLabs.DragDrop/Operations/ItemDropOperation.props.cs
 types:
   - ItemDragOperation
   - ItemDropOperation

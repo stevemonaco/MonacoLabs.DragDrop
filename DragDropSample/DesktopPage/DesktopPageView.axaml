@@ -45,7 +45,7 @@
                             <cdd:FileDragOperation
                                 AllowedEffects="Copy"
                                 InteractionIds="platform:files"
-                                PayloadCollection="{Binding Files}"
+                                SourceCollection="{Binding Files}"
                                 RemoveOnDropOutside="True" />
                         </dd:DragDrop.DragOperation>
                         <dd:DragDrop.DropOperation>
@@ -144,14 +144,14 @@
                             <dd:CollectionDragOperation
                                 AllowedEffects="Move,Copy"
                                 InteractionIds="app:snippet, platform:text"
-                                PayloadCollection="{Binding Snippets}"
+                                SourceCollection="{Binding Snippets}"
                                 RemoveOnDropOutside="True" />
                         </dd:DragDrop.DragOperation>
                         <dd:DragDrop.DropOperation>
                             <dd:CollectionDropOperation
                                 InteractionIds="app:snippet, platform:text"
                                 PayloadCommand="{Binding AddSnippetsCommand}"
-                                PayloadTarget="{Binding Snippets}" />
+                                TargetCollection="{Binding Snippets}" />
                         </dd:DragDrop.DropOperation>
                         <ListBox.ItemTemplate>
                             <DataTemplate x:DataType="x:String">

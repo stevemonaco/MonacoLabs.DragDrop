@@ -4,10 +4,10 @@ using MonacoLabs.DragDrop.Abstractions;
 namespace MonacoLabs.DragDrop;
 
 /// <summary>
-/// Drops a single value: an accepted in-process drop replaces <see cref="DropOperationBase.PayloadTarget"/> with the payload.
+/// Drops a single value: an accepted in-process drop replaces <see cref="PayloadTarget"/> with the payload.
 /// Drags carrying more than one payload are not meant for it unless <see cref="DropOperationBase.AcceptsMultiplePayloads"/> is set.
 /// </summary>
-public class ItemDropOperation : DropOperationBase
+public partial class ItemDropOperation : DropOperationBase
 {
     static ItemDropOperation()
     {
@@ -15,7 +15,7 @@ public class ItemDropOperation : DropOperationBase
     }
 
     /// <summary>
-    /// Sets <see cref="DropOperationBase.PayloadTarget"/> to the first of <paramref name="values"/> and reports the previous value as
+    /// Sets <see cref="PayloadTarget"/> to the first of <paramref name="values"/> and reports the previous value as
     /// <see cref="DropInfo.ReplacedPayload"/>.
     /// </summary>
     protected override DropInfo? Transfer(DragEventArgs e, DragInfo dragInfo, IReadOnlyList<object> values)
@@ -33,7 +33,7 @@ public class ItemDropOperation : DropOperationBase
     }
 
     /// <summary>
-    /// True: every accepted in-process drop replaces <see cref="DropOperationBase.PayloadTarget"/>.
+    /// True: every accepted in-process drop replaces <see cref="PayloadTarget"/>.
     /// </summary>
     protected override bool CanTransfer(DragEventArgs e) => true;
 }

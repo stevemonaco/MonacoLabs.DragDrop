@@ -34,7 +34,7 @@ public class AutoScrollTests
             Content = new Border { Height = 1000, Background = Brushes.Blue },
             VerticalAlignment = VerticalAlignment.Top
         };
-        DragDrop.SetDropOperation(viewer, new CollectionDropOperation { PayloadTarget = new List<string>() });
+        DragDrop.SetDropOperation(viewer, new CollectionDropOperation { TargetCollection = new List<string>() });
         var window = TestWindow.Show(viewer);
         using var drag = window.SimulateDrag(DragData.For(new CollectionDragOperation(), "x"));
 
@@ -88,7 +88,7 @@ public class AutoScrollTests
     public async Task AScrollViewerReplacedBetweenDragsIsTheOneScrolled()
     {
         var host = new Decorator { Width = 150, Height = 100, VerticalAlignment = VerticalAlignment.Top, Child = TallViewer() };
-        DragDrop.SetDropOperation(host, new CollectionDropOperation { PayloadTarget = new List<string>() });
+        DragDrop.SetDropOperation(host, new CollectionDropOperation { TargetCollection = new List<string>() });
         var window = TestWindow.Show(host);
         var nearBottom = window.PointIn(host, new Point(10, 95));
         await ScrollWithOneDrag(window, nearBottom, (ScrollViewer)host.Child);
@@ -105,7 +105,7 @@ public class AutoScrollTests
     {
         var first = TallViewer();
         var second = TallViewer();
-        var operation = new CollectionDropOperation { PayloadTarget = new List<string>() };
+        var operation = new CollectionDropOperation { TargetCollection = new List<string>() };
         DragDrop.SetDropOperation(first, operation);
         var window = TestWindow.Show(new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Top, Children = { first, second } });
         await ScrollWithOneDrag(window, window.PointIn(first, new Point(10, 95)), first);
@@ -138,7 +138,7 @@ public class AutoScrollTests
     private static (Window, ListBox, ScrollViewer) ShowLongList(CollectionDropOperation operation)
     {
         var items = Enumerable.Range(0, 40).Select(i => $"item {i}").ToList();
-        operation.PayloadTarget = items;
+        operation.TargetCollection = items;
         var list = new ListBox
         {
             ItemsSource = items,

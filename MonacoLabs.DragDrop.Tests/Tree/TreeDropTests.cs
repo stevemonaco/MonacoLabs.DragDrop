@@ -132,10 +132,10 @@ public class TreeDropTests
     }
 
     [AvaloniaFact]
-    public void TheTreeAlwaysTransfersAndIgnoresPayloadTarget()
+    public void TheTreeAlwaysTransfersAndIgnoresTargetCollection()
     {
         var unused = new List<TreeNode>();
-        var tree = new TestTree(new TreeDropOperation { PayloadTarget = unused });
+        var tree = new TestTree(new TreeDropOperation { TargetCollection = unused });
         var x = new TreeNode("X");
 
         DropOn(tree, tree.BelowTheNodes, x);

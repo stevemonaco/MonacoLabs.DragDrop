@@ -50,7 +50,7 @@ public class CollectionDragTests
     }
 
     [AvaloniaFact]
-    public void OnlyAMoveWithAPayloadCollectionRemovesTheOriginal()
+    public void OnlyAMoveWithASourceCollectionRemovesTheOriginal()
     {
         var items = new List<string> { "a", "b" };
         var operation = new CollectionDragOperation();
@@ -228,7 +228,7 @@ public class CollectionDragTests
             Height = 250,
             ItemTemplate = new FuncDataTemplate<string>((_, _) => new TextBlock { Height = 30 })
         };
-        DragDrop.SetDragOperation(list, new CollectionDragOperation { PayloadCollection = items });
+        DragDrop.SetDragOperation(list, new CollectionDragOperation { SourceCollection = items });
         var target = new Border { Background = Brushes.Blue, Width = 100, Height = 100 };
         var drop = new RecordingDropOperation();
         DragDrop.SetDropOperation(target, drop);
@@ -267,7 +267,7 @@ public class CollectionDragTests
             Height = 250,
             ItemTemplate = new FuncDataTemplate<string>((_, _) => new TextBlock { Height = 30 })
         };
-        operation.PayloadCollection = items;
+        operation.SourceCollection = items;
         DragDrop.SetDragOperation(list, operation);
         var gestureHost = new Border { Child = list };
         gestureHost.AddHandler(InputElement.PointerPressedEvent, (_, e) => e.Handled = true, RoutingStrategies.Tunnel);
@@ -316,7 +316,7 @@ public class CollectionDragTests
             Height = 250,
             ItemTemplate = new FuncDataTemplate<string>((_, _) => new TextBlock { Height = 30 })
         };
-        DragDrop.SetDragOperation(list, new CollectionDragOperation { PayloadCollection = items });
+        DragDrop.SetDragOperation(list, new CollectionDragOperation { SourceCollection = items });
 
         var target = new Border { Background = Brushes.Blue, Width = 100, Height = 100 };
         var drop = new RecordingDropOperation();

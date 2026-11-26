@@ -333,14 +333,14 @@ public class DropTargetTests
     {
         var holder = new Border { Tag = "old" };
         var operation = new ItemDropOperation();
-        operation.Bind(DropOperationBase.PayloadTargetProperty, new ReflectionBinding(nameof(Control.Tag)) { Source = holder });
+        operation.Bind(ItemDropOperation.PayloadTargetProperty, new ReflectionBinding(nameof(Control.Tag)) { Source = holder });
         var (window, target) = Show(operation);
         using var drag = window.SimulateDrag(DragData.For(new ItemDragOperation(), "A"));
 
         drag.Enter(window.PointIn(target));
         drag.Drop(window.PointIn(target));
 
-        Assert.Equal(BindingMode.TwoWay, DropOperationBase.PayloadTargetProperty.GetMetadata(typeof(ItemDropOperation)).DefaultBindingMode);
+        Assert.Equal(BindingMode.TwoWay, ItemDropOperation.PayloadTargetProperty.GetMetadata(typeof(ItemDropOperation)).DefaultBindingMode);
         Assert.Equal("A", holder.Tag);
     }
 
@@ -580,7 +580,6 @@ public class DropTargetTests
         Assert.Equal(DragDropEffects.Move, drag.Drop(window.PointIn(target)));
 
         Assert.Equal(["A"], args?.Items);
-        Assert.Null(operation.PayloadTarget);
         var (effect, dropInfo) = Assert.Single(source.Completions);
         Assert.Equal(DragDropEffects.Move, effect);
         Assert.Same(target, dropInfo.HoveredControl);
@@ -598,7 +597,6 @@ public class DropTargetTests
         Assert.Equal(DragDropEffects.None, drag.Drop(window.PointIn(target)));
 
         Assert.Empty(source.Completions);
-        Assert.Null(operation.PayloadTarget);
     }
 
     [AvaloniaFact]

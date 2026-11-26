@@ -142,7 +142,7 @@ public class DropNotificationTests
                 Height = 250,
                 ItemTemplate = new FuncDataTemplate<object>((_, _) => new TextBlock { Height = 30 })
             };
-            DragDrop.SetDropOperation(list, new CollectionTarget(log) { PayloadTarget = items });
+            DragDrop.SetDropOperation(list, new CollectionTarget(log) { TargetCollection = items });
             var window = TestWindow.Show(list);
             var container = list.ContainerFromIndex(1)!;
             var point = window.PointIn(container, new Point(10, container.Bounds.Height / 4));

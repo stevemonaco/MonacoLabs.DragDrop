@@ -98,13 +98,13 @@ depends:
   - Tests: `DropTargetTests.AnAcceptedDropAssignsThePayloadCompletesTheDragThenRunsTheCommand`, `CollectionDropTests.AnAcceptedDropInsertsThenCompletesWithWhereItLanded`
 - **DD-DROP-029** — When the transfer step transferred nothing but `PayloadCommand` ran, the drop target shall call `DropCompleted` after the command; when neither happened (there is no command, or `CanExecute` is false), it shall report effect None and not call `DropCompleted`. (DD-DROP-038 already rejects such drops; this covers a `CanExecute` that changes, or a transfer step that returns null although `CanTransfer` was true.)
   - Tests: `DropTargetTests.ACommandOnlyBaseSubclassCompletesAMove`, `DropTargetTests.ABaseSubclassWithoutACommandShowsAndReportsNone`, `DropTargetTests.ACommandOnlyTargetShowsNoneWhileItsCommandCannotExecute`, `CollectionDropTests.ACommandOnlyTargetCompletesAMove`, `CollectionDropTests.ADropThatNeitherTransfersNorRunsACommandShowsAndReportsNone`, `CollectionDropTests.ACommandWhoseCanExecuteIsFalseReportsNone`, `EndToEndTests.ReorderingThroughACommandRemovesTheOriginal`
-- **DD-DROP-016** — When platform data is dropped and accepted, the drop target shall leave `PayloadTarget` unchanged, not call `DropCompleted`, and run `PayloadCommand` with the files or text and `IsPlatformDrop` set (DD-PLATFORM).
+- **DD-DROP-016** — When platform data is dropped and accepted, the drop target shall transfer nothing (an item target's `PayloadTarget` and a collection target's `TargetCollection` stay unchanged), not call `DropCompleted`, and run `PayloadCommand` with the files or text and `IsPlatformDrop` set (DD-PLATFORM).
   - Tests: `PlatformDropTests.APlatformDropLeavesPayloadTargetAndNeverCompletesTheDrag`
 - **DD-DROP-017** — The drop target shall run `PayloadCommand` only when `CanExecute` returns true for the `DropEventArgs` it would receive.
   - Tests: `DropTargetTests.TheCommandRunsOnlyWhenItCanExecuteTheArgsItWouldReceive`
 - **DD-DROP-018** — After an accepted drop, the drop target shall call `OnDrop`, then clear `:dropover`, set the adorner invalid and hide it.
   - Tests: `DropTargetTests.AnAcceptedDropCallsOnDropAndHidesTheFeedback`
-- **DD-DROP-019** — `PayloadTarget` shall bind TwoWay by default, so a drop writes back to the bound view-model property.
+- **DD-DROP-019** — `ItemDropOperation.PayloadTarget` shall bind TwoWay by default, so a drop writes back to the bound view-model property.
   - Tests: `DropTargetTests.ADropWritesPayloadTargetBackThroughADefaultBinding`
 
 ### Notifications
@@ -134,7 +134,7 @@ depends:
 
 ## Invariants
 
-- The base never changes `PayloadTarget`; only a transfer step does (DD-ITEM).
+- The base has no transfer target of its own; only a subclass's transfer step changes one (`PayloadTarget` in DD-ITEM, `TargetCollection` in DD-COLLECTION).
 - `DropCompleted` is called at most once per drop, and only for an accepted in-process drop that transferred or ran `PayloadCommand`.
 - Once a drop or an undisturbed leave has been processed, the attached control has no `:dropover` and the adorner is hidden.
 - A hover raises `OnDragEnter` once, then `OnDragOver` any number of times, and ends with exactly one `OnDrop` or `OnDragLeave`.

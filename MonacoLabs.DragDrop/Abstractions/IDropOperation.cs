@@ -18,11 +18,6 @@ public interface IDropOperation
     Control? AttachedControl { get; }
 
     /// <summary>
-    /// What receives dropped payloads: the value itself on single-value targets, or the list on collection targets.
-    /// </summary>
-    object? PayloadTarget { get; set; }
-
-    /// <summary>
     /// Hooks the operation to <paramref name="control"/>. Throws <see cref="InvalidOperationException"/> when it is already attached.
     /// </summary>
     void Attach(Control control);

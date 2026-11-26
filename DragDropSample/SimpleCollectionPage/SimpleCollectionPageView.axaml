@@ -35,10 +35,10 @@
                     ItemsSource="{Binding LeftGuids}"
                     SelectionMode="Multiple">
                     <dd:DragDrop.DragOperation>
-                        <dd:CollectionDragOperation AllowedEffects="Move,Copy" InteractionIds="app:guid" PayloadCollection="{Binding LeftGuids}" />
+                        <dd:CollectionDragOperation AllowedEffects="Move,Copy" InteractionIds="app:guid" SourceCollection="{Binding LeftGuids}" />
                     </dd:DragDrop.DragOperation>
                     <dd:DragDrop.DropOperation>
-                        <dd:CollectionDropOperation InteractionIds="app:guid" PayloadTarget="{Binding LeftGuids}" />
+                        <dd:CollectionDropOperation InteractionIds="app:guid" TargetCollection="{Binding LeftGuids}" />
                     </dd:DragDrop.DropOperation>
                 </ListBox>
             </Grid>
@@ -58,10 +58,10 @@
                     ItemsSource="{Binding RightGuids}"
                     SelectionMode="Multiple">
                     <dd:DragDrop.DragOperation>
-                        <dd:CollectionDragOperation AllowedEffects="Move,Copy" InteractionIds="app:guid" PayloadCollection="{Binding RightGuids}" />
+                        <dd:CollectionDragOperation AllowedEffects="Move,Copy" InteractionIds="app:guid" SourceCollection="{Binding RightGuids}" />
                     </dd:DragDrop.DragOperation>
                     <dd:DragDrop.DropOperation>
-                        <dd:CollectionDropOperation InteractionIds="app:guid" PayloadTarget="{Binding RightGuids}" />
+                        <dd:CollectionDropOperation InteractionIds="app:guid" TargetCollection="{Binding RightGuids}" />
                     </dd:DragDrop.DropOperation>
                 </ListBox>
             </Grid>
