@@ -47,6 +47,7 @@ public class DragPreviewAdorner : Border, IDisposable
     /// <summary>
     /// Creates a preview from a snapshot of <paramref name="source"/>, or null if it has no visible size.
     /// </summary>
+    /// <param name="source">Control to snapshot, usually the pressed item container.</param>
     /// <param name="grabOffset">Pointer position relative to <paramref name="source"/> when the drag started.</param>
     /// <param name="payloadCount">Number of payloads the drag carries; above 1, the preview shows it in a badge.</param>
     public static DragPreviewAdorner? Create(Control source, Point grabOffset, int payloadCount = 1)
@@ -112,6 +113,7 @@ public class DragPreviewAdorner : Border, IDisposable
     /// <summary>
     /// Reflects the hovered location through the <c>:nodrop</c>, <c>:copy</c> and <c>:remove</c> pseudo-classes.
     /// </summary>
+    /// <param name="effect">Effect a drop at the hovered location would have.</param>
     /// <param name="isRemoving">Dropping here removes the payload from its source.</param>
     public void SetEffect(DragDropEffects effect, bool isRemoving)
     {

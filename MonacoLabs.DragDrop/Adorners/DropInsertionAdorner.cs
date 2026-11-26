@@ -90,6 +90,7 @@ public class DropInsertionAdorner : DropAdornerBase
         return (neighborEdge.Value.Y - targetEdge) / 2;
     }
 
+    /// <inheritdoc/>
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);

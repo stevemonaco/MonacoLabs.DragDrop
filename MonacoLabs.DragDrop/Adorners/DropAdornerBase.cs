@@ -9,6 +9,10 @@ using AvaDragDrop = Avalonia.Input.DragDrop;
 
 namespace MonacoLabs.DragDrop;
 
+/// <summary>
+/// Base class for drop feedback placed in the <see cref="AdornerLayer"/> over <see cref="TargetControl"/>. It is not hit-testable and has
+/// the <c>:error</c> pseudo-class while <see cref="IsDropValid"/> is false.
+/// </summary>
 public abstract class DropAdornerBase : Border
 {
     public static readonly StyledProperty<Control?> TargetControlProperty =
@@ -28,7 +32,7 @@ public abstract class DropAdornerBase : Border
         AvaloniaProperty.RegisterDirect<DropAdornerBase, bool>(nameof(IsDropValid), o => o.IsDropValid);
 
     /// <summary>
-    /// Control which the adorner should be positioned above
+    /// Whether the drag over <see cref="TargetControl"/> passed validation. False sets the <c>:error</c> pseudo-class.
     /// </summary>
     public bool IsDropValid
     {
@@ -79,6 +83,9 @@ public abstract class DropAdornerBase : Border
         UpdatePseudoclasses(IsDropValid);
     }
 
+    /// <summary>
+    /// Places the adorner over <see cref="TargetControl"/> and fades it in. Does nothing without a target or when already attached.
+    /// </summary>
     public virtual void Attach()
     {
         if (TargetControl is null || IsAttached)
@@ -88,6 +95,9 @@ public abstract class DropAdornerBase : Border
         FadeIn();
     }
 
+    /// <summary>
+    /// Removes the adorner from over <see cref="TargetControl"/>.
+    /// </summary>
     public virtual void Detach()
     {
         if (TargetControl is null)
@@ -131,6 +141,7 @@ public abstract class DropAdornerBase : Border
         return new Rect(point.X - bounds.X, point.Y - bounds.Y, bounds.Width, bounds.Height);
     }
 
+    /// <inheritdoc/>
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);

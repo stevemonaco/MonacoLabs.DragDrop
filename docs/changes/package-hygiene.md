@@ -44,6 +44,8 @@ What does not change: behavior, public API (except where a doc comment says more
 
 ## Tasks
 
+Tasks 1-6 landed on 2026-11-26. Coverage uses `Microsoft.Testing.Extensions.CodeCoverage` 18.0.6, the last line on Microsoft.Testing.Platform 1.x, which `xunit.v3` 3.2.2 needs. Overrides that change behavior got their own summary instead of `<inheritdoc/>`. What remains is task 7, which waits for filtered-sorted-collections and the backlog's `DragFailed` event, and closing.
+
 1. **Assembly attributes.** Remove `ComVisible` and `Guid`. Build.
 2. **Doc comments.** Turn on `GenerateDocumentationFile` with CS1591 in `NoWarn`. Write the summaries listed in Why, use `<inheritdoc/>` on overrides, fix `IsDropValid` and the two CS1573. Done when a build with CS1591 enabled lists only self-evident constructors, `*Property` fields and enum members whose names say it all.
 3. **`DataFormat` cache.**
@@ -51,9 +53,9 @@ What does not change: behavior, public API (except where a doc comment says more
 4. **Shared props and `.editorconfig`.** Add `Directory.Build.props`, `.editorconfig`, then one format-only commit from `dotnet format`. Add `dotnet format --verify-no-changes` to CI.
 5. **Package metadata.** Metadata, package README, `LICENSE.txt`'s placeholder filled in as `Copyright (c) 2026 Stephen Monaco`, `IsPackable` false on the sample and tests, `ContinuousIntegrationBuild` under CI. Check `dotnet pack -c Release` output: the README renders, the license is recognized, the `.snupkg` is produced and Source Link resolves (`dotnet-sourcelink test` or NuGet Package Explorer).
 6. **Coverage in CI.** Add the extension, collect on the Windows leg, upload the report.
-7. **Public API baseline.** Add PublicApiAnalyzers and generate `PublicAPI.Unshipped.txt` after the API-changing proposals have landed. Build with no RS0016/RS0017.
-8. **Close.** Remove the DD-WIRING and DD-ADORNERS Open items lines that point here, and delete this proposal and the backlog pointer to it.
+7. **Public API baseline.** Add PublicApiAnalyzers and generate `PublicAPI.Unshipped.txt` after the API-changing proposals have landed. Build with no RS0016/RS0017. Mention `PublicAPI.*.txt` updates in CLAUDE.md's Conventions.
+8. **Close.** Delete this proposal and the backlog and changes README pointers to it. (The DD-WIRING and DD-ADORNERS Open items lines are already gone.)
 
 ## Open questions
 
-- **Package README location.** Recommended: `docs/PACKAGE.md`, packed under the name `README.md`.
+- None. The package README is `docs/PACKAGE.md`, packed as `README.md` (decided 2026-11-26).

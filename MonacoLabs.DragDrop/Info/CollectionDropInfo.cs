@@ -3,6 +3,9 @@ using System.Collections;
 
 namespace MonacoLabs.DragDrop;
 
+/// <summary>
+/// Where a drop into a list or tree landed: the collection, the index of the first payload and how many were inserted.
+/// </summary>
 public class CollectionDropInfo : DropInfo
 {
     /// <summary>

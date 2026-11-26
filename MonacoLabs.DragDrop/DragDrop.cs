@@ -4,6 +4,9 @@ using MonacoLabs.DragDrop.Abstractions;
 
 namespace MonacoLabs.DragDrop;
 
+/// <summary>
+/// Attached properties that make controls drag sources and drop targets, and mark drag handles and ignored presses inside them.
+/// </summary>
 public static partial class DragDrop
 {
     static DragDrop()

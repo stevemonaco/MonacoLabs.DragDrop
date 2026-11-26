@@ -1,4 +1,5 @@
 ﻿using Avalonia.Input;
+using System.Collections.Concurrent;
 
 namespace MonacoLabs.DragDrop;
 
@@ -9,7 +10,10 @@ internal static class DragDropIds
 
     public static DataFormat<DragInfo> DragMetadataFormat { get; } = DataFormat.CreateInProcessFormat<DragInfo>(DragMetadata);
 
-    public static DataFormat<object> PayloadFormat(string interactionId) => DataFormat.CreateInProcessFormat<object>(interactionId);
+    private static readonly ConcurrentDictionary<string, DataFormat<object>> PayloadFormats = new();
+
+    public static DataFormat<object> PayloadFormat(string interactionId) =>
+        PayloadFormats.GetOrAdd(interactionId, DataFormat.CreateInProcessFormat<object>);
 
     public static bool IsPlatform(string interactionId) =>
         interactionId is PlatformInteractionIds.Files or PlatformInteractionIds.Text;

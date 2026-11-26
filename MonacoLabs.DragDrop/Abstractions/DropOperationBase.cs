@@ -22,6 +22,7 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
     private bool _isDragLeavePending;
     private DragEventArgs? _hoverEventArgs; // The latest event of the drag hovering this target; null when none is
 
+    /// <inheritdoc/>
     public IList<string> InteractionIds { get; set; } = [DragDropIds.DefaultOperation];
 
     /// <summary>
@@ -51,6 +52,7 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
     /// </summary>
     protected bool IsDropValid { get; private set; }
 
+    /// <inheritdoc/>
     public void Attach(Control control)
     {
         ThrowIf.InvalidOperation(AttachedControl is not null, $"{GetType().Name} is already attached to {AttachedControl}; an operation can attach to only one control");
@@ -67,6 +69,7 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
         OnAttached();
     }
 
+    /// <inheritdoc/>
     public void Detach(Control control)
     {
         if (AttachedControl is null)
@@ -370,6 +373,9 @@ public abstract partial class DropOperationBase : AvaloniaObject, IDropOperation
         return InteractionIds.Any(x => e.DataTransfer.Contains(DragDropIds.FormatFor(x)));
     }
 
+    /// <summary>
+    /// Checks if the drag carries an in-process payload for any of <see cref="InteractionIds"/>. False means a platform drop.
+    /// </summary>
     protected bool HasInProcessPayload(DragEventArgs e) =>
         InteractionIds.Any(x => !DragDropIds.IsPlatform(x) && e.DataTransfer.Contains(DragDropIds.PayloadFormat(x)));
 

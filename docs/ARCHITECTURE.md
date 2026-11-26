@@ -90,7 +90,7 @@ All derive from `DragOperationBase` / `DropOperationBase` in `MonacoLabs.DragDro
 - **Pure logic is extracted, not mocked.** Effect resolution, the removal index and the auto-scroll step are internal static helpers the operations call, so their many cases run without a window. Rejected: mocking `DragEventArgs` (Avalonia types are not designed for it).
 - **Plain xUnit `Assert`.** Rejected: FluentAssertions (commercial license since v8) and Shouldly (an extra dependency for little gain).
 - **No spec-format tests.** AI agents maintain the specs and read past small format drift, so tests enforcing the spec schema cost more in friction than they return. Cited tests are still checked when specs change. Rejected: a `SpecTests` class, built and removed.
-- **CI runs on Windows and Linux.** Fixed-size item templates remove the font dependence that keeps many Avalonia suites Windows-only. CI runs on pushes to `main`, pull requests and manual runs, skips Markdown-only changes, and packs nothing yet.
+- **CI runs on Windows and Linux.** Fixed-size item templates remove the font dependence that keeps many Avalonia suites Windows-only. CI runs on pushes to `main`, pull requests and manual runs, skips Markdown-only changes, and packs nothing yet. The Windows leg also checks formatting (`dotnet format --verify-no-changes`) and uploads a Cobertura coverage report, with no threshold until a few reports have set a baseline.
 
 ## 4. Project-wide decisions
 
@@ -104,6 +104,7 @@ All derive from `DragOperationBase` / `DropOperationBase` in `MonacoLabs.DragDro
 - **Most public types use the root `MonacoLabs.DragDrop` namespace regardless of folder.** The exception is `MonacoLabs.DragDrop.Abstractions`. The XML namespace maps only the root namespace.
 - **Guard clauses use `ThrowIf`** (`Internals/ThrowIf.cs`).
 - **Package versions are central** in `Directory.Packages.props`.
+- **Packaging.** Only `MonacoLabs.DragDrop` packs; the sample and tests set `IsPackable` to false. The package carries the XML documentation file, `docs/PACKAGE.md` as its README (absolute image URLs, since nuget.org can't resolve repo-relative ones), an MIT license expression, and a `.snupkg` with Source Link. `ContinuousIntegrationBuild` is on under GitHub Actions, so CI builds are deterministic. CS1591 stays suppressed (agreed 2026-11-26, revisit before 1.0): public types and members get a summary, but self-evident constructors and `*Property` fields don't, per the comment rules. To cut a pre-release, set `Version` in the csproj and run `dotnet pack -c Release`. The first version is 0.7.0; 1.0.0 follows once the open proposals have landed.
 
 ## 5. Sample
 

@@ -57,11 +57,17 @@ public static partial class DragDrop
     /// </summary>
     public static readonly AttachedProperty<bool> IsDragHandleProperty = AvaloniaProperty.RegisterAttached<Control, bool>("IsDragHandle", typeof(DragDrop));
 
+    /// <summary>
+    /// Sets the <see cref="IsDragHandleProperty"/> attached property on <paramref name="element"/>.
+    /// </summary>
     public static void SetIsDragHandle(AvaloniaObject element, bool value)
     {
         element.SetValue(IsDragHandleProperty, value);
     }
 
+    /// <summary>
+    /// Gets the <see cref="IsDragHandleProperty"/> attached property from <paramref name="element"/>.
+    /// </summary>
     public static bool GetIsDragHandle(AvaloniaObject element)
     {
         return element.GetValue(IsDragHandleProperty);
@@ -75,11 +81,17 @@ public static partial class DragDrop
     /// or that <see cref="DragOperationBase.IsIgnoredPressSource"/> ignores, decides.</remarks>
     public static readonly AttachedProperty<bool?> IgnoresPressProperty = AvaloniaProperty.RegisterAttached<Control, bool?>("IgnoresPress", typeof(DragDrop));
 
+    /// <summary>
+    /// Sets the <see cref="IgnoresPressProperty"/> attached property on <paramref name="element"/>.
+    /// </summary>
     public static void SetIgnoresPress(AvaloniaObject element, bool? value)
     {
         element.SetValue(IgnoresPressProperty, value);
     }
 
+    /// <summary>
+    /// Gets the <see cref="IgnoresPressProperty"/> attached property from <paramref name="element"/>.
+    /// </summary>
     public static bool? GetIgnoresPress(AvaloniaObject element)
     {
         return element.GetValue(IgnoresPressProperty);

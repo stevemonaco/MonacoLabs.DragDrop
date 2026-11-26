@@ -14,6 +14,7 @@ MonacoLabs.DragDrop is a WIP/prototype MVVM-friendly drag-and-drop library for A
 | `docs/specs/dragdrop/` | Feature specs, the source of truth for behavior; format in `docs/specs/README.md`, index in `index.md` |
 | `docs/changes/` | Change proposals for work in progress |
 | `docs/BACKLOG.md` | Open work: bugs and gaps, docs and hygiene, manual checks, candidates |
+| `docs/PACKAGE.md` | The NuGet package's README (packed as `README.md`); use absolute image URLs |
 
 **Specs:** before changing a feature's behavior, read its spec (and the specs in its `depends`), and update its requirements and `Tests:` lines in the same change. A change that diverges from its spec without updating it is incomplete. Design decisions and their reasons live in the spec's Decisions section, or ARCHITECTURE §4 when project-wide. New work that needs design starts as a proposal in `docs/changes/`; small fixes come straight from the backlog.
 
@@ -28,7 +29,8 @@ dotnet format MonacoLabs.DragDrop.slnx   # CI runs it with --verify-no-changes
 
 - Targets `net10.0`; the solution is a `.slnx` file. `global.json` pins SDK 10.0 with `rollForward: latestMajor` and selects the Microsoft Testing Platform runner for `dotnet test`.
 - `xunit.v3` is pinned to 3.2.2: `Avalonia.Headless.XUnit` 12.2 fails discovery of every `[AvaloniaFact]` on 4.x.
-- Package versions are centrally managed in `Directory.Packages.props`. Add `<PackageVersion>` there and a version-less `<PackageReference>` in the csproj.
+- Package versions are centrally managed in `Directory.Packages.props`. Add `<PackageVersion>` there and a version-less `<PackageReference>` in the csproj. Settings all projects share (`Nullable`, `ContinuousIntegrationBuild` under GitHub Actions) live in `Directory.Build.props`.
+- Package metadata lives in the library's csproj; `dotnet pack -c Release` produces the `.nupkg` and `.snupkg`. Public members need a `<summary>` (CS1591 is suppressed, so nothing enforces it).
 - Debug builds of the sample reference `AvaloniaUI.DiagnosticsSupport` and call `WithDeveloperTools()`, so the Avalonia DevTools MCP (`attach-to-app`) can inspect the running demo's visual tree, adorners, and pseudo-classes.
 
 ## Tests (`MonacoLabs.DragDrop.Tests`)

@@ -27,6 +27,10 @@ public class InteractionIdTests
         Assert.Equal(DataFormat.CreateInProcessFormat<object>(id), format);
     }
 
+    [Fact]
+    public void TheFormatForAnIdIsCreatedOnce() =>
+        Assert.Same(DragDropIds.PayloadFormat("workers"), DragDropIds.PayloadFormat("workers"));
+
     [AvaloniaFact]
     public void DragOperationsDefaultToTheAppDefaultId() =>
         Assert.All(

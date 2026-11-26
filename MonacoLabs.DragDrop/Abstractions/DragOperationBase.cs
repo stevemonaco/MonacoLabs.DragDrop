@@ -11,6 +11,10 @@ using AvaDragDrop = Avalonia.Input.DragDrop;
 
 namespace MonacoLabs.DragDrop.Abstractions;
 
+/// <summary>
+/// Makes its attached control a drag source: it tracks a left press, starts a drag once the pointer moves past <see cref="DragThreshold"/>,
+/// and carries the payloads from <see cref="ResolvePayloads"/>. Subclasses remove what they moved in <see cref="DropCompleted"/>.
+/// </summary>
 public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
 {
     private const string LogArea = "DragDrop";
@@ -21,6 +25,7 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
     private Point? _dragOrigin;
     private PointerPressedEventArgs? _pressedEventArgs; // DoDragDropAsync requires the press event, not the move event that crossed the threshold
 
+    /// <inheritdoc/>
     public IList<string> InteractionIds { get; set; } = [DragDropIds.DefaultOperation];
 
     /// <summary>
@@ -52,6 +57,7 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
     private void ThrowIfAttached([CallerMemberName] string property = "") =>
         ThrowIf.InvalidOperation(AttachedControl is not null, $"{property} can only be set while {GetType().Name} is detached");
 
+    /// <inheritdoc/>
     public void Attach(Control control)
     {
         ThrowIf.InvalidOperation(AttachedControl is not null, $"{GetType().Name} is already attached to {AttachedControl}; an operation can attach to only one control");
@@ -60,6 +66,7 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
         SubscribeDragEvents(control);
     }
 
+    /// <inheritdoc/>
     public void Detach(Control control)
     {
         if (AttachedControl is null)
@@ -69,6 +76,9 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
         AttachedControl = null;
     }
 
+    /// <summary>
+    /// Adds the pointer handlers to <paramref name="control"/> with <see cref="Routing"/> and <see cref="HandledEventsToo"/>.
+    /// </summary>
     protected virtual void SubscribeDragEvents(Control control)
     {
         control.AddHandler(InputElement.PointerPressedEvent, HandlePointerPressed, Routing, HandledEventsToo);
@@ -78,6 +88,9 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
         control.AddHandler(InputElement.PointerCaptureLostEvent, HandlePointerCaptureLost, RoutingStrategies.Direct);
     }
 
+    /// <summary>
+    /// Removes the handlers <see cref="SubscribeDragEvents"/> added.
+    /// </summary>
     protected virtual void UnsubscribeDragEvents(Control control)
     {
         control.RemoveHandler(InputElement.PointerPressedEvent, HandlePointerPressed);
@@ -212,6 +225,9 @@ public abstract partial class DragOperationBase : AvaloniaObject, IDragOperation
         return StartDrag(e);
     }
 
+    /// <summary>
+    /// Starts a drag for the tracked press: resolves its payloads and metadata, then runs <see cref="DoDragDrop"/>. Completes when the drag ends.
+    /// </summary>
     protected virtual async Task StartDrag(PointerEventArgs e)
     {
         var pressedEventArgs = _pressedEventArgs;

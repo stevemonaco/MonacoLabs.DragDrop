@@ -102,4 +102,4 @@ depends: []
 
 ## Open items
 
-- `SetIsDragHandle` and `GetIsDragHandle` have no doc comments. Addressed by [changes/package-hygiene.md](../../changes/package-hygiene.md).
+- None.

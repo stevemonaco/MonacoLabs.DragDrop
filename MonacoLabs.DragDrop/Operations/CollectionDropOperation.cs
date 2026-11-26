@@ -19,6 +19,9 @@ public partial class CollectionDropOperation : DropOperationBase
     private ScrollViewer? _autoScrollViewer;
     private Vector _autoScrollStep;
 
+    /// <summary>
+    /// True, so items can be reordered within the attached control.
+    /// </summary>
     protected override bool AllowsSelfDrop => true;
 
     /// <summary>
@@ -216,6 +219,10 @@ public partial class CollectionDropOperation : DropOperationBase
     /// </summary>
     protected virtual Control GetInsertionTarget(Control container) => container;
 
+    /// <summary>
+    /// Finds the item container under the drag event's source: its topmost logical ancestor below the attached control,
+    /// or null when that is part of the attached control's own template.
+    /// </summary>
     protected virtual Control? LocateTargetContainer(RoutedEventArgs triggerEvent)
     {
         if (AttachedControl is ItemsControl
@@ -234,6 +241,9 @@ public partial class CollectionDropOperation : DropOperationBase
         return null;
     }
 
+    /// <summary>
+    /// Gets the index of <paramref name="container"/> in its items control, or null when there is none.
+    /// </summary>
     protected virtual int? LocateTargetContainerIndex(Control? container)
     {
         if (AttachedControl is ItemsControl items && container is not null)

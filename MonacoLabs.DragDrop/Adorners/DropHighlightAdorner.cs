@@ -111,6 +111,7 @@ public class DropHighlightAdorner : DropAdornerBase
         Child = _errorBadge;
     }
 
+    /// <inheritdoc/>
     public override void Attach()
     {
         base.Attach();
@@ -134,6 +135,7 @@ public class DropHighlightAdorner : DropAdornerBase
         _isCornerRadiusInferred = true;
     }
 
+    /// <inheritdoc/>
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);

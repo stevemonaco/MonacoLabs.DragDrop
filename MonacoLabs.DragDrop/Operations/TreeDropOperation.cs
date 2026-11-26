@@ -19,6 +19,9 @@ public partial class TreeDropOperation : CollectionDropOperation
     private IDisposable? _expandTimer;
     private TreeViewItem? _expandCandidate;
 
+    /// <summary>
+    /// True: the target collection comes from the tree, not from <see cref="Abstractions.DropOperationBase.PayloadTarget"/>.
+    /// </summary>
     protected override bool TransfersPayload => true;
 
     private protected override void UpdateFeedback(DragEventArgs e)
@@ -33,6 +36,9 @@ public partial class TreeDropOperation : CollectionDropOperation
         CancelHoverExpand();
     }
 
+    /// <summary>
+    /// Finds the nearest <see cref="TreeViewItem"/> at or above the drag event's source, within the attached control.
+    /// </summary>
     protected override Control? LocateTargetContainer(RoutedEventArgs triggerEvent)
     {
         if (triggerEvent.Source is not Control source)
@@ -44,13 +50,22 @@ public partial class TreeDropOperation : CollectionDropOperation
             .FirstOrDefault();
     }
 
+    /// <summary>
+    /// Gets the node's index among its siblings.
+    /// </summary>
     protected override int? LocateTargetContainerIndex(Control? container) =>
         container is null ? null : ItemsControl.ItemsControlFromItemContainer(container)?.IndexFromContainer(container);
 
-    // A TreeViewItem's bounds include its expanded children, so zones and indicators use the header row
+    /// <summary>
+    /// The node's header row, because a <see cref="TreeViewItem"/>'s bounds include its expanded children.
+    /// </summary>
     protected override Control GetInsertionTarget(Control container) =>
         container is TreeViewItem item ? TreeDragOperation.FindHeader(item) : container;
 
+    /// <summary>
+    /// For a node whose container has an <see cref="IList"/> <see cref="ItemsControl.ItemsSource"/>: the top quarter is before it,
+    /// the bottom quarter after it and the middle inside it. Other nodes split at the middle.
+    /// </summary>
     protected override DropTargetOffset GetDropOffset(Control container, Point position, Size size)
     {
         if (container is not TreeViewItem { ItemsSource: IList })
@@ -66,6 +81,10 @@ public partial class TreeDropOperation : CollectionDropOperation
         return DropTargetOffset.OnTarget;
     }
 
+    /// <summary>
+    /// Resolves the location from the tree: the hovered node's children for a drop inside it or just after an expanded node's header,
+    /// its siblings otherwise, and the roots when no node is hovered.
+    /// </summary>
     protected override CollectionDropLocation? ResolveDropLocation()
     {
         if (HoveredContainer is not TreeViewItem item)

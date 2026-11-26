@@ -10,6 +10,13 @@ namespace MonacoLabs.DragDrop;
 /// </remarks>
 public static class PlatformInteractionIds
 {
+    /// <summary>
+    /// Exchanges files and folders as <see cref="Avalonia.Input.DataFormat.File"/>.
+    /// </summary>
     public const string Files = "platform:files";
+
+    /// <summary>
+    /// Exchanges text as <see cref="Avalonia.Input.DataFormat.Text"/>.
+    /// </summary>
     public const string Text = "platform:text";
 }

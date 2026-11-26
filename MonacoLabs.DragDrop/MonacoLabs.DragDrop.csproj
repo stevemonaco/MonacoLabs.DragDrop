@@ -3,8 +3,30 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- Self-evident constructors and *Property fields stay undocumented; see docs/ARCHITECTURE.md, Packaging. -->
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>MonacoLabs.DragDrop</PackageId>
+    <Version>0.7.0</Version>
+    <Authors>Stephen Monaco</Authors>
+    <Copyright>Copyright (c) 2026 Stephen Monaco</Copyright>
+    <Description>MVVM-friendly drag and drop for Avalonia: attached drag and drop operations for single values, lists and trees, with insertion adorners, drag previews, auto-scroll and platform file and text drops.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/stevemonaco/MonacoLabs.DragDrop</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/stevemonaco/MonacoLabs.DragDrop</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>avalonia;drag-drop;dragdrop;mvvm</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\docs\PACKAGE.md" Pack="true" PackagePath="README.md" Visible="false" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Avalonia" />

@@ -12,6 +12,9 @@ namespace MonacoLabs.DragDrop;
 /// </summary>
 public class TreeDragOperation : CollectionDragOperation
 {
+    /// <summary>
+    /// <see cref="CollectionDragOperation.PayloadCollection"/> when set, otherwise the <see cref="ItemsControl.ItemsSource"/> of the node's parent.
+    /// </summary>
     protected override IList? ResolvePayloadCollection(Control? container) =>
         PayloadCollection ?? (container is null ? null : ItemsControl.ItemsControlFromItemContainer(container)?.ItemsSource as IList);
 
@@ -45,6 +48,9 @@ public class TreeDragOperation : CollectionDragOperation
         }
     }
 
+    /// <summary>
+    /// Finds the nearest <see cref="TreeViewItem"/> at or above the event's source.
+    /// </summary>
     protected override Control? LocatePayloadContainer(RoutedEventArgs triggerEvent)
     {
         if (AttachedControl is TreeView && triggerEvent.Source is Control sourceItem)
@@ -53,6 +59,9 @@ public class TreeDragOperation : CollectionDragOperation
         return null;
     }
 
+    /// <summary>
+    /// Gets the node's index among its siblings.
+    /// </summary>
     protected override int? LocatePayloadContainerIndex(Control? container)
     {
         if (AttachedControl is TreeView && container is TreeViewItem item)

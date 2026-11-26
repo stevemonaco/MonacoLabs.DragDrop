@@ -16,6 +16,9 @@ public partial class ItemDragOperation : DragOperationBase
         PayloadProperty.OverrideMetadata<ItemDragOperation>(new StyledPropertyMetadata<object?>(defaultBindingMode: BindingMode.TwoWay));
     }
 
+    /// <summary>
+    /// On a Move, clears a set <see cref="DragOperationBase.Payload"/>, or with <see cref="SwapOnDrop"/> assigns the target's previous value.
+    /// </summary>
     public override void DropCompleted(DragDropEffects effect, DragInfo dragInfo, DropInfo dropInfo)
     {
         if (effect != DragDropEffects.Move || !IsSet(PayloadProperty))
@@ -24,6 +27,9 @@ public partial class ItemDragOperation : DragOperationBase
         SetCurrentValue(PayloadProperty, SwapOnDrop ? dropInfo.ReplacedPayload : null);
     }
 
+    /// <summary>
+    /// Clears a set <see cref="DragOperationBase.Payload"/>.
+    /// </summary>
     protected override void OnDroppedOutside(DragInfo dragInfo)
     {
         if (IsSet(PayloadProperty))

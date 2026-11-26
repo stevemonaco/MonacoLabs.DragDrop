@@ -43,6 +43,9 @@ public class CollectionDragOperation : DragOperationBase
         Routing = RoutingStrategies.Tunnel;
     }
 
+    /// <summary>
+    /// On an <see cref="ItemsControl"/>, tracks only presses inside an item container; otherwise behaves as the base.
+    /// </summary>
     protected override void OnPointerPressed(PointerPressedEventArgs e)
     {
         if (AttachedControl is ItemsControl && LocatePayloadContainerIndex(LocatePayloadContainer(e)) is null or < 0)
@@ -59,6 +62,9 @@ public class CollectionDragOperation : DragOperationBase
     protected override IReadOnlyList<object> ResolvePayloads(PointerPressedEventArgs pressedEventArgs) =>
         [.. ResolveDragItems(pressedEventArgs).Select(x => x.Item)];
 
+    /// <summary>
+    /// The pressed item container, or the attached control when the press isn't on one.
+    /// </summary>
     protected override Control? ResolveDragVisual(PointerPressedEventArgs pressedEventArgs) =>
         LocatePayloadContainer(pressedEventArgs) is { } container ? DragVisualOf(container) : base.ResolveDragVisual(pressedEventArgs);
 
@@ -70,6 +76,9 @@ public class CollectionDragOperation : DragOperationBase
         return base.ResolveDraggingControls(dragInfo, dragVisual).Concat(containers).Distinct();
     }
 
+    /// <summary>
+    /// Creates a <see cref="CollectionDragInfo"/> with the pressed container and, per payload, its collection, index and container.
+    /// </summary>
     protected override DragInfo CreateMetadata(PointerEventArgs e, Point origin)
     {
         return new CollectionDragInfo()
@@ -124,6 +133,10 @@ public class CollectionDragOperation : DragOperationBase
     /// </summary>
     protected virtual IList? ResolvePayloadCollection(Control? container) => PayloadCollection;
 
+    /// <summary>
+    /// Finds the item container under the event's source: its topmost logical ancestor below the attached control, or null when the
+    /// attached control isn't an <see cref="ItemsControl"/>.
+    /// </summary>
     protected virtual Control? LocatePayloadContainer(RoutedEventArgs triggerEvent)
     {
         if (AttachedControl is ItemsControl items && triggerEvent.Source is Control sourceItem)
@@ -137,6 +150,9 @@ public class CollectionDragOperation : DragOperationBase
         }
     }
 
+    /// <summary>
+    /// Gets the index of <paramref name="container"/> in the attached control, or null when there is none. Negative when it isn't an item container.
+    /// </summary>
     protected virtual int? LocatePayloadContainerIndex(Control? container)
     {
         if (AttachedControl is ItemsControl items && container is not null)
@@ -149,6 +165,9 @@ public class CollectionDragOperation : DragOperationBase
         }
     }
 
+    /// <summary>
+    /// On a Move, removes every original from its collection, checking each recorded index before trusting it.
+    /// </summary>
     public override void DropCompleted(DragDropEffects effect, DragInfo dragInfo, DropInfo dropInfo)
     {
         base.DropCompleted(effect, dragInfo, dropInfo);
@@ -161,6 +180,9 @@ public class CollectionDragOperation : DragOperationBase
             collectionDropInfo?.TargetCount ?? 0);
     }
 
+    /// <summary>
+    /// Removes every original from its collection.
+    /// </summary>
     protected override void OnDroppedOutside(DragInfo dragInfo)
     {
         if (dragInfo is CollectionDragInfo collectionDragInfo)

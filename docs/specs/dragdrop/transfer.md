@@ -88,6 +88,7 @@ Defines what a drag carries and how a drop target recognizes it. Interaction ids
 ## Threading and lifetime
 
 - `DragInfo` and `DropInfo` hold references to controls and event args. They live as long as whoever keeps them. The library keeps neither after the drop returns.
+- Formats for interaction ids are created once per id and reused, so DragOver does not allocate them (`InteractionIdTests.TheFormatForAnIdIsCreatedOnce`).
 
 ## Platform behavior
 

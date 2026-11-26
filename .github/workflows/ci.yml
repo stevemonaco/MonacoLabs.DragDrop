@@ -41,9 +41,16 @@ jobs:
       - run: dotnet format MonacoLabs.DragDrop.slnx --verify-no-changes --no-restore
         if: runner.os == 'Windows'
       - run: dotnet build MonacoLabs.DragDrop.slnx --configuration Release --no-restore
-      - run: dotnet test --project MonacoLabs.DragDrop.Tests --configuration Release --no-build --report-xunit --results-directory TestResults
+      - run: >-
+          dotnet test --project MonacoLabs.DragDrop.Tests --configuration Release --no-build --report-xunit --results-directory TestResults
+          ${{ runner.os == 'Windows' && '--coverage --coverage-output-format cobertura --coverage-output coverage.cobertura.xml' || '' }}
       - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: test-results-${{ runner.os }}
           path: TestResults
+      - uses: actions/upload-artifact@v7
+        if: success() && runner.os == 'Windows'
+        with:
+          name: coverage
+          path: TestResults/coverage.cobertura.xml
